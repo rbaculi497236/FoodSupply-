@@ -1,0 +1,142 @@
+@model FoodSupply.Models.Purchase
+
+@{
+    ViewData["Title"] = "New Purchase";
+}
+
+<div class="mb-4">
+    <h1 class="fw-bold mb-1">
+        <i class="bi bi-cart-plus-fill text-primary me-2"></i>
+        New Purchase
+    </h1>
+
+    <p class="text-muted mb-0">
+        Create a new purchase order
+    </p>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <form asp-action="Create" method="post">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <div class="row">
+
+                <!-- Purchase Order Number -->
+                <div class="col-md-6 mb-3">
+                    <label asp-for="PurchaseOrderNumber"
+                           class="form-label fw-semibold">
+                        Purchase Order Number
+                    </label>
+
+                    <input asp-for="PurchaseOrderNumber"
+                           class="form-control"
+                           placeholder="Example: PO-0001" />
+
+                    <span asp-validation-for="PurchaseOrderNumber"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <!-- Purchase Date -->
+                <div class="col-md-6 mb-3">
+                    <label asp-for="PurchaseDate"
+                           class="form-label fw-semibold">
+                        Purchase Date
+                    </label>
+
+                    <input asp-for="PurchaseDate"
+                           type="date"
+                           class="form-control" />
+
+                    <span asp-validation-for="PurchaseDate"
+                          class="text-danger">
+                    </span>
+                </div>
+
+            </div>
+
+            <!-- Supplier -->
+            <div class="mb-3">
+                <label asp-for="SupplierId"
+                       class="form-label fw-semibold">
+                    Supplier
+                </label>
+
+                <select asp-for="SupplierId"
+                        class="form-select">
+
+                    <option value="">-- Select Supplier --</option>
+
+                    @foreach (var supplier in ViewBag.Suppliers)
+                    {
+                        <option value="@supplier.Id">
+                            @supplier.SupplierCode -
+                            @supplier.SupplierName
+                        </option>
+                    }
+
+                </select>
+
+                <span asp-validation-for="SupplierId"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-3">
+                <label asp-for="Notes"
+                       class="form-label fw-semibold">
+                    Notes
+                </label>
+
+                <textarea asp-for="Notes"
+                          class="form-control"
+                          rows="4"
+                          placeholder="Optional notes about this purchase"></textarea>
+
+                <span asp-validation-for="Notes"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <!-- Information -->
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+
+                <strong>Purchase Status:</strong>
+                New purchases are automatically created as
+                <strong>Pending</strong>.
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Back
+                </a>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>
+                    Save Purchase
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

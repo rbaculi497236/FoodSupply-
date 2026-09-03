@@ -1,0 +1,148 @@
+@model FoodSupply.Models.PurchaseItem
+
+@{
+    ViewData["Title"] = "Add Purchase Item";
+    var purchase = ViewBag.Purchase as FoodSupply.Models.Purchase;
+}
+
+<div class="mb-4">
+    <h1 class="fw-bold mb-1">
+        <i class="bi bi-box-seam text-primary me-2"></i>
+        Add Product
+    </h1>
+
+    <p class="text-muted mb-0">
+        Add a product to purchase order
+        <strong>@purchase?.PurchaseOrderNumber</strong>
+    </p>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <form asp-action="AddItem" method="post">
+
+            <input type="hidden" asp-for="PurchaseId" />
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <!-- Product -->
+            <div class="mb-3">
+
+                <label asp-for="ProductId"
+                       class="form-label fw-semibold">
+                    Product
+                </label>
+
+                <select asp-for="ProductId"
+                        class="form-select">
+
+                    <option value="">
+                        -- Select Product --
+                    </option>
+
+                    @foreach (var product in ViewBag.Products)
+                    {
+                        <option value="@product.Id">
+                            @product.ProductCode -
+                            @product.ProductName
+                        </option>
+                    }
+
+                </select>
+
+                <span asp-validation-for="ProductId"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="row">
+
+                <!-- Quantity -->
+                <div class="col-md-6 mb-3">
+
+                    <label asp-for="Quantity"
+                           class="form-label fw-semibold">
+                        Quantity
+                    </label>
+
+                    <input asp-for="Quantity"
+                           type="number"
+                           min="1"
+                           class="form-control" />
+
+                    <span asp-validation-for="Quantity"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+                <!-- Unit Price -->
+                <div class="col-md-6 mb-3">
+
+                    <label asp-for="UnitPrice"
+                           class="form-label fw-semibold">
+                        Unit Price
+                    </label>
+
+                    <input asp-for="UnitPrice"
+                           type="number"
+                           min="0"
+                           step="0.01"
+                           class="form-control"
+                           placeholder="0.00" />
+
+                    <span asp-validation-for="UnitPrice"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Calculation Information -->
+            <div class="alert alert-info">
+
+                <i class="bi bi-calculator me-2"></i>
+
+                <strong>Subtotal</strong> is calculated automatically:
+
+                <strong>Quantity × Unit Price</strong>
+
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+
+                <a asp-action="Details"
+                   asp-route-id="@Model.PurchaseId"
+                   class="btn btn-secondary">
+
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Back
+
+                </a>
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Add Product
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

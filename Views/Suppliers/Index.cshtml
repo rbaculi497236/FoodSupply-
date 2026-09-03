@@ -1,0 +1,149 @@
+@model IEnumerable<FoodSupply.Models.Supplier>
+
+@{
+ViewData["Title"] = "Suppliers";
+}
+
+<div class="container py-4">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">
+            <i class="bi bi-truck text-primary me-2"></i>
+            Suppliers
+        </h1>
+        <p class="text-muted mb-0">
+            Manage supplier records
+        </p>
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>
+        Add Supplier
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Code</th>
+                            <th>Supplier Name</th>
+                            <th>Contact Person</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var supplier in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold">
+                                        @supplier.SupplierCode
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @supplier.SupplierName
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(supplier.ContactPerson)
+                                        ? "—"
+                                        : supplier.ContactPerson)
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(supplier.PhoneNumber)
+                                        ? "—"
+                                        : supplier.PhoneNumber)
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(supplier.Email)
+                                        ? "—"
+                                        : supplier.Email)
+                                </td>
+
+                                <td>
+                                    @if (supplier.Status == "Active")
+                                    {
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            @supplier.Status
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+
+                                        <a asp-action="Details"
+                                           asp-route-id="@supplier.Id"
+                                           class="btn btn-sm btn-outline-info"
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <a asp-action="Edit"
+                                           asp-route-id="@supplier.Id"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <a asp-action="Delete"
+                                           asp-route-id="@supplier.Id"
+                                           class="btn btn-sm btn-outline-danger"
+                                           title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-truck fs-1 text-muted"></i>
+
+                <h5 class="mt-3">
+                    No suppliers found
+                </h5>
+
+                <p class="text-muted">
+                    Add your first supplier to get started.
+                </p>
+
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Add Supplier
+                </a>
+            </div>
+        }
+
+    </div>
+</div>
+
+</div>

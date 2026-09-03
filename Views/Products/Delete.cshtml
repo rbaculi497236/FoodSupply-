@@ -1,0 +1,94 @@
+@model FoodSupply.Models.Product
+
+@{
+ViewData["Title"] = "Delete Product";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="fw-bold text-danger mb-1">
+            <i class="bi bi-trash me-2"></i>
+            Delete Product
+        </h1>
+
+    <p class="text-muted mb-0">
+        Please confirm that you want to delete this product.
+    </p>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Warning:</strong> This action cannot be undone.
+        </div>
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <div class="text-muted small">Product Code</div>
+                <div class="fw-semibold">@Model.ProductCode</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Product Name</div>
+                <div class="fw-semibold">@Model.ProductName</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Category</div>
+                <div class="fw-semibold">@Model.Category</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Unit</div>
+                <div class="fw-semibold">@Model.Unit</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Price</div>
+                <div class="fw-semibold">
+                    ₱@Model.Price.ToString("N2")
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Stock Quantity</div>
+                <div class="fw-semibold">@Model.StockQuantity</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Reorder Level</div>
+                <div class="fw-semibold">@Model.ReorderLevel</div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="text-muted small">Status</div>
+                <div class="fw-semibold">@Model.Status</div>
+            </div>
+
+        </div>
+
+        <hr class="my-4" />
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cancel
+                </a>
+
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>
+                    Delete Product
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+</div>

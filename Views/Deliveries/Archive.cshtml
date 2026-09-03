@@ -1,0 +1,92 @@
+@model FoodSupply.Models.Delivery
+
+@{
+    ViewData["Title"] = "Archive Delivery";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+        <h1 class="fw-bold">
+            <i class="bi bi-archive-fill text-warning me-2"></i>
+            Archive Delivery
+        </h1>
+
+        <p class="text-muted">
+            Confirm that you want to archive this delivery.
+        </p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+                Confirm Archive
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                This delivery will be removed from the active deliveries list.
+                It will not be deleted and can be restored later.
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <strong>Delivery #</strong>
+                    <p>#@Model.Id</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Sales Order</strong>
+                    <p>#@Model.SalesOrderId</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Customer</strong>
+                    <p>
+                        @(Model.SalesOrder?.Customer?.CustomerName ?? "Unknown Customer")
+                    </p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Status</strong>
+                    <p>@Model.Status</p>
+                </div>
+
+            </div>
+
+            <hr />
+
+            <form asp-action="ArchiveConfirmed"
+                  asp-route-id="@Model.Id"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Cancel
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-warning"
+                            onclick="return confirm('Are you sure you want to archive Delivery #@Model.Id?');">
+                        <i class="bi bi-archive me-1"></i>
+                        Archive Delivery
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>

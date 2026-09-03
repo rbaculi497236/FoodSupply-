@@ -1,0 +1,177 @@
+@model FoodSupply.Models.Delivery
+
+@{
+    ViewData["Title"] = "Edit Delivery";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+        <h1 class="fw-bold">
+            <i class="bi bi-pencil-square text-primary me-2"></i>
+            Edit Delivery #@Model.Id
+        </h1>
+
+        <p class="text-muted">
+            Update delivery information.
+        </p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                Delivery Information
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <form asp-action="Edit"
+                  asp-route-id="@Model.Id"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       asp-for="Id" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger"></div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label asp-for="SalesOrderId"
+                               class="form-label fw-semibold">
+                            Sales Order
+                        </label>
+
+                        <select asp-for="SalesOrderId"
+                                class="form-select"
+                                asp-items="@(new SelectList(ViewBag.SalesOrders, "Id", "Id", Model.SalesOrderId))">
+                            <option value="">-- Select Sales Order --</option>
+                        </select>
+
+                        <span asp-validation-for="SalesOrderId"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DeliveryDate"
+                               class="form-label fw-semibold">
+                            Delivery Date
+                        </label>
+
+                        <input asp-for="DeliveryDate"
+                               type="datetime-local"
+                               class="form-control" />
+
+                        <span asp-validation-for="DeliveryDate"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Status"
+                               class="form-label fw-semibold">
+                            Delivery Status
+                        </label>
+
+                        <select asp-for="Status"
+                                class="form-select">
+                            <option value="Pending">Pending</option>
+                            <option value="Out for Delivery">Out for Delivery</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+
+                        <span asp-validation-for="Status"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Driver"
+                               class="form-label fw-semibold">
+                            Driver
+                        </label>
+
+                        <input asp-for="Driver"
+                               class="form-control" />
+
+                        <span asp-validation-for="Driver"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Vehicle"
+                               class="form-label fw-semibold">
+                            Vehicle
+                        </label>
+
+                        <input asp-for="Vehicle"
+                               class="form-control" />
+
+                        <span asp-validation-for="Vehicle"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DeliveryAddress"
+                               class="form-label fw-semibold">
+                            Delivery Address
+                        </label>
+
+                        <textarea asp-for="DeliveryAddress"
+                                  class="form-control"
+                                  rows="3"></textarea>
+
+                        <span asp-validation-for="DeliveryAddress"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Remarks"
+                               class="form-label fw-semibold">
+                            Remarks
+                        </label>
+
+                        <textarea asp-for="Remarks"
+                                  class="form-control"
+                                  rows="3"></textarea>
+
+                        <span asp-validation-for="Remarks"
+                              class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Cancel
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

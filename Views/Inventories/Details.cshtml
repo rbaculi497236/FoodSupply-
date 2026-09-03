@@ -1,0 +1,107 @@
+@model FoodSupply.Models.Inventory
+
+@{
+    ViewData["Title"] = "Inventory Details";
+}
+
+<div class="mb-4">
+    <h1 class="fw-bold mb-1">
+        <i class="bi bi-box-seam-fill text-primary me-2"></i>
+        Inventory Details
+    </h1>
+
+    <p class="text-muted mb-0">
+        View stock information
+    </p>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <div class="row">
+
+            <div class="col-md-6 mb-3">
+                <label class="text-muted">Product</label>
+                <h5 class="fw-semibold">
+                    @(Model.Product?.ProductName ?? "Unknown Product")
+                </h5>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="text-muted">Product Code</label>
+                <h5 class="fw-semibold">
+                    @(Model.Product?.ProductCode ?? "N/A")
+                </h5>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="text-muted">Stock Quantity</label>
+                <h5 class="fw-semibold">
+                    @Model.StockQuantity
+                </h5>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="text-muted">Reorder Level</label>
+                <h5 class="fw-semibold">
+                    @Model.ReorderLevel
+                </h5>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="text-muted">Stock Status</label>
+                <div>
+                    @if (Model.StockStatus == "In Stock")
+                    {
+                        <span class="badge bg-success fs-6">
+                            <i class="bi bi-check-circle me-1"></i>
+                            In Stock
+                        </span>
+                    }
+                    else if (Model.StockStatus == "Low Stock")
+                    {
+                        <span class="badge bg-warning text-dark fs-6">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Low Stock
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger fs-6">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Out of Stock
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="text-muted">Last Updated</label>
+                <h5 class="fw-semibold">
+                    @Model.LastUpdated.ToString("MMM dd, yyyy hh:mm tt")
+                </h5>
+            </div>
+
+        </div>
+
+        <hr />
+
+        <div class="d-flex justify-content-between mt-4">
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back
+            </a>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i>
+                Edit Inventory
+            </a>
+
+        </div>
+
+    </div>
+</div>

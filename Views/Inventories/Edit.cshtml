@@ -1,0 +1,124 @@
+@model FoodSupply.Models.Inventory
+
+@{
+    ViewData["Title"] = "Edit Inventory";
+}
+
+<div class="mb-4">
+    <h1 class="fw-bold mb-1">
+        <i class="bi bi-pencil-square text-primary me-2"></i>
+        Edit Inventory
+    </h1>
+
+    <p class="text-muted mb-0">
+        Update the stock information for this product
+    </p>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <form asp-action="Edit" method="post">
+
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <!-- Product -->
+            <div class="mb-3">
+                <label asp-for="ProductId" class="form-label fw-semibold">
+                    Product
+                </label>
+
+                <select asp-for="ProductId"
+                        class="form-select">
+
+                    <option value="">-- Select Product --</option>
+
+                    @foreach (var product in ViewBag.Products)
+                    {
+                        <option value="@product.Id">
+                            @product.ProductCode - @product.ProductName
+                        </option>
+                    }
+
+                </select>
+
+                <span asp-validation-for="ProductId"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <div class="row">
+
+                <!-- Stock Quantity -->
+                <div class="col-md-6 mb-3">
+                    <label asp-for="StockQuantity"
+                           class="form-label fw-semibold">
+                        Stock Quantity
+                    </label>
+
+                    <input asp-for="StockQuantity"
+                           class="form-control"
+                           min="0"
+                           placeholder="Enter stock quantity" />
+
+                    <span asp-validation-for="StockQuantity"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <!-- Reorder Level -->
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ReorderLevel"
+                           class="form-label fw-semibold">
+                        Reorder Level
+                    </label>
+
+                    <input asp-for="ReorderLevel"
+                           class="form-control"
+                           min="0"
+                           placeholder="Enter reorder level" />
+
+                    <span asp-validation-for="ReorderLevel"
+                          class="text-danger">
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+
+                <strong>Stock Status</strong> will be automatically
+                updated when you save the inventory.
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Back
+                </a>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
