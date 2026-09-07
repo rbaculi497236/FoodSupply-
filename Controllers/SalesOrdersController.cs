@@ -29,7 +29,6 @@ namespace FoodSupply.Controllers
             return View(salesOrders);
         }
 
-
         // GET: SalesOrders/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -52,7 +51,6 @@ namespace FoodSupply.Controllers
             return View(salesOrder);
         }
 
-
         // GET: SalesOrders/Create
         public async Task<IActionResult> Create()
         {
@@ -61,7 +59,6 @@ namespace FoodSupply.Controllers
 
             return View();
         }
-
 
         // POST: SalesOrders/Create
         [HttpPost]
@@ -160,6 +157,7 @@ namespace FoodSupply.Controllers
                 return View(salesOrder);
             }
 
+            // New Sales Order always starts as Pending
             salesOrder.OrderDate = DateTime.Now;
             salesOrder.Status = "Pending";
             salesOrder.TotalAmount = totalAmount;
@@ -194,7 +192,6 @@ namespace FoodSupply.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
         // GET: SalesOrders/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -218,7 +215,6 @@ namespace FoodSupply.Controllers
 
             return View(salesOrder);
         }
-
 
         // POST: SalesOrders/Edit/5
         [HttpPost]
@@ -265,6 +261,50 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
+            // Prevent manually skipping the workflow
+            //
+            // Only Pending / Processing orders can be changed
+            // through the Sales Order screen.
+            //
+            // Billed, Out for Delivery, and Delivered are controlled
+            // by Billing and Delivery modules.
+
+            if (existingOrder.Status == "Billed" ||
+                existingOrder.Status == "Out for Delivery" ||
+                existingOrder.Status == "Delivered")
+            {
+                ModelState.AddModelError(
+                    "",
+                    "This Sales Order has already progressed to Billing or Delivery and cannot be edited from the Sales Order module."
+                );
+
+                await LoadCustomers(existingOrder.CustomerId);
+                await LoadProducts();
+
+                return View(existingOrder);
+            }
+
+            // Only allow Pending, Processing, or Cancelled
+            var allowedStatuses = new[]
+            {
+                "Pending",
+                "Processing",
+                "Cancelled"
+            };
+
+            if (!allowedStatuses.Contains(salesOrder.Status))
+            {
+                ModelState.AddModelError(
+                    "Status",
+                    "Invalid Sales Order status."
+                );
+
+                await LoadCustomers(existingOrder.CustomerId);
+                await LoadProducts();
+
+                return View(existingOrder);
+            }
+
             // Get new product IDs
             var productIds = newItems
                 .Select(i => i.ProductId)
@@ -293,7 +333,6 @@ namespace FoodSupply.Controllers
                 .Where(i =>
                     allProductIds.Contains(i.ProductId))
                 .ToDictionaryAsync(i => i.ProductId);
-
 
             // Restore old inventory
             // Only restore if the old order was not cancelled.
@@ -329,9 +368,7 @@ namespace FoodSupply.Controllers
                 }
             }
 
-
             decimal totalAmount = 0;
-
 
             // Validate and calculate new order
             if (salesOrder.Status != "Cancelled")
@@ -375,7 +412,6 @@ namespace FoodSupply.Controllers
                         continue;
                     }
 
-                    // Always use current database price
                     item.UnitPrice =
                         product.Price;
 
@@ -387,7 +423,6 @@ namespace FoodSupply.Controllers
                         item.Subtotal;
                 }
 
-
                 if (!ModelState.IsValid)
                 {
                     await LoadCustomers(
@@ -397,7 +432,6 @@ namespace FoodSupply.Controllers
 
                     return View(salesOrder);
                 }
-
 
                 // Deduct new inventory
                 foreach (var item in newItems)
@@ -422,7 +456,6 @@ namespace FoodSupply.Controllers
                 }
             }
 
-
             // Update order
             existingOrder.CustomerId =
                 salesOrder.CustomerId;
@@ -437,7 +470,6 @@ namespace FoodSupply.Controllers
                 salesOrder.Status == "Cancelled"
                     ? 0
                     : totalAmount;
-
 
             // Replace old items
             _context.SalesOrderItems.RemoveRange(
@@ -459,7 +491,6 @@ namespace FoodSupply.Controllers
                 _context.SalesOrderItems.Add(item);
             }
 
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -474,13 +505,11 @@ namespace FoodSupply.Controllers
                 throw;
             }
 
-
             TempData["SuccessMessage"] =
                 $"Sales Order #{existingOrder.Id} updated successfully.";
 
             return RedirectToAction(nameof(Index));
         }
-
 
         // GET: SalesOrders/Archive/5
         public async Task<IActionResult> Archive(int? id)
@@ -506,7 +535,6 @@ namespace FoodSupply.Controllers
             return View(salesOrder);
         }
 
-
         // POST: SalesOrders/ArchiveConfirmed/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -522,11 +550,7 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
-            // Soft archive
             salesOrder.IsArchived = true;
-
-            // Archiving does NOT change inventory.
-            // The order remains in the database.
 
             await _context.SaveChangesAsync();
 
@@ -535,7 +559,6 @@ namespace FoodSupply.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
 
         // GET: SalesOrders/Archived
         public async Task<IActionResult> Archived()
@@ -550,7 +573,6 @@ namespace FoodSupply.Controllers
 
             return View(archivedOrders);
         }
-
 
         // POST: SalesOrders/Restore/5
         [HttpPost]
@@ -567,8 +589,6 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
-            // Restore the order from archive.
-            // Inventory is NOT changed.
             salesOrder.IsArchived = false;
 
             await _context.SaveChangesAsync();
@@ -578,7 +598,6 @@ namespace FoodSupply.Controllers
 
             return RedirectToAction(nameof(Archived));
         }
-
 
         // Load active customers
         private async Task LoadCustomers(
@@ -598,7 +617,6 @@ namespace FoodSupply.Controllers
                 );
         }
 
-
         // Load active products
         private async Task LoadProducts()
         {
@@ -609,7 +627,6 @@ namespace FoodSupply.Controllers
 
             ViewBag.Products = products;
         }
-
 
         // Update inventory status
         private void UpdateInventoryStatus(
@@ -633,7 +650,6 @@ namespace FoodSupply.Controllers
                     "In Stock";
             }
         }
-
 
         private bool SalesOrderExists(int id)
         {

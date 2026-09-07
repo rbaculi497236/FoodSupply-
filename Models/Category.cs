@@ -17,5 +17,7 @@ namespace FoodSupply.Models
         public string? Description { get; set; }
 
         public string Status { get; set; } = "Active";
+
+        public bool IsArchived { get; set; } = false;
     }
 }

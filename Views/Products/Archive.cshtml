@@ -1,0 +1,50 @@
+@model FoodSupply.Models.Product
+
+@{
+    ViewData["Title"] = "Archive Product";
+}
+
+<h1>Archive Product</h1>
+
+<div class="alert alert-warning">
+    Are you sure you want to archive this product?
+    <br />
+    The product will no longer appear in the active Products list,
+    but its information will be preserved.
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Product Code</dt>
+            <dd class="col-sm-9">@Model.ProductCode</dd>
+
+            <dt class="col-sm-3">Product Name</dt>
+            <dd class="col-sm-9">@Model.ProductName</dd>
+
+            <dt class="col-sm-3">Category</dt>
+            <dd class="col-sm-9">@Model.Category</dd>
+
+            <dt class="col-sm-3">Price</dt>
+            <dd class="col-sm-9">₱@Model.Price.ToString("N2")</dd>
+
+            <dt class="col-sm-3">Stock Quantity</dt>
+            <dd class="col-sm-9">@Model.StockQuantity</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Model.Status</dd>
+        </dl>
+
+        <form asp-action="Archive" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <button type="submit" class="btn btn-danger">
+                Archive Product
+            </button>
+
+            <a asp-action="Index" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>

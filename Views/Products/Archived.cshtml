@@ -1,0 +1,44 @@
+@model IEnumerable<FoodSupply.Models.Product>
+
+@{
+ViewData["Title"] = "Archived Products";
+}
+
+<h1>Archived Products</h1>
+
+<p>
+    <a asp-action="Index" class="btn btn-primary">
+        Back to Products
+    </a>
+</p>
+
+@if (!Model.Any())
+{ <div class="alert alert-info">
+There are no archived products. </div>
+}
+else
+{ <table class="table table-bordered table-striped"> <thead> <tr> <th>Product Code</th> <th>Product Name</th> <th>Price</th> <th>Actions</th> </tr> </thead>
+
+    <tbody>
+        @foreach (var product in Model)
+        {
+            <tr>
+                <td>@product.ProductCode</td>
+                <td>@product.ProductName</td>
+                <td>@product.Price.ToString("C")</td>
+                <td>
+                    <form asp-action="Restore"
+                          asp-route-id="@product.Id"
+                          method="post"
+                          style="display:inline;">
+                        <button type="submit" class="btn btn-success btn-sm">
+                            Restore
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+}
