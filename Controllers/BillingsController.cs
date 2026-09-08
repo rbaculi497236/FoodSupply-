@@ -1,10 +1,12 @@
 ﻿using FoodSupply.Data;
 using FoodSupply.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FoodSupply.Controllers
 {
+    [Authorize(Roles = "Main Admin,Billing Staff,Delivery Staff")]
     public class BillingsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -27,6 +29,7 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Billings/Create
+        [Authorize(Roles = "Main Admin,Billing Staff")]
         public async Task<IActionResult> Create()
         {
             await LoadSalesOrders();
@@ -43,6 +46,7 @@ namespace FoodSupply.Controllers
         // POST: Billings/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Main Admin,Billing Staff")]
         public async Task<IActionResult> Create(Billing billing)
         {
             // System-generated fields
@@ -158,6 +162,7 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Billings/Edit/5
+        [Authorize(Roles = "Main Admin,Billing Staff")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -175,6 +180,7 @@ namespace FoodSupply.Controllers
         // POST: Billings/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Main Admin,Billing Staff")]
         public async Task<IActionResult> Edit(
             int id,
             Billing billing)
@@ -276,6 +282,7 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Billings/Archive/5
+        [Authorize(Roles = "Main Admin,Billing Staff")]
         public async Task<IActionResult> Archive(int? id)
         {
             if (id == null)
@@ -296,6 +303,7 @@ namespace FoodSupply.Controllers
         // POST: Billings/ArchiveConfirmed/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Main Admin,Billing Staff")]
         public async Task<IActionResult> ArchiveConfirmed(int id)
         {
             var billing = await _context.Billings
@@ -331,6 +339,7 @@ namespace FoodSupply.Controllers
         // POST: Billings/Restore/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Main Admin,Billing Staff")]
         public async Task<IActionResult> Restore(int id)
         {
             var billing = await _context.Billings

@@ -1,10 +1,12 @@
 using FoodSupply.Data;
 using FoodSupply.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FoodSupply.Controllers
 {
+[Authorize]
 public class DashboardController : Controller
 {
 private readonly ApplicationDbContext _context;

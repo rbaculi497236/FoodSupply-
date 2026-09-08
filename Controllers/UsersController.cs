@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using FoodSupply.Data;
 using FoodSupply.Models;
 
 namespace FoodSupply.Controllers
 {
+    [Authorize(Roles = "Main Admin")]
     public class UsersController : Controller
     {
         private readonly ApplicationDbContext _context;

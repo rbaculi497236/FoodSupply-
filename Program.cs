@@ -15,32 +15,27 @@ builder.Services.AddControllersWithViews();
 // ==========================================
 
 var connectionString = builder.Configuration
-.GetConnectionString("DefaultConnection");
+    .GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-options.UseMySql(
-connectionString,
-ServerVersion.AutoDetect(connectionString)
-));
+    options.UseMySql(
+        connectionString,
+        ServerVersion.AutoDetect(connectionString)
+    ));
 
 // ==========================================
 // COOKIE AUTHENTICATION
 // ==========================================
 
 builder.Services.AddAuthentication(
-CookieAuthenticationDefaults.AuthenticationScheme
+    CookieAuthenticationDefaults.AuthenticationScheme
 )
 .AddCookie(options =>
 {
-options.LoginPath = "/Account/Login";
-
-options.AccessDeniedPath = "/Account/AccessDenied";
-
-options.ExpireTimeSpan = TimeSpan.FromHours(8);
-
-options.SlidingExpiration = true;
-
-
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
 });
 
 // ==========================================
@@ -57,11 +52,8 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-app.UseExceptionHandler("/Home/Error");
-
-
-app.UseHsts();
-
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
 
 // ==========================================
@@ -91,12 +83,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // ==========================================
-// MVC ROUTING
+// DEFAULT ROUTE
 // ==========================================
 
 app.MapControllerRoute(
-name: "default",
-pattern: "{controller=Account}/{action=Login}/{id?}"
+    name: "default",
+    pattern: "{controller=Account}/{action=Login}/{id?}"
 );
 
 app.Run();

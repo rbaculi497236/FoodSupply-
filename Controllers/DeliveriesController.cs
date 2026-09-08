@@ -1,10 +1,12 @@
 using FoodSupply.Data;
 using FoodSupply.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace FoodSupply.Controllers
 {
+    [Authorize(Roles = "Main Admin,Delivery Staff")]
     public class DeliveriesController : Controller
     {
         private readonly ApplicationDbContext _context;
