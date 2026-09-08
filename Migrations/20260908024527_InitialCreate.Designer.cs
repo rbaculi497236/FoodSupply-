@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodSupply.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260903014004_AddPurchaseArchive")]
-    partial class AddPurchaseArchive
+    [Migration("20260908024527_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,59 @@ namespace FoodSupply.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+            modelBuilder.Entity("FoodSupply.Models.Billing", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AmountPaid")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("InvoiceDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("PaymentDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("SalesOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalesOrderId");
+
+                    b.ToTable("Billings");
+                });
 
             modelBuilder.Entity("FoodSupply.Models.Category", b =>
                 {
@@ -43,6 +96,9 @@ namespace FoodSupply.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -94,6 +150,46 @@ namespace FoodSupply.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("FoodSupply.Models.Delivery", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DeliveryAddress")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("DeliveryDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Driver")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("SalesOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Vehicle")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalesOrderId");
+
+                    b.ToTable("Deliveries");
+                });
+
             modelBuilder.Entity("FoodSupply.Models.Inventory", b =>
                 {
                     b.Property<int>("Id")
@@ -133,15 +229,17 @@ namespace FoodSupply.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
 
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(65,30)");
@@ -169,6 +267,8 @@ namespace FoodSupply.Migrations
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
                 });
@@ -243,6 +343,72 @@ namespace FoodSupply.Migrations
                     b.ToTable("PurchaseItems");
                 });
 
+            modelBuilder.Entity("FoodSupply.Models.SalesOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("SalesOrders");
+                });
+
+            modelBuilder.Entity("FoodSupply.Models.SalesOrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SalesOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SalesOrderId");
+
+                    b.ToTable("SalesOrderItems");
+                });
+
             modelBuilder.Entity("FoodSupply.Models.Supplier", b =>
                 {
                     b.Property<int>("Id")
@@ -280,6 +446,70 @@ namespace FoodSupply.Migrations
                     b.ToTable("Suppliers");
                 });
 
+            modelBuilder.Entity("FoodSupply.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("FoodSupply.Models.Billing", b =>
+                {
+                    b.HasOne("FoodSupply.Models.SalesOrder", "SalesOrder")
+                        .WithMany()
+                        .HasForeignKey("SalesOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SalesOrder");
+                });
+
+            modelBuilder.Entity("FoodSupply.Models.Delivery", b =>
+                {
+                    b.HasOne("FoodSupply.Models.SalesOrder", "SalesOrder")
+                        .WithMany()
+                        .HasForeignKey("SalesOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SalesOrder");
+                });
+
             modelBuilder.Entity("FoodSupply.Models.Inventory", b =>
                 {
                     b.HasOne("FoodSupply.Models.Product", "Product")
@@ -289,6 +519,17 @@ namespace FoodSupply.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("FoodSupply.Models.Product", b =>
+                {
+                    b.HasOne("FoodSupply.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("FoodSupply.Models.Purchase", b =>
@@ -321,9 +562,44 @@ namespace FoodSupply.Migrations
                     b.Navigation("Purchase");
                 });
 
+            modelBuilder.Entity("FoodSupply.Models.SalesOrder", b =>
+                {
+                    b.HasOne("FoodSupply.Models.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("FoodSupply.Models.SalesOrderItem", b =>
+                {
+                    b.HasOne("FoodSupply.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodSupply.Models.SalesOrder", "SalesOrder")
+                        .WithMany("SalesOrderItems")
+                        .HasForeignKey("SalesOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("SalesOrder");
+                });
+
             modelBuilder.Entity("FoodSupply.Models.Purchase", b =>
                 {
                     b.Navigation("PurchaseItems");
+                });
+
+            modelBuilder.Entity("FoodSupply.Models.SalesOrder", b =>
+                {
+                    b.Navigation("SalesOrderItems");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,0 +1,116 @@
+@model FoodSupply.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="container d-flex justify-content-center align-items-center"
+     style="min-height: 80vh;">
+
+    <div class="card shadow" style="width: 420px;">
+
+        <div class="card-header bg-primary text-white text-center">
+            <h3 class="mb-0">FoodSupply Login</h3>
+        </div>
+
+        <div class="card-body p-4">
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["Success"]
+                </div>
+            }
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3"></div>
+
+            <form asp-action="Login" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label">
+                        Username
+                    </label>
+
+                    <input asp-for="Username"
+                           class="form-control"
+                           placeholder="Enter username" />
+
+                    <span asp-validation-for="Username"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">
+                        Password
+                    </label>
+
+                    <div class="input-group">
+                        <input asp-for="Password"
+                               type="password"
+                               class="form-control"
+                               id="passwordInput"
+                               placeholder="Enter password" />
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                onclick="togglePassword()">
+                            <i class="bi bi-eye" id="passwordIcon"></i>
+                        </button>
+                    </div>
+
+                    <span asp-validation-for="Password"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input asp-for="RememberMe"
+                           class="form-check-input" />
+
+                    <label asp-for="RememberMe"
+                           class="form-check-label">
+                        Remember me
+                    </label>
+                </div>
+
+                <button type="submit"
+                        class="btn btn-primary w-100">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    Login
+                </button>
+
+            </form>
+
+            <div class="text-center mt-3">
+                <a asp-controller="Account"
+                   asp-action="ForgotPassword">
+                    Forgot Password?
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function togglePassword() {
+            const password = document.getElementById("passwordInput");
+            const icon = document.getElementById("passwordIcon");
+
+            if (password.type === "password") {
+                password.type = "text";
+                icon.classList.remove("bi-eye");
+                icon.classList.add("bi-eye-slash");
+            } else {
+                password.type = "password";
+                icon.classList.remove("bi-eye-slash");
+                icon.classList.add("bi-eye");
+            }
+        }
+    </script>
+}

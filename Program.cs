@@ -1,39 +1,102 @@
 using FoodSupply.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add MVC services
+// ==========================================
+// MVC
+// ==========================================
+
 builder.Services.AddControllersWithViews();
 
-// Connect to MySQL/MariaDB through XAMPP
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// ==========================================
+// DATABASE
+// ==========================================
+
+var connectionString = builder.Configuration
+.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString)
-    ));
+options.UseMySql(
+connectionString,
+ServerVersion.AutoDetect(connectionString)
+));
+
+// ==========================================
+// COOKIE AUTHENTICATION
+// ==========================================
+
+builder.Services.AddAuthentication(
+CookieAuthenticationDefaults.AuthenticationScheme
+)
+.AddCookie(options =>
+{
+options.LoginPath = "/Account/Login";
+
+options.AccessDeniedPath = "/Account/AccessDenied";
+
+options.ExpireTimeSpan = TimeSpan.FromHours(8);
+
+options.SlidingExpiration = true;
+
+
+});
+
+// ==========================================
+// AUTHORIZATION
+// ==========================================
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Configure HTTP request pipeline
+// ==========================================
+// ERROR HANDLING
+// ==========================================
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+app.UseExceptionHandler("/Home/Error");
+
+
+app.UseHsts();
+
 }
 
+// ==========================================
+// HTTPS
+// ==========================================
+
 app.UseHttpsRedirection();
+
+// ==========================================
+// STATIC FILES
+// ==========================================
+
+app.UseStaticFiles();
+
+// ==========================================
+// ROUTING
+// ==========================================
+
 app.UseRouting();
+
+// ==========================================
+// AUTHENTICATION
+// ==========================================
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.MapStaticAssets();
+// ==========================================
+// MVC ROUTING
+// ==========================================
 
 app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+name: "default",
+pattern: "{controller=Account}/{action=Login}/{id?}"
+);
 
 app.Run();

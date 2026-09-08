@@ -1,0 +1,220 @@
+@model FoodSupply.Models.User
+
+@{
+    ViewData["Title"] = "Create User";
+}
+
+<div class="container mt-4">
+
+    <h1 class="fw-bold mb-4">
+        <i class="bi bi-person-plus-fill text-primary me-2"></i>
+        Create User
+    </h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form asp-controller="Users"
+                  asp-action="Create"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="All"
+                     class="text-danger mb-3"></div>
+
+                <div class="row">
+
+                    <!-- Full Name -->
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName"
+                               class="form-label">
+                            Full Name
+                        </label>
+
+                        <input asp-for="FullName"
+                               class="form-control"
+                               placeholder="Enter full name" />
+
+                        <span asp-validation-for="FullName"
+                              class="text-danger"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email"
+                               class="form-label">
+                            Email
+                        </label>
+
+                        <input asp-for="Email"
+                               type="email"
+                               class="form-control"
+                               placeholder="Enter email" />
+
+                        <span asp-validation-for="Email"
+                              class="text-danger"></span>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Username"
+                               class="form-label">
+                            Username
+                        </label>
+
+                        <input asp-for="Username"
+                               class="form-control"
+                               placeholder="Enter username" />
+
+                        <span asp-validation-for="Username"
+                              class="text-danger"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Password
+                        </label>
+
+                        <div class="input-group">
+
+                            <input type="password"
+                                   name="password"
+                                   id="password"
+                                   class="form-control"
+                                   placeholder="Enter password"
+                                   required />
+
+                            <button type="button"
+                                    class="btn btn-outline-secondary"
+                                    id="togglePassword"
+                                    title="Show password">
+
+                                <i class="bi bi-eye"
+                                   id="passwordIcon"></i>
+
+                            </button>
+
+                        </div>
+
+                        @Html.ValidationMessage(
+                            "password",
+                            new { @class = "text-danger" })
+
+                    </div>
+
+                    <!-- Role -->
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Role"
+                               class="form-label">
+                            Role
+                        </label>
+
+                        <select asp-for="Role"
+                                class="form-select">
+
+                            <option value="Main Admin">
+                                Main Admin
+                            </option>
+
+                            <option value="Warehouse Staff">
+                                Warehouse Staff
+                            </option>
+
+                            <option value="Purchasing/Supplier Staff">
+                                Purchasing/Supplier Staff
+                            </option>
+
+                            <option value="Sales/Customer Staff">
+                                Sales/Customer Staff
+                            </option>
+
+                            <option value="Delivery Staff">
+                                Delivery Staff
+                            </option>
+
+                            <option value="Billing Staff">
+                                Billing Staff
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="Role"
+                              class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <!-- Buttons -->
+                <div class="mt-4">
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Cancel
+
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        <i class="bi bi-person-plus me-1"></i>
+                        Create User
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const passwordInput =
+                document.getElementById("password");
+
+            const toggleButton =
+                document.getElementById("togglePassword");
+
+            const passwordIcon =
+                document.getElementById("passwordIcon");
+
+            toggleButton.addEventListener("click", function () {
+
+                if (passwordInput.type === "password") {
+
+                    passwordInput.type = "text";
+
+                    passwordIcon.classList.remove("bi-eye");
+                    passwordIcon.classList.add("bi-eye-slash");
+
+                    toggleButton.title = "Hide password";
+
+                } else {
+
+                    passwordInput.type = "password";
+
+                    passwordIcon.classList.remove("bi-eye-slash");
+                    passwordIcon.classList.add("bi-eye");
+
+                    toggleButton.title = "Show password";
+                }
+
+            });
+
+        });
+    </script>
+}

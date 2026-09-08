@@ -1,0 +1,189 @@
+@model FoodSupply.Models.User
+
+@{
+ViewData["Title"] = "Edit User";
+}
+
+<div class="container mt-4">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold">
+            <i class="bi bi-person-gear text-primary me-2"></i>
+            Edit User
+        </h1>
+
+        <p class="text-muted mb-0">
+            Update user information and access permissions.
+        </p>
+    </div>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to Users
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <form asp-action="Edit" method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3"></div>
+
+            <div class="row">
+
+                <!-- Full Name -->
+                <div class="col-md-6 mb-3">
+
+                    <label asp-for="FullName"
+                           class="form-label fw-semibold">
+                        Full Name
+                    </label>
+
+                    <input asp-for="FullName"
+                           class="form-control"
+                           placeholder="Enter full name" />
+
+                    <span asp-validation-for="FullName"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- Email -->
+                <div class="col-md-6 mb-3">
+
+                    <label asp-for="Email"
+                           class="form-label fw-semibold">
+                        Email
+                    </label>
+
+                    <input asp-for="Email"
+                           type="email"
+                           class="form-control"
+                           placeholder="Enter email address" />
+
+                    <span asp-validation-for="Email"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- Username -->
+                <div class="col-md-6 mb-3">
+
+                    <label asp-for="Username"
+                           class="form-label fw-semibold">
+                        Username
+                    </label>
+
+                    <input asp-for="Username"
+                           class="form-control"
+                           placeholder="Enter username" />
+
+                    <span asp-validation-for="Username"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- Role -->
+                <div class="col-md-6 mb-3">
+
+                    <label asp-for="Role"
+                           class="form-label fw-semibold">
+                        Role
+                    </label>
+
+                    <select asp-for="Role"
+                            class="form-select">
+
+                        <option value="Main Admin">
+                            Main Admin
+                        </option>
+
+                        <option value="Warehouse Staff">
+                            Warehouse Staff
+                        </option>
+
+                        <option value="Purchasing/Supplier Staff">
+                            Purchasing/Supplier Staff
+                        </option>
+
+                        <option value="Sales/Customer Staff">
+                            Sales/Customer Staff
+                        </option>
+
+                        <option value="Delivery Staff">
+                            Delivery Staff
+                        </option>
+
+                        <option value="Billing Staff">
+                            Billing Staff
+                        </option>
+
+                    </select>
+
+                    <span asp-validation-for="Role"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- Status -->
+                <div class="col-md-6 mb-3">
+
+                    <label asp-for="IsActive"
+                           class="form-label fw-semibold">
+                        Account Status
+                    </label>
+
+                    <select asp-for="IsActive"
+                            class="form-select">
+
+                        <option value="true">
+                            Active
+                        </option>
+
+                        <option value="false">
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-flex justify-content-end gap-2">
+
+                <a asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+</div>
+
+@section Scripts {
+@{
+await Html.RenderPartialAsync("_ValidationScriptsPartial");
+}
+}
