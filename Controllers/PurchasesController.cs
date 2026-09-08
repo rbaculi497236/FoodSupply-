@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FoodSupply.Data;
@@ -51,11 +50,16 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Purchases/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewBag.Suppliers = _context.Suppliers
+            ViewBag.Suppliers = await _context.Suppliers
                 .Where(s => s.Status == "Active")
-                .ToList();
+                .ToListAsync();
+
+            ViewBag.Products = await _context.Products
+                .Where(p => p.Status == "Active")
+                .OrderBy(p => p.ProductName)
+                .ToListAsync();
 
             return View();
         }
@@ -67,9 +71,19 @@ namespace FoodSupply.Controllers
         {
             if (ModelState.IsValid)
             {
-                purchase.TotalAmount = 0;
+                // New purchases always start as Pending.
+                // Inventory will NOT increase yet.
                 purchase.Status = "Pending";
                 purchase.IsArchived = false;
+
+                foreach (var item in purchase.PurchaseItems)
+                {
+                    item.Id = 0;
+                    item.Subtotal = item.Quantity * item.UnitPrice;
+                }
+
+                purchase.TotalAmount = purchase.PurchaseItems
+                    .Sum(item => item.Subtotal);
 
                 _context.Purchases.Add(purchase);
 
@@ -80,9 +94,14 @@ namespace FoodSupply.Controllers
                     new { id = purchase.Id });
             }
 
-            ViewBag.Suppliers = _context.Suppliers
+            ViewBag.Suppliers = await _context.Suppliers
                 .Where(s => s.Status == "Active")
-                .ToList();
+                .ToListAsync();
+
+            ViewBag.Products = await _context.Products
+                .Where(p => p.Status == "Active")
+                .OrderBy(p => p.ProductName)
+                .ToListAsync();
 
             return View(purchase);
         }
@@ -103,9 +122,20 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
-            ViewBag.Suppliers = _context.Suppliers
+            // Do not allow editing a received purchase.
+            if (purchase.Status == "Received")
+            {
+                TempData["Error"] =
+                    "A received purchase cannot be edited.";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id = purchase.Id });
+            }
+
+            ViewBag.Suppliers = await _context.Suppliers
                 .Where(s => s.Status == "Active")
-                .ToList();
+                .ToListAsync();
 
             return View(purchase);
         }
@@ -120,10 +150,34 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
+            // Prevent editing a purchase that has already been received.
+            var existingPurchase = await _context.Purchases
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (existingPurchase == null)
+            {
+                return NotFound();
+            }
+
+            if (existingPurchase.Status == "Received")
+            {
+                TempData["Error"] =
+                    "A received purchase cannot be edited.";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id });
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Keep the existing status.
+                    purchase.Status = existingPurchase.Status;
+                    purchase.IsArchived = existingPurchase.IsArchived;
+
                     _context.Update(purchase);
 
                     await _context.SaveChangesAsync();
@@ -141,9 +195,9 @@ namespace FoodSupply.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Suppliers = _context.Suppliers
+            ViewBag.Suppliers = await _context.Suppliers
                 .Where(s => s.Status == "Active")
-                .ToList();
+                .ToListAsync();
 
             return View(purchase);
         }
@@ -163,6 +217,17 @@ namespace FoodSupply.Controllers
             if (purchase == null)
             {
                 return NotFound();
+            }
+
+            // Do not allow items to be added after receiving.
+            if (purchase.Status == "Received")
+            {
+                TempData["Error"] =
+                    "Items cannot be added to a received purchase.";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id });
             }
 
             ViewBag.Products = await _context.Products
@@ -186,38 +251,48 @@ namespace FoodSupply.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddItem(PurchaseItem item)
         {
-            // Make sure this is a new PurchaseItem
-            // and let MySQL generate the primary key
             item.Id = 0;
 
-            if (ModelState.IsValid)
+            // Make sure the purchase exists.
+            var purchase = await _context.Purchases
+                .FirstOrDefaultAsync(p => p.Id == item.PurchaseId);
+
+            if (purchase == null)
             {
-                // Calculate subtotal
-                item.Subtotal = item.Quantity * item.UnitPrice;
+                return NotFound();
+            }
 
-                _context.PurchaseItems.Add(item);
-
-                await _context.SaveChangesAsync();
-
-                // Recalculate purchase total
-                var purchase = await _context.Purchases
-                    .Include(p => p.PurchaseItems)
-                    .FirstOrDefaultAsync(p => p.Id == item.PurchaseId);
-
-                if (purchase != null)
-                {
-                    purchase.TotalAmount = purchase.PurchaseItems
-                        .Sum(i => i.Subtotal);
-
-                    await _context.SaveChangesAsync();
-                }
+            // Do not allow items after receiving.
+            if (purchase.Status == "Received")
+            {
+                TempData["Error"] =
+                    "Items cannot be added to a received purchase.";
 
                 return RedirectToAction(
                     nameof(Details),
                     new { id = item.PurchaseId });
             }
 
-            // Reload products if validation fails
+            if (ModelState.IsValid)
+            {
+                item.Subtotal = item.Quantity * item.UnitPrice;
+
+                _context.PurchaseItems.Add(item);
+
+                await _context.SaveChangesAsync();
+
+                // Recalculate purchase total.
+                purchase.TotalAmount = await _context.PurchaseItems
+                    .Where(i => i.PurchaseId == purchase.Id)
+                    .SumAsync(i => i.Subtotal);
+
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id = item.PurchaseId });
+            }
+
             ViewBag.Products = await _context.Products
                 .Where(p => p.Status == "Active")
                 .OrderBy(p => p.ProductName)
@@ -229,6 +304,113 @@ namespace FoodSupply.Controllers
 
             return View(item);
         }
+
+        // =========================================================
+        // RECEIVE PURCHASE
+        // =========================================================
+
+        // POST: Purchases/Receive/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Receive(int id)
+        {
+            // Load purchase and its items.
+            var purchase = await _context.Purchases
+                .Include(p => p.PurchaseItems)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (purchase == null)
+            {
+                return NotFound();
+            }
+
+            // Prevent receiving an already received purchase.
+            if (purchase.Status == "Received")
+            {
+                TempData["Error"] =
+                    "This purchase has already been received.";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id });
+            }
+
+            // A purchase without items cannot be received.
+            if (!purchase.PurchaseItems.Any())
+            {
+                TempData["Error"] =
+                    "This purchase cannot be received because it has no items.";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id });
+            }
+
+            // Process every purchased item.
+            foreach (var purchaseItem in purchase.PurchaseItems)
+            {
+                var inventory = await _context.Inventories
+                    .FirstOrDefaultAsync(i =>
+                        i.ProductId == purchaseItem.ProductId);
+
+                if (inventory == null)
+                {
+                    // Create inventory record if one doesn't exist.
+                    inventory = new Inventory
+                    {
+                        ProductId = purchaseItem.ProductId,
+                        StockQuantity = purchaseItem.Quantity,
+                        ReorderLevel = 0,
+                        LastUpdated = DateTime.Now
+                    };
+
+                    UpdateStockStatus(inventory);
+
+                    _context.Inventories.Add(inventory);
+                }
+                else
+                {
+                    // Increase existing stock.
+                    inventory.StockQuantity += purchaseItem.Quantity;
+                    inventory.LastUpdated = DateTime.Now;
+
+                    UpdateStockStatus(inventory);
+                }
+            }
+
+            // Mark purchase as received.
+            purchase.Status = "Received";
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Purchase received successfully. Inventory has been updated.";
+
+            return RedirectToAction(
+                nameof(Details),
+                new { id });
+        }
+
+        // Updates Inventory.StockStatus based on quantity.
+        private void UpdateStockStatus(Inventory inventory)
+        {
+            if (inventory.StockQuantity <= 0)
+            {
+                inventory.StockStatus = "Out of Stock";
+            }
+            else if (inventory.StockQuantity <= inventory.ReorderLevel)
+            {
+                inventory.StockStatus = "Low Stock";
+            }
+            else
+            {
+                inventory.StockStatus = "In Stock";
+            }
+        }
+
+        // =========================================================
+        // ARCHIVE
+        // =========================================================
 
         // POST: Purchases/Archive/5
         [HttpPost]
@@ -251,7 +433,6 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Purchases/Archived
-        // Shows archived purchases
         public async Task<IActionResult> Archived()
         {
             var purchases = await _context.Purchases
