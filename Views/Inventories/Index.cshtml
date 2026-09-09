@@ -22,6 +22,8 @@
     </a>
 </div>
 
+@await Html.PartialAsync("_TableTools")
+
 <div class="card shadow-sm border-0">
     <div class="card-body">
 
@@ -54,6 +56,7 @@
                             <th>Reorder Level</th>
                             <th>Status</th>
                             <th>Last Updated</th>
+                            <th>Alerts</th>
                             <th class="text-center">Actions</th>
                         </tr>
                     </thead>
@@ -110,6 +113,15 @@
 
                                 <td>
                                     @item.LastUpdated.ToString("MMM dd, yyyy hh:mm tt")
+                                </td>
+
+                                <td>
+                                    @if (item.ExpirationDate.HasValue && item.ExpirationDate.Value.Date <= DateTime.Today.AddDays(30))
+                                    { <span class="badge bg-warning text-dark">Expiring</span> }
+                                    @if (item.SpoiledQuantity > 0)
+                                    { <span class="badge bg-danger">Spoiled</span> }
+                                    @if (item.DamagedQuantity > 0)
+                                    { <span class="badge bg-danger">Damaged</span> }
                                 </td>
 
                                 <td class="text-center">

@@ -6,7 +6,7 @@ using FoodSupply.Models;
 
 namespace FoodSupply.Controllers
 {
-    [Authorize(Roles = "Main Admin,Warehouse Staff")]
+    [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
     public class InventoriesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -17,13 +17,36 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Inventories
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
-            var inventories = await _context.Inventories
-                .Include(i => i.Product)
-                .ToListAsync();
+            const int pageSize = 10;
+            var query = _context.Inventories.Include(i => i.Product).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(i => i.Product != null &&
+                    (i.Product.ProductName.Contains(search) || i.Product.ProductCode.Contains(search)));
+
+            ViewBag.Search = search;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = await query.CountAsync();
+            var inventories = await query.OrderBy(i => i.Product!.ProductName)
+                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return View(inventories);
+        }
+
+        public async Task<IActionResult> Alerts()
+        {
+            var today = DateTime.Today;
+            var alerts = await _context.Inventories
+                .Include(i => i.Product)
+                .Where(i => i.StockQuantity <= i.ReorderLevel ||
+                    (i.ExpirationDate.HasValue && i.ExpirationDate.Value.Date <= today.AddDays(30)) ||
+                    i.SpoiledQuantity > 0 || i.DamagedQuantity > 0)
+                .OrderBy(i => i.ExpirationDate)
+                .ToListAsync();
+
+            return View(alerts);
         }
 
         // GET: Inventories/Details/5
@@ -64,6 +87,7 @@ namespace FoodSupply.Controllers
             if (ModelState.IsValid)
             {
                 inventory.LastUpdated = DateTime.Now;
+                inventory.ExpirationDate = inventory.ExpirationDate?.Date;
 
                 if (inventory.StockQuantity <= 0)
                 {
@@ -127,6 +151,7 @@ namespace FoodSupply.Controllers
                 try
                 {
                     inventory.LastUpdated = DateTime.Now;
+                    inventory.ExpirationDate = inventory.ExpirationDate?.Date;
 
                     if (inventory.StockQuantity <= 0)
                     {

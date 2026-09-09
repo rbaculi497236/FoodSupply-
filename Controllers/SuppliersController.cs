@@ -6,7 +6,7 @@ using FoodSupply.Models;
 
 namespace FoodSupply.Controllers
 {
-[Authorize(Roles = "Main Admin,Purchasing/Supplier Staff")]
+[Authorize(Roles = "Admin,Manager,Main Admin,Purchasing/Supplier Staff")]
 public class SuppliersController : Controller
 {
 private readonly ApplicationDbContext _context;
@@ -17,9 +17,16 @@ private readonly ApplicationDbContext _context;
     }
 
     // GET: Suppliers
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, int page = 1)
     {
-        var suppliers = await _context.Suppliers.ToListAsync();
+        const int pageSize = 10;
+        var query = _context.Suppliers.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(s => s.SupplierCode.Contains(search) || s.SupplierName.Contains(search) ||
+                (s.PhoneNumber != null && s.PhoneNumber.Contains(search)));
+        ViewBag.Search = search; ViewBag.Page = page; ViewBag.PageSize = pageSize;
+        ViewBag.TotalItems = await query.CountAsync();
+        var suppliers = await query.OrderBy(s => s.SupplierName).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return View(suppliers);
     }
 
@@ -53,6 +60,12 @@ private readonly ApplicationDbContext _context;
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Supplier supplier)
     {
+        var nextId = (await _context.Suppliers
+            .Select(s => (int?)s.Id)
+            .MaxAsync() ?? 0) + 1;
+        supplier.SupplierCode = $"SUP-{nextId:D6}";
+        ModelState.Remove(nameof(Supplier.SupplierCode));
+
         if (ModelState.IsValid)
         {
             _context.Suppliers.Add(supplier);

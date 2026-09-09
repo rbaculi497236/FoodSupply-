@@ -1,0 +1,30 @@
+@{
+    var action = (string?)ViewContext.RouteData.Values["action"] ?? "Index";
+    var controller = (string?)ViewContext.RouteData.Values["controller"];
+    var search = (string?)ViewBag.Search;
+    var page = (int?)ViewBag.Page ?? 1;
+    var pageSize = (int?)ViewBag.PageSize ?? 10;
+    var totalItems = (int?)ViewBag.TotalItems ?? 0;
+    var pageCount = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+}
+<form method="get" asp-controller="@controller" asp-action="@action" class="row g-2 mb-3">
+    <div class="col-sm-8 col-md-5">
+        <input name="search" value="@search" class="form-control" placeholder="Search..." />
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> Search</button></div>
+    @if (!string.IsNullOrWhiteSpace(search))
+    {
+        <div class="col-auto"><a class="btn btn-outline-secondary" asp-controller="@controller" asp-action="@action">Clear</a></div>
+    }
+</form>
+@if (pageCount > 1)
+{
+    <nav aria-label="Table pages">
+        <ul class="pagination pagination-sm mb-0">
+            @for (var number = 1; number <= pageCount; number++)
+            {
+                <li class="page-item @(number == page ? "active" : "")"><a class="page-link" asp-controller="@controller" asp-action="@action" asp-route-search="@search" asp-route-page="@number">@number</a></li>
+            }
+        </ul>
+    </nav>
+}

@@ -39,6 +39,8 @@
         </div>
     </div>
 
+    @await Html.PartialAsync("_TableTools")
+
     <!-- Success Message -->
     @if (TempData["SuccessMessage"] != null)
     {

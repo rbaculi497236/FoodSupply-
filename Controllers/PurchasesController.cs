@@ -6,7 +6,7 @@ using FoodSupply.Models;
 
 namespace FoodSupply.Controllers
 {
-    [Authorize(Roles = "Main Admin,Purchasing/Supplier Staff")]
+    [Authorize(Roles = "Admin,Manager,Main Admin,Purchasing/Supplier Staff")]
     public class PurchasesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -18,13 +18,20 @@ namespace FoodSupply.Controllers
 
         // GET: Purchases
         // Shows only active purchases
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
-            var purchases = await _context.Purchases
+            const int pageSize = 10;
+            var query = _context.Purchases
                 .Include(p => p.Supplier)
                 .Where(p => !p.IsArchived)
-                .OrderByDescending(p => p.PurchaseDate)
-                .ToListAsync();
+                .AsQueryable();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p => p.PurchaseOrderNumber.Contains(search) ||
+                    (p.Supplier != null && p.Supplier.SupplierName.Contains(search)) || p.Status.Contains(search));
+            ViewBag.Search = search; ViewBag.Page = page; ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = await query.CountAsync();
+            var purchases = await query.OrderByDescending(p => p.PurchaseDate)
+                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return View(purchases);
         }

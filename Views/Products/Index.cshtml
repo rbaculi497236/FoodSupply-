@@ -2,18 +2,25 @@
 
 @{
 ViewData["Title"] = "Products";
+var canEditProducts = User.IsInRole("Admin") || User.IsInRole("Manager") || User.IsInRole("Main Admin") || User.IsInRole("Warehouse Staff");
 }
 
 <h1>Products</h1>
 
 <p>
-    <a asp-action="Create" class="btn btn-primary">Add Product</a>
+    @if (canEditProducts)
+    {
+        <a asp-action="Create" class="btn btn-primary">Add Product</a>
+    }
 
-<a asp-action="Archived" class="btn btn-secondary">
-    Archived Products
-</a>
+    @if (canEditProducts)
+    {
+        <a asp-action="Archived" class="btn btn-secondary">Archived Products</a>
+    }
 
 </p>
+
+@await Html.PartialAsync("_TableTools")
 
 <table class="table table-bordered table-striped">
     <thead>
@@ -22,6 +29,7 @@ ViewData["Title"] = "Products";
             <th>Product Name</th>
             <th>Category</th>
             <th>Unit</th>
+            <th>Pack</th>
             <th>Price</th>
             <th>Stock</th>
             <th>Reorder Level</th>
@@ -38,6 +46,7 @@ ViewData["Title"] = "Products";
             <td>@item.ProductName</td>
             <td>@item.Category</td>
             <td>@item.Unit</td>
+            <td>@item.Boxes box(es) / @item.PiecesPerBox pcs</td>
             <td>@item.Price.ToString("N2")</td>
             <td>@item.StockQuantity</td>
             <td>@item.ReorderLevel</td>
@@ -46,11 +55,11 @@ ViewData["Title"] = "Products";
                 <a asp-action="Details" asp-route-id="@item.Id"
                    class="btn btn-info btn-sm">Details</a>
 
-                <a asp-action="Edit" asp-route-id="@item.Id"
-                   class="btn btn-warning btn-sm">Edit</a>
-
-                <a asp-action="Archive" asp-route-id="@item.Id"
-                   class="btn btn-danger btn-sm">Archive</a>
+                @if (canEditProducts)
+                {
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
+                    <a asp-action="Archive" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Archive</a>
+                }
             </td>
         </tr>
     }

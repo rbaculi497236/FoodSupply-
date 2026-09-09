@@ -69,6 +69,18 @@ ViewData["Title"] = "Edit Product";
                     <span asp-validation-for="Unit" class="text-danger"></span>
                 </div>
 
+                <div class="col-md-3">
+                    <label asp-for="Boxes" class="form-label fw-semibold"></label>
+                    <input asp-for="Boxes" class="form-control" type="number" min="0" />
+                    <span asp-validation-for="Boxes" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="PiecesPerBox" class="form-label fw-semibold"></label>
+                    <input asp-for="PiecesPerBox" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="PiecesPerBox" class="text-danger"></span>
+                </div>
+
                 <div class="col-md-4">
                     <label asp-for="Price" class="form-label fw-semibold"></label>
                     <input asp-for="Price"

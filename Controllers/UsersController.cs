@@ -6,7 +6,7 @@ using FoodSupply.Models;
 
 namespace FoodSupply.Controllers
 {
-    [Authorize(Roles = "Main Admin")]
+    [Authorize(Roles = "Admin,Main Admin")]
     public class UsersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -17,12 +17,17 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Users
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
-            var users = await _context.Users
+            const int pageSize = 10;
+            var query = _context.Users
                 .Where(u => !u.IsArchived)
-                .OrderBy(u => u.FullName)
-                .ToListAsync();
+                .AsQueryable();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(u => u.FullName.Contains(search) || u.Username.Contains(search) || u.Email.Contains(search));
+            ViewBag.Search = search; ViewBag.Page = page; ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = await query.CountAsync();
+            var users = await query.OrderBy(u => u.FullName).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return View(users);
         }

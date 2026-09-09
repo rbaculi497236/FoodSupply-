@@ -25,5 +25,16 @@ namespace FoodSupply.Models
 
         [Display(Name = "Last Updated")]
         public DateTime LastUpdated { get; set; } = DateTime.Now;
+
+        [Display(Name = "Expiration Date")]
+        public DateTime? ExpirationDate { get; set; }
+
+        [Display(Name = "Spoiled Quantity")]
+        [Range(0, int.MaxValue)]
+        public int SpoiledQuantity { get; set; }
+
+        [Display(Name = "Damaged Quantity")]
+        [Range(0, int.MaxValue)]
+        public int DamagedQuantity { get; set; }
     }
 }

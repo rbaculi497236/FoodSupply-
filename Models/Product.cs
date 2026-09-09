@@ -27,6 +27,14 @@ public int Id { get; set; }
     [Required]
     public string Unit { get; set; } = string.Empty;
 
+    [Display(Name = "Boxes")]
+    [Range(0, int.MaxValue)]
+    public int Boxes { get; set; }
+
+    [Display(Name = "Pieces per Box")]
+    [Range(1, int.MaxValue)]
+    public int PiecesPerBox { get; set; } = 1;
+
     [Range(0, double.MaxValue)]
     public decimal Price { get; set; }
 

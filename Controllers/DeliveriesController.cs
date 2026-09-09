@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FoodSupply.Controllers
 {
-    [Authorize(Roles = "Main Admin,Delivery Staff")]
+    [Authorize(Roles = "Admin,Manager,Main Admin,Delivery Staff")]
     public class DeliveriesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -17,18 +17,26 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Deliveries
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
-            var deliveries = await _context.Deliveries
+            const int pageSize = 10;
+            var query = _context.Deliveries
                 .Where(d => !d.IsArchived)
                 .Include(d => d.SalesOrder)
-                .OrderByDescending(d => d.DeliveryDate)
-                .ToListAsync();
+                .AsQueryable();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(d => d.Status.Contains(search) ||
+                    (d.Driver != null && d.Driver.Contains(search)) || d.SalesOrderId.ToString().Contains(search));
+            ViewBag.Search = search; ViewBag.Page = page; ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = await query.CountAsync();
+            var deliveries = await query.OrderByDescending(d => d.DeliveryDate)
+                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return View(deliveries);
         }
 
         // GET: Deliveries/Create
+        [Authorize(Roles = "Admin,Manager,Main Admin")]
         public async Task<IActionResult> Create()
         {
             await LoadSalesOrders();
@@ -39,6 +47,7 @@ namespace FoodSupply.Controllers
         // POST: Deliveries/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Manager,Main Admin")]
         public async Task<IActionResult> Create(Delivery delivery)
         {
             ModelState.Remove("SalesOrder");
@@ -193,6 +202,26 @@ namespace FoodSupply.Controllers
             if (existingDelivery == null)
                 return NotFound();
 
+            if (User.IsInRole("Delivery Staff") &&
+                !User.IsInRole("Admin") &&
+                !User.IsInRole("Manager") &&
+                !User.IsInRole("Main Admin"))
+            {
+                var status = delivery.Status;
+                if (status != "Pending" && status != "Out for Delivery" &&
+                    status != "Delivered" && status != "Cancelled")
+                    return BadRequest("Invalid delivery status.");
+
+                existingDelivery.Status = status;
+                var currentSalesOrder = await _context.SalesOrders
+                    .FirstOrDefaultAsync(s => s.Id == existingDelivery.SalesOrderId && !s.IsArchived);
+                if (currentSalesOrder != null)
+                    UpdateSalesOrderStatus(currentSalesOrder, status);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Delivery #{existingDelivery.Id} status updated successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+
             // Get Sales Order
             var salesOrder = await _context.SalesOrders
                 .FirstOrDefaultAsync(s =>
@@ -308,6 +337,7 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Deliveries/Archive/5
+        [Authorize(Roles = "Admin,Manager,Main Admin")]
         public async Task<IActionResult> Archive(int? id)
         {
             if (id == null)
@@ -328,6 +358,7 @@ namespace FoodSupply.Controllers
         // POST: Deliveries/ArchiveConfirmed/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Manager,Main Admin")]
         public async Task<IActionResult> ArchiveConfirmed(int id)
         {
             var delivery = await _context.Deliveries
@@ -386,6 +417,7 @@ namespace FoodSupply.Controllers
         // POST: Deliveries/Restore/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Manager,Main Admin")]
         public async Task<IActionResult> Restore(int id)
         {
             var delivery = await _context.Deliveries

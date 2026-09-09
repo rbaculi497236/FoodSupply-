@@ -24,6 +24,12 @@
                  class="text-danger mb-3">
             </div>
 
+            <div class="row">
+                <div class="col-md-4 mb-3"><label asp-for="ExpirationDate" class="form-label"></label><input asp-for="ExpirationDate" type="date" class="form-control" /></div>
+                <div class="col-md-4 mb-3"><label asp-for="SpoiledQuantity" class="form-label"></label><input asp-for="SpoiledQuantity" type="number" min="0" class="form-control" /></div>
+                <div class="col-md-4 mb-3"><label asp-for="DamagedQuantity" class="form-label"></label><input asp-for="DamagedQuantity" type="number" min="0" class="form-control" /></div>
+            </div>
+
             <!-- Product -->
             <div class="mb-3">
                 <label asp-for="ProductId" class="form-label fw-semibold">

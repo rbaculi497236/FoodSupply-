@@ -22,7 +22,7 @@ namespace FoodSupply.Models
         public string PasswordHash { get; set; } = string.Empty;
 
         [Required]
-        public string Role { get; set; } = "Warehouse Staff";
+        public string Role { get; set; } = "Manager";
 
         public bool IsActive { get; set; } = true;
 

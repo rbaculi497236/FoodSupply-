@@ -7,7 +7,7 @@ using FoodSupply.Models;
 
 namespace FoodSupply.Controllers
 {
-    [Authorize(Roles = "Main Admin,Warehouse Staff")]
+    [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff,Sales Staff / Billing Staff,Sales/Customer Staff")]
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -18,12 +18,25 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Products
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
-            var products = await _context.Products
+            const int pageSize = 10;
+            var query = _context.Products
                 .Include(p => p.Category)
-                .Where(p => !p.IsArchived)
-                .ToListAsync();
+                .Where(p => !p.IsArchived);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p => p.ProductCode.Contains(search) ||
+                    p.ProductName.Contains(search) || p.Unit.Contains(search));
+            }
+
+            ViewBag.Search = search;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = await query.CountAsync();
+            var products = await query.OrderBy(p => p.ProductName)
+                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return View(products);
         }
@@ -60,6 +73,7 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Products/Create
+        [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
         public async Task<IActionResult> Create()
         {
             await LoadCategories();
@@ -70,8 +84,15 @@ namespace FoodSupply.Controllers
         // POST: Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
         public async Task<IActionResult> Create(Product product)
         {
+            var nextId = (await _context.Products
+                .Select(p => (int?)p.Id)
+                .MaxAsync() ?? 0) + 1;
+            product.ProductCode = $"PROD-{nextId:D6}";
+            ModelState.Remove(nameof(Product.ProductCode));
+
             if (ModelState.IsValid)
             {
                 product.IsArchived = false;
@@ -89,6 +110,7 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Products/Edit/5
+        [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -112,6 +134,7 @@ namespace FoodSupply.Controllers
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
         public async Task<IActionResult> Edit(int id, Product product)
         {
             if (id != product.Id)
@@ -139,6 +162,8 @@ namespace FoodSupply.Controllers
                     existingProduct.CategoryId = product.CategoryId;
 
                     existingProduct.Unit = product.Unit;
+                    existingProduct.Boxes = product.Boxes;
+                    existingProduct.PiecesPerBox = product.PiecesPerBox;
                     existingProduct.Price = product.Price;
                     existingProduct.StockQuantity = product.StockQuantity;
                     existingProduct.ReorderLevel = product.ReorderLevel;
@@ -168,6 +193,7 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Products/Archive/5
+        [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
         public async Task<IActionResult> Archive(int? id)
         {
             if (id == null)
@@ -190,6 +216,7 @@ namespace FoodSupply.Controllers
         // POST: Products/Archive/5
         [HttpPost, ActionName("Archive")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
         public async Task<IActionResult> ArchiveConfirmed(int id)
         {
             var product = await _context.Products
@@ -211,6 +238,7 @@ namespace FoodSupply.Controllers
         // POST: Products/Restore/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
         public async Task<IActionResult> Restore(int id)
         {
             var product = await _context.Products

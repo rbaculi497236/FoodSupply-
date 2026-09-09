@@ -1,11 +1,16 @@
 ﻿@{
-    var isAdmin = User.IsInRole("Main Admin");
-    var canManageWarehouse = isAdmin || User.IsInRole("Warehouse Staff");
-    var canManagePurchasing = isAdmin || User.IsInRole("Purchasing/Supplier Staff");
-    var canManageSales = isAdmin || User.IsInRole("Sales/Customer Staff");
-    var canManageDelivery = isAdmin || User.IsInRole("Delivery Staff");
-    var canViewBilling = isAdmin || User.IsInRole("Billing Staff") || User.IsInRole("Delivery Staff");
+    var isAdmin = User.IsInRole("Admin") || User.IsInRole("Main Admin");
+    var isManager = isAdmin || User.IsInRole("Manager");
+    var isDeliveryOnly = User.IsInRole("Delivery Staff") && !isAdmin && !User.IsInRole("Manager");
+    var canManageWarehouse = !isDeliveryOnly && (isManager || User.IsInRole("Warehouse Staff"));
+    var canViewProducts = !isDeliveryOnly && (canManageWarehouse || User.IsInRole("Sales Staff / Billing Staff") || User.IsInRole("Sales/Customer Staff"));
+    var canManagePurchasing = !isDeliveryOnly && (isManager || User.IsInRole("Purchasing/Supplier Staff"));
+    var canManageSales = !isDeliveryOnly && (isManager || User.IsInRole("Sales Staff / Billing Staff") || User.IsInRole("Sales/Customer Staff"));
+    var canManageDelivery = isManager || User.IsInRole("Delivery Staff");
+    var canViewBilling = !isDeliveryOnly && (isManager || User.IsInRole("Sales Staff / Billing Staff") || User.IsInRole("Sales/Customer Staff") || User.IsInRole("Billing Staff"));
 }
+@inject FoodSupply.Data.ApplicationDbContext DbContext
+@{ var inventoryAlertCount = User.Identity?.IsAuthenticated == true ? await DbContext.Inventories.CountAsync(i => i.StockQuantity <= i.ReorderLevel || (i.ExpirationDate.HasValue && i.ExpirationDate.Value <= DateTime.Today.AddDays(30)) || i.SpoiledQuantity > 0 || i.DamagedQuantity > 0) : 0; }
 
 <!DOCTYPE html>
 
@@ -294,7 +299,7 @@
 
             <!-- PRODUCTS -->
 
-                @if (canManageWarehouse)
+                @if (canViewProducts)
                 {
                 <a class="sidebar-link"
                asp-controller="Products"
@@ -517,6 +522,13 @@
         ========================= -->
 
         <header class="topbar">
+            @if (canManageWarehouse)
+            {
+                <a asp-controller="Inventories" asp-action="Alerts" class="btn btn-link position-relative ms-auto" title="Inventory alerts">
+                    <i class="bi bi-bell fs-5"></i>
+                    @if (inventoryAlertCount > 0) { <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@inventoryAlertCount</span> }
+                </a>
+            }
 
             <!-- PAGE TITLE -->
 

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FoodSupply.Controllers
 {
-    [Authorize(Roles = "Main Admin,Sales/Customer Staff")]
+    [Authorize(Roles = "Admin,Manager,Main Admin,Sales Staff / Billing Staff,Sales/Customer Staff")]
     public class SalesOrdersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -18,15 +18,24 @@ namespace FoodSupply.Controllers
         }
 
         // GET: SalesOrders
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
-            var salesOrders = await _context.SalesOrders
+            const int pageSize = 10;
+            var query = _context.SalesOrders
                 .Where(s => !s.IsArchived)
                 .Include(s => s.Customer)
                 .Include(s => s.SalesOrderItems)
                     .ThenInclude(i => i.Product)
-                .OrderByDescending(s => s.OrderDate)
-                .ToListAsync();
+                .AsQueryable();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(s => s.Customer != null && s.Customer.CustomerName.Contains(search) ||
+                    s.Status.Contains(search) || s.Id.ToString().Contains(search));
+            ViewBag.Search = search;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = await query.CountAsync();
+            var salesOrders = await query.OrderByDescending(s => s.OrderDate)
+                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return View(salesOrders);
         }

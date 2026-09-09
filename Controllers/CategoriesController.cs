@@ -6,7 +6,7 @@ using FoodSupply.Models;
 
 namespace FoodSupply.Controllers
 {
-[Authorize(Roles = "Main Admin,Warehouse Staff")]
+[Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
 public class CategoriesController : Controller
 {
 private readonly ApplicationDbContext _context;
@@ -17,11 +17,15 @@ private readonly ApplicationDbContext _context;
     }
 
     // GET: Categories
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? search, int page = 1)
     {
-        var categories = await _context.Categories
-            .Where(c => !c.IsArchived)
-            .ToListAsync();
+        const int pageSize = 10;
+        var query = _context.Categories.Where(c => !c.IsArchived);
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(c => c.CategoryCode.Contains(search) || c.CategoryName.Contains(search));
+        ViewBag.Search = search; ViewBag.Page = page; ViewBag.PageSize = pageSize;
+        ViewBag.TotalItems = await query.CountAsync();
+        var categories = await query.OrderBy(c => c.CategoryName).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
         return View(categories);
     }
@@ -66,6 +70,12 @@ private readonly ApplicationDbContext _context;
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Category category)
     {
+        var nextId = (await _context.Categories
+            .Select(c => (int?)c.Id)
+            .MaxAsync() ?? 0) + 1;
+        category.CategoryCode = $"CAT-{nextId:D6}";
+        ModelState.Remove(nameof(Category.CategoryCode));
+
         if (ModelState.IsValid)
         {
             category.IsArchived = false;
