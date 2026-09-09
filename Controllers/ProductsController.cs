@@ -21,22 +21,30 @@ namespace FoodSupply.Controllers
         public async Task<IActionResult> Index(string? search, int page = 1)
         {
             const int pageSize = 10;
+
             var query = _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Supplier)
                 .Where(p => !p.IsArchived);
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(p => p.ProductCode.Contains(search) ||
-                    p.ProductName.Contains(search) || p.Unit.Contains(search));
+                query = query.Where(p =>
+                    p.ProductCode.Contains(search) ||
+                    p.ProductName.Contains(search) ||
+                    p.Unit.Contains(search));
             }
 
             ViewBag.Search = search;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
             ViewBag.TotalItems = await query.CountAsync();
-            var products = await query.OrderBy(p => p.ProductName)
-                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            var products = await query
+                .OrderBy(p => p.ProductName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return View(products);
         }
@@ -46,6 +54,7 @@ namespace FoodSupply.Controllers
         {
             var products = await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Supplier)
                 .Where(p => p.IsArchived)
                 .ToListAsync();
 
@@ -62,6 +71,7 @@ namespace FoodSupply.Controllers
 
             var product = await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Supplier)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
@@ -76,7 +86,7 @@ namespace FoodSupply.Controllers
         [Authorize(Roles = "Admin,Manager,Main Admin,Warehouse Staff")]
         public async Task<IActionResult> Create()
         {
-            await LoadCategories();
+            await LoadDropdowns();
 
             return View();
         }
@@ -90,7 +100,10 @@ namespace FoodSupply.Controllers
             var nextId = (await _context.Products
                 .Select(p => (int?)p.Id)
                 .MaxAsync() ?? 0) + 1;
+
             product.ProductCode = $"PROD-{nextId:D6}";
+
+            // ProductCode is generated automatically
             ModelState.Remove(nameof(Product.ProductCode));
 
             if (ModelState.IsValid)
@@ -104,7 +117,8 @@ namespace FoodSupply.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            await LoadCategories(product.CategoryId);
+            // Reload dropdowns if validation fails
+            await LoadDropdowns(product.CategoryId, product.SupplierId);
 
             return View(product);
         }
@@ -126,7 +140,7 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
-            await LoadCategories(product.CategoryId);
+            await LoadDropdowns(product.CategoryId, product.SupplierId);
 
             return View(product);
         }
@@ -161,6 +175,9 @@ namespace FoodSupply.Controllers
                     // Save selected category
                     existingProduct.CategoryId = product.CategoryId;
 
+                    // Save selected supplier
+                    existingProduct.SupplierId = product.SupplierId;
+
                     existingProduct.Unit = product.Unit;
                     existingProduct.Boxes = product.Boxes;
                     existingProduct.PiecesPerBox = product.PiecesPerBox;
@@ -187,7 +204,8 @@ namespace FoodSupply.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            await LoadCategories(product.CategoryId);
+            // Reload dropdowns if validation fails
+            await LoadDropdowns(product.CategoryId, product.SupplierId);
 
             return View(product);
         }
@@ -203,6 +221,7 @@ namespace FoodSupply.Controllers
 
             var product = await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Supplier)
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsArchived);
 
             if (product == null)
@@ -257,24 +276,42 @@ namespace FoodSupply.Controllers
             return RedirectToAction(nameof(Archived));
         }
 
-        // Load active categories for Create/Edit dropdown
-private async Task LoadCategories(int? selectedCategoryId = null)
-{
-    var categories = await _context.Categories
-        .Where(c => !c.IsArchived)
-        .OrderBy(c => c.CategoryName)
-        .ToListAsync();
+        // Load Categories and Suppliers for Create/Edit
+        private async Task LoadDropdowns(
+            int? selectedCategoryId = null,
+            int? selectedSupplierId = null)
+        {
+            // Categories
+            var categories = await _context.Categories
+                .Where(c => !c.IsArchived)
+                .OrderBy(c => c.CategoryName)
+                .ToListAsync();
 
-    ViewBag.CategoryId = new SelectList(
-        categories,
-        "Id",
-        "CategoryName",
-        selectedCategoryId
-    );
+            ViewBag.CategoryId = new SelectList(
+                categories,
+                "Id",
+                "CategoryName",
+                selectedCategoryId
+            );
 
-    // TEMPORARY: check how many categories ASP.NET finds
-    ViewBag.CategoryCount = categories.Count;
-}
+            ViewBag.CategoryCount = categories.Count;
+
+
+            // Suppliers
+            var suppliers = await _context.Suppliers
+                .Where(s => s.Status == "Active")
+                .OrderBy(s => s.SupplierName)
+                .ToListAsync();
+
+            ViewBag.SupplierId = new SelectList(
+                suppliers,
+                "Id",
+                "SupplierName",
+                selectedSupplierId
+            );
+
+            ViewBag.SupplierCount = suppliers.Count;
+        }
 
         private bool ProductExists(int id)
         {

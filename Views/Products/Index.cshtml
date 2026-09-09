@@ -44,7 +44,7 @@ var canEditProducts = User.IsInRole("Admin") || User.IsInRole("Manager") || User
         <tr>
             <td>@item.ProductCode</td>
             <td>@item.ProductName</td>
-            <td>@item.Category</td>
+            <td>@(item.Category?.CategoryName ?? "Uncategorized")</td>
             <td>@item.Unit</td>
             <td>@item.Boxes box(es) / @item.PiecesPerBox pcs</td>
             <td>@item.Price.ToString("N2")</td>
