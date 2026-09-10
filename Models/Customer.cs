@@ -29,6 +29,15 @@ public int Id { get; set; }
     public string CustomerType { get; set; } = "Regular";
 
     public string Status { get; set; } = "Active";
+
+    public bool IsArchived { get; set; } = false;
+
+    [Display(Name = "CRM Notes")]
+    public string? CrmNotes { get; set; }
+
+    [Display(Name = "Next Follow-up")]
+    [DataType(DataType.Date)]
+    public DateTime? NextFollowUpDate { get; set; }
 }
 
 }

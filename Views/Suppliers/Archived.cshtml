@@ -1,0 +1,7 @@
+@model IEnumerable<FoodSupply.Models.Supplier>
+@{ ViewData["Title"] = "Archived Suppliers"; }
+<div class="d-flex justify-content-between align-items-center mb-4"><h1>Archived Suppliers</h1><a asp-action="Index" class="btn btn-outline-secondary">Back to Suppliers</a></div>
+<table class="table table-hover"><thead><tr><th>Code</th><th>Name</th><th>Contact</th><th>Status</th><th></th></tr></thead><tbody>
+@foreach (var supplier in Model)
+{<tr><td>@supplier.SupplierCode</td><td>@supplier.SupplierName</td><td>@supplier.ContactPerson</td><td>@supplier.Status</td><td><form asp-action="Restore" method="post"><input type="hidden" name="id" value="@supplier.Id" /><button class="btn btn-sm btn-success" type="submit">Restore</button></form></td></tr>}
+</tbody></table>

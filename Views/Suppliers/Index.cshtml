@@ -17,6 +17,7 @@ ViewData["Title"] = "Suppliers";
         </p>
     </div>
 
+    <a asp-action="Archived" class="btn btn-outline-secondary me-2">Archived</a>
     <a asp-action="Create" class="btn btn-primary">
         <i class="bi bi-plus-circle me-1"></i>
         Add Supplier
@@ -112,8 +113,8 @@ ViewData["Title"] = "Suppliers";
                                         <a asp-action="Delete"
                                            asp-route-id="@supplier.Id"
                                            class="btn btn-sm btn-outline-danger"
-                                           title="Delete">
-                                            <i class="bi bi-trash"></i>
+                                           title="Archive">
+                                            <i class="bi bi-archive"></i>
                                         </a>
 
                                     </div>

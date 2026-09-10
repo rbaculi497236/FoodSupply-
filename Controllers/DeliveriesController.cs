@@ -23,6 +23,7 @@ namespace FoodSupply.Controllers
             var query = _context.Deliveries
                 .Where(d => !d.IsArchived)
                 .Include(d => d.SalesOrder)
+                    .ThenInclude(s => s!.Customer)
                 .AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(d => d.Status.Contains(search) ||
@@ -152,6 +153,7 @@ namespace FoodSupply.Controllers
 
             var delivery = await _context.Deliveries
                 .Include(d => d.SalesOrder)
+                    .ThenInclude(s => s!.Customer)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (delivery == null)

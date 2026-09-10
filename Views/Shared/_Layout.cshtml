@@ -46,7 +46,15 @@
 
         body {
             margin: 0;
-            background-color: #f8f9fa;
+            background: #f4f8f5;
+            color: #18324b;
+        }
+
+        :root {
+            --food-navy: #123d68;
+            --food-green: #4b9b28;
+            --food-ink: #18324b;
+            --food-border: #d8e4dc;
         }
 
         /* =========================
@@ -59,10 +67,12 @@
             left: 0;
             width: 250px;
             height: 100vh;
-            background: #212529;
+            background: #123d68;
             color: white;
             overflow-y: auto;
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-brand {
@@ -70,8 +80,6 @@
             display: flex;
             align-items: center;
             padding: 0 24px;
-            font-size: 22px;
-            font-weight: 700;
             color: white;
             text-decoration: none;
             border-bottom: 1px solid rgba(255,255,255,.1);
@@ -84,6 +92,24 @@
 
         .sidebar-menu {
             padding: 20px 12px;
+            flex: 1;
+        }
+
+        .sidebar-account {
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,.15);
+            background: rgba(0,0,0,.12);
+        }
+
+        .sidebar-account .account-name {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .sidebar-account .btn {
+            width: 100%;
         }
 
         .sidebar-section {
@@ -109,7 +135,7 @@
         }
 
         .sidebar-link:hover {
-            background-color: #343a40;
+            background-color: #2d6b45;
             color: white;
         }
 
@@ -122,12 +148,12 @@
         /* Dashboard highlight */
 
         .dashboard-link {
-            background-color: #0d6efd;
+            background-color: #4b9b28;
             color: white;
         }
 
         .dashboard-link:hover {
-            background-color: #0b5ed7;
+            background-color: #3e8122;
             color: white;
         }
 
@@ -146,11 +172,42 @@
 
         .topbar {
             height: 70px;
-            background: white;
-            border-bottom: 1px solid #dee2e6;
+            background: #ffffff;
+            border-bottom: 1px solid var(--food-border);
             display: flex;
             align-items: center;
             padding: 0 30px;
+        }
+
+        .brand-logo {
+            width: 58px;
+            height: 58px;
+            object-fit: contain;
+        }
+
+        .topbar .btn-primary,
+        .btn-primary {
+            background-color: var(--food-navy);
+            border-color: var(--food-navy);
+        }
+
+        .topbar .btn-primary:hover,
+        .btn-primary:hover {
+            background-color: var(--food-green);
+            border-color: var(--food-green);
+        }
+
+        .topbar-title {
+            color: var(--food-navy);
+            border-left: 3px solid var(--food-green);
+            padding-left: 12px;
+        }
+
+        .brand-login {
+            display: block;
+            width: min(330px, 80vw);
+            height: auto;
+            margin: 0 auto 18px;
         }
 
         /* =========================
@@ -179,11 +236,11 @@
         }
 
         .sidebar::-webkit-scrollbar-track {
-            background: #212529;
+            background: #123d68;
         }
 
         .sidebar::-webkit-scrollbar-thumb {
-            background: #495057;
+            background: #4b9b28;
             border-radius: 10px;
         }
 
@@ -192,7 +249,6 @@
         ========================= */
 
         @@media (max-width: 991.98px) {
-
             .sidebar {
                 width: 220px;
             }
@@ -212,7 +268,6 @@
         ========================= */
 
         @@media (max-width: 767.98px) {
-
             .sidebar {
                 position: relative;
                 width: 100%;
@@ -255,10 +310,10 @@
         <a class="sidebar-brand"
            asp-controller="Dashboard"
            asp-action="Index">
-
-            <i class="bi bi-box-seam me-2"></i>
-
-            FoodSupply
+            <img src="~/images/foodsupply-logo.png"
+                 alt="FoodSupply"
+                 class="w-100"
+                  style="max-height: 62px; object-fit: contain;" />
 
         </a>
 
@@ -366,6 +421,16 @@
                 <span>Customers</span>
 
             </a>
+
+            @if (canManageSales)
+            {
+            <a class="sidebar-link"
+               asp-controller="Customers"
+               asp-action="Crm">
+                <span class="sidebar-icon"><i class="bi bi-person-lines-fill"></i></span>
+                <span>CRM</span>
+            </a>
+            }
             }
 
 
@@ -507,6 +572,29 @@
 
         </div>
 
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="sidebar-account">
+                @if (canManageWarehouse)
+                {
+                    <a asp-controller="Inventories" asp-action="Alerts" class="sidebar-link px-0" title="Inventory alerts">
+                        <span class="sidebar-icon position-relative">
+                            <i class="bi bi-bell"></i>
+                            @if (inventoryAlertCount > 0) { <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@inventoryAlertCount</span> }
+                        </span>
+                        <span>Notifications</span>
+                    </a>
+                }
+                <span class="account-name"><i class="bi bi-person-circle me-1"></i>@User.Identity.Name</span>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-box-arrow-right me-1"></i>Logout
+                    </button>
+                </form>
+            </div>
+        }
+
     </aside>
 
 
@@ -522,60 +610,19 @@
         ========================= -->
 
         <header class="topbar">
-            @if (canManageWarehouse)
-            {
-                <a asp-controller="Inventories" asp-action="Alerts" class="btn btn-link position-relative ms-auto" title="Inventory alerts">
-                    <i class="bi bi-bell fs-5"></i>
-                    @if (inventoryAlertCount > 0) { <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@inventoryAlertCount</span> }
-                </a>
-            }
-
+            <a asp-controller="Dashboard" asp-action="Index" class="me-4">
+                <img src="~/images/foodsupply-logo.png" alt="FoodSupply" class="brand-logo" />
+            </a>
             <!-- PAGE TITLE -->
 
             <div>
 
-                <h5 class="mb-0 fw-bold">
+                <h5 class="mb-0 fw-bold topbar-title">
                     @ViewData["Title"]
                 </h5>
 
             </div>
 
-
-            <!-- USER / LOGOUT -->
-
-            <div class="ms-auto d-flex align-items-center gap-3">
-
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <span class="text-muted">
-
-                        <i class="bi bi-person-circle me-1"></i>
-
-                        @User.Identity.Name
-
-                    </span>
-
-
-                    <form asp-controller="Account"
-                          asp-action="Logout"
-                          method="post"
-                          class="d-inline">
-
-                        @Html.AntiForgeryToken()
-
-                        <button type="submit"
-                                class="btn btn-outline-danger btn-sm">
-
-                            <i class="bi bi-box-arrow-right me-1"></i>
-
-                            Logout
-
-                        </button>
-
-                    </form>
-                }
-
-            </div>
 
         </header>
 

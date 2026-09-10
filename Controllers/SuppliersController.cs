@@ -20,7 +20,9 @@ private readonly ApplicationDbContext _context;
     public async Task<IActionResult> Index(string? search, int page = 1)
     {
         const int pageSize = 10;
-        var query = _context.Suppliers.AsQueryable();
+        var query = _context.Suppliers
+            .Where(s => !s.IsArchived)
+            .AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(s => s.SupplierCode.Contains(search) || s.SupplierName.Contains(search) ||
                 (s.PhoneNumber != null && s.PhoneNumber.Contains(search)));
@@ -28,6 +30,27 @@ private readonly ApplicationDbContext _context;
         ViewBag.TotalItems = await query.CountAsync();
         var suppliers = await query.OrderBy(s => s.SupplierName).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return View(suppliers);
+    }
+
+    public async Task<IActionResult> Archived()
+    {
+        var suppliers = await _context.Suppliers
+            .Where(s => s.IsArchived)
+            .OrderBy(s => s.SupplierName)
+            .ToListAsync();
+        return View(suppliers);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restore(int id)
+    {
+        var supplier = await _context.Suppliers.FirstOrDefaultAsync(s => s.Id == id && s.IsArchived);
+        if (supplier == null) return NotFound();
+        supplier.IsArchived = false;
+        supplier.Status = "Active";
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Archived));
     }
 
     // GET: Suppliers/Details/5
@@ -85,7 +108,8 @@ private readonly ApplicationDbContext _context;
             return NotFound();
         }
 
-        var supplier = await _context.Suppliers.FindAsync(id);
+        var supplier = await _context.Suppliers
+            .FirstOrDefaultAsync(s => s.Id == id && !s.IsArchived);
 
         if (supplier == null)
         {
@@ -156,7 +180,8 @@ private readonly ApplicationDbContext _context;
 
         if (supplier != null)
         {
-            _context.Suppliers.Remove(supplier);
+            supplier.IsArchived = true;
+            supplier.Status = "Archived";
             await _context.SaveChangesAsync();
         }
 

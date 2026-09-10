@@ -78,10 +78,13 @@ namespace FoodSupply.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Purchase purchase)
         {
+            ModelState.Remove(nameof(Purchase.PurchaseOrderNumber));
+
             if (ModelState.IsValid)
             {
                 // New purchases always start as Pending.
                 // Inventory will NOT increase yet.
+                purchase.PurchaseOrderNumber = "PENDING";
                 purchase.Status = "Pending";
                 purchase.IsArchived = false;
 
@@ -96,6 +99,9 @@ namespace FoodSupply.Controllers
 
                 _context.Purchases.Add(purchase);
 
+                await _context.SaveChangesAsync();
+
+                purchase.PurchaseOrderNumber = $"PO-{purchase.Id:D6}";
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(

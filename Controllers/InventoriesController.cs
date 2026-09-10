@@ -20,7 +20,10 @@ namespace FoodSupply.Controllers
         public async Task<IActionResult> Index(string? search, int page = 1)
         {
             const int pageSize = 10;
-            var query = _context.Inventories.Include(i => i.Product).AsQueryable();
+            var query = _context.Inventories
+                .Where(i => !i.IsArchived)
+                .Include(i => i.Product)
+                .AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(i => i.Product != null &&
                     (i.Product.ProductName.Contains(search) || i.Product.ProductCode.Contains(search)));
@@ -47,6 +50,27 @@ namespace FoodSupply.Controllers
                 .ToListAsync();
 
             return View(alerts);
+        }
+
+        public async Task<IActionResult> Archived()
+        {
+            var inventories = await _context.Inventories
+                .Where(i => i.IsArchived)
+                .Include(i => i.Product)
+                .OrderByDescending(i => i.LastUpdated)
+                .ToListAsync();
+            return View(inventories);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.Id == id && i.IsArchived);
+            if (inventory == null) return NotFound();
+            inventory.IsArchived = false;
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Archived));
         }
 
         // GET: Inventories/Details/5
@@ -214,11 +238,12 @@ namespace FoodSupply.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var inventory = await _context.Inventories.FindAsync(id);
+            var inventory = await _context.Inventories
+                .FirstOrDefaultAsync(i => i.Id == id && !i.IsArchived);
 
             if (inventory != null)
             {
-                _context.Inventories.Remove(inventory);
+                inventory.IsArchived = true;
                 await _context.SaveChangesAsync();
             }
 

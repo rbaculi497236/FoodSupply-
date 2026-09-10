@@ -138,7 +138,7 @@
                    asp-route-id="@Model.Id"
                    class="btn btn-danger ms-2">
                     <i class="bi bi-trash me-1"></i>
-                    Delete Customer
+                    Archive Customer
                 </a>
 
                 <a asp-action="Index"
@@ -147,6 +147,32 @@
                     Back
                 </a>
 
+            </div>
+
+            <hr class="my-4" />
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <h5><i class="bi bi-clock-history me-2"></i>Customer Activity</h5>
+                    <form asp-action="AddActivity" method="post" class="border rounded p-3 mb-3">
+                        <input type="hidden" name="CustomerId" value="@Model.Id" />
+                        <div class="mb-2"><select name="ActivityType" class="form-select"><option>Note</option><option>Call</option><option>Email</option><option>Meeting</option><option>Complaint</option></select></div>
+                        <div class="mb-2"><input name="Subject" class="form-control" placeholder="Subject" required /></div>
+                        <div class="mb-2"><textarea name="Notes" class="form-control" rows="2" placeholder="Activity notes"></textarea></div>
+                        <div class="mb-2"><input name="NextActionDate" type="date" class="form-control" /></div>
+                        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-plus-circle me-1"></i>Add Activity</button>
+                    </form>
+                    @foreach (var activity in (IEnumerable<FoodSupply.Models.CustomerActivity>)(ViewBag.Activities ?? new List<FoodSupply.Models.CustomerActivity>()))
+                    {
+                        <div class="border-start border-3 border-success ps-3 mb-3"><strong>@activity.Subject</strong><div class="small text-muted">@activity.ActivityType · @activity.ActivityDate.ToString("MMM dd, yyyy")</div><div>@activity.Notes</div></div>
+                    }
+                </div>
+                <div class="col-lg-6">
+                    <h5><i class="bi bi-bar-chart-line me-2"></i>Customer History</h5>
+                    <p class="mb-2">Sales orders: @(((IEnumerable<FoodSupply.Models.SalesOrder>)(ViewBag.SalesOrders ?? new List<FoodSupply.Models.SalesOrder>())).Count())</p>
+                    <p class="mb-2">Invoices: @(((IEnumerable<FoodSupply.Models.Billing>)(ViewBag.Billings ?? new List<FoodSupply.Models.Billing>())).Count())</p>
+                    <p class="mb-2">Deliveries: @(((IEnumerable<FoodSupply.Models.Delivery>)(ViewBag.Deliveries ?? new List<FoodSupply.Models.Delivery>())).Count())</p>
+                    <p class="mb-0">Next follow-up: @(Model.NextFollowUpDate?.ToString("MMM dd, yyyy") ?? "Not scheduled")</p>
+                </div>
             </div>
 
         </div>

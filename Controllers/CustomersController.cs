@@ -20,7 +20,9 @@ namespace FoodSupply.Controllers
         public async Task<IActionResult> Index(string? search, int page = 1)
         {
             const int pageSize = 10;
-            var query = _context.Customers.AsQueryable();
+            var query = _context.Customers
+                .Where(c => !c.IsArchived)
+                .AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(c => c.CustomerCode.Contains(search) || c.CustomerName.Contains(search) ||
                     (c.PhoneNumber != null && c.PhoneNumber.Contains(search)));
@@ -28,6 +30,27 @@ namespace FoodSupply.Controllers
             ViewBag.TotalItems = await query.CountAsync();
             var customers = await query.OrderBy(c => c.CustomerName).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
             return View(customers);
+        }
+
+        public async Task<IActionResult> Archived()
+        {
+            var customers = await _context.Customers
+                .Where(c => c.IsArchived)
+                .OrderBy(c => c.CustomerName)
+                .ToListAsync();
+            return View(customers);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == id && c.IsArchived);
+            if (customer == null) return NotFound();
+            customer.IsArchived = false;
+            customer.Status = "Active";
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Archived));
         }
 
         // GET: Customers/Details/5
@@ -46,7 +69,58 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
+            ViewBag.Activities = await _context.Set<CustomerActivity>()
+                .Where(a => a.CustomerId == customer.Id)
+                .OrderByDescending(a => a.ActivityDate)
+                .ToListAsync();
+            ViewBag.SalesOrders = await _context.SalesOrders
+                .Where(s => s.CustomerId == customer.Id && !s.IsArchived)
+                .OrderByDescending(s => s.OrderDate)
+                .ToListAsync();
+            ViewBag.Billings = await _context.Billings
+                .Include(b => b.SalesOrder)
+                .Where(b => b.SalesOrder != null && b.SalesOrder.CustomerId == customer.Id && !b.IsArchived)
+                .OrderByDescending(b => b.InvoiceDate)
+                .ToListAsync();
+            ViewBag.Deliveries = await _context.Deliveries
+                .Include(d => d.SalesOrder)
+                .Where(d => d.SalesOrder != null && d.SalesOrder.CustomerId == customer.Id && !d.IsArchived)
+                .OrderByDescending(d => d.DeliveryDate)
+                .ToListAsync();
+
             return View(customer);
+        }
+
+        public async Task<IActionResult> Crm()
+        {
+            var today = DateTime.Today;
+            ViewBag.FollowUps = await _context.Customers
+                .Where(c => !c.IsArchived && c.NextFollowUpDate.HasValue)
+                .OrderBy(c => c.NextFollowUpDate)
+                .ToListAsync();
+            ViewBag.DueFollowUps = await _context.Customers
+                .CountAsync(c => !c.IsArchived && c.NextFollowUpDate.HasValue && c.NextFollowUpDate.Value.Date <= today);
+            ViewBag.RecentActivities = await _context.Set<CustomerActivity>()
+                .Include(a => a.Customer)
+                .Where(a => a.Customer != null && !a.Customer.IsArchived)
+                .OrderByDescending(a => a.ActivityDate)
+                .Take(10)
+                .ToListAsync();
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddActivity(CustomerActivity activity)
+        {
+            ModelState.Remove(nameof(CustomerActivity.Customer));
+            if (!ModelState.IsValid)
+                return RedirectToAction(nameof(Details), new { id = activity.CustomerId });
+
+            activity.ActivityDate = DateTime.Now;
+            _context.Set<CustomerActivity>().Add(activity);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Details), new { id = activity.CustomerId });
         }
 
         // GET: Customers/Create
@@ -85,7 +159,8 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
-            var customer = await _context.Customers.FindAsync(id);
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(c => c.Id == id && !c.IsArchived);
 
             if (customer == null)
             {
@@ -156,7 +231,8 @@ namespace FoodSupply.Controllers
 
             if (customer != null)
             {
-                _context.Customers.Remove(customer);
+                customer.IsArchived = true;
+                customer.Status = "Archived";
                 await _context.SaveChangesAsync();
             }
 

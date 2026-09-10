@@ -1,0 +1,7 @@
+@model IEnumerable<FoodSupply.Models.Inventory>
+@{ ViewData["Title"] = "Archived Inventory"; }
+<div class="d-flex justify-content-between align-items-center mb-4"><h1>Archived Inventory</h1><a asp-action="Index" class="btn btn-outline-secondary">Back to Inventory</a></div>
+<table class="table table-hover"><thead><tr><th>Product</th><th>Stock</th><th>Last Updated</th><th></th></tr></thead><tbody>
+@foreach (var inventory in Model)
+{<tr><td>@inventory.Product?.ProductName</td><td>@inventory.StockQuantity</td><td>@inventory.LastUpdated.ToString("MMM dd, yyyy")</td><td><form asp-action="Restore" method="post"><input type="hidden" name="id" value="@inventory.Id" /><button class="btn btn-sm btn-success" type="submit">Restore</button></form></td></tr>}
+</tbody></table>

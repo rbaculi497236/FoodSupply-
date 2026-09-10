@@ -36,5 +36,7 @@ namespace FoodSupply.Models
         [Display(Name = "Damaged Quantity")]
         [Range(0, int.MaxValue)]
         public int DamagedQuantity { get; set; }
+
+        public bool IsArchived { get; set; } = false;
     }
 }

@@ -1,7 +1,7 @@
 @model FoodSupply.Models.Customer
 
 @{
-    ViewData["Title"] = "Delete Customer";
+    ViewData["Title"] = "Archive Customer";
 }
 
 <div class="container mt-4">
@@ -9,7 +9,7 @@
     <div class="mb-4">
         <h1 class="fw-bold text-danger">
             <i class="bi bi-trash-fill me-2"></i>
-            Delete Customer
+            Archive Customer
         </h1>
 
         <p class="text-muted">
@@ -23,7 +23,7 @@
 
             <div class="alert alert-warning">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Are you sure you want to delete this customer?
+                Are you sure you want to archive this customer?
             </div>
 
             <dl class="row">
@@ -62,7 +62,7 @@
                 <button type="submit"
                         class="btn btn-danger">
                     <i class="bi bi-trash me-1"></i>
-                    Delete Customer
+                    Archive Customer
                 </button>
 
                 <a asp-action="Index"

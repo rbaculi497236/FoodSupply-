@@ -1,5 +1,8 @@
 html {
   font-size: 14px;
+  --food-navy: #123d68;
+  --food-green: #4b9b28;
+  --food-border: #d8e4dc;
 }
 
 @media (min-width: 768px) {
@@ -19,6 +22,16 @@ html {
 
 body {
   margin-bottom: 60px;
+  background: #f4f8f5;
+  color: #18324b;
+}
+
+.table thead {
+  color: var(--food-navy);
+}
+
+.card {
+  border-color: var(--food-border);
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {

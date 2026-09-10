@@ -120,6 +120,9 @@ namespace FoodSupply.Migrations
                     b.Property<string>("ContactPerson")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("CrmNotes")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("CustomerCode")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -134,6 +137,12 @@ namespace FoodSupply.Migrations
 
                     b.Property<string>("Email")
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("NextFollowUpDate")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("longtext");
@@ -200,6 +209,9 @@ namespace FoodSupply.Migrations
 
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime>("LastUpdated")
                         .HasColumnType("datetime(6)");
@@ -442,6 +454,9 @@ namespace FoodSupply.Migrations
 
                     b.Property<string>("Email")
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("longtext");
