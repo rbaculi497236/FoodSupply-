@@ -1,0 +1,260 @@
+@model IEnumerable<FoodSupply.Models.BillingReportViewModel>
+
+@{
+    ViewData["Title"] = "Billing Report";
+}
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="fw-bold">
+                <i class="bi bi-receipt text-info me-2"></i>
+                Billing Report
+            </h1>
+
+            <p class="text-muted">
+                Invoices, payments, and outstanding balances.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Back to Reports
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-body">
+
+            <form method="get"
+                  asp-action="Billing"
+                  class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Payment Status
+                    </label>
+
+                    <select name="paymentStatus"
+                            class="form-select">
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option value="Paid">
+                            Paid
+                        </option>
+
+                        <option value="Pending">
+                            Pending
+                        </option>
+
+                        <option value="Partial">
+                            Partial
+                        </option>
+
+                        <option value="Overdue">
+                            Overdue
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                        Filter
+                    </button>
+
+                    <a asp-action="Billing"
+                       class="btn btn-outline-secondary">
+                        Clear
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Total Billed
+                    </small>
+
+                    <h3 class="fw-bold">
+                        ₱@Convert.ToDecimal(ViewBag.TotalBilled).ToString("N2")
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Total Paid
+                    </small>
+
+                    <h3 class="fw-bold text-success">
+                        ₱@Convert.ToDecimal(ViewBag.TotalPaid).ToString("N2")
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Outstanding Balance
+                    </small>
+
+                    <h3 class="fw-bold text-danger">
+                        ₱@Convert.ToDecimal(ViewBag.TotalBalance).ToString("N2")
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Status</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Paid</th>
+                            <th class="text-end">Balance</th>
+                            <th>Payment Method</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="8"
+                                    class="text-center text-muted py-4">
+                                    No billing records found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+
+                                    <td class="fw-semibold">
+                                        @item.InvoiceNumber
+                                    </td>
+
+                                    <td>
+                                        @item.InvoiceDate.ToString("MMM dd, yyyy")
+                                    </td>
+
+                                    <td>
+                                        @item.CustomerName
+                                    </td>
+
+                                    <td>
+
+                                        @if (item.PaymentStatus == "Paid")
+                                        {
+                                            <span class="badge bg-success">
+                                                Paid
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                @item.PaymentStatus
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    <td class="text-end">
+                                        ₱@item.TotalAmount.ToString("N2")
+                                    </td>
+
+                                    <td class="text-end text-success">
+                                        ₱@item.AmountPaid.ToString("N2")
+                                    </td>
+
+                                    <td class="text-end text-danger">
+                                        ₱@item.Balance.ToString("N2")
+                                    </td>
+
+                                    <td>
+                                        @(item.PaymentMethod ?? "-")
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

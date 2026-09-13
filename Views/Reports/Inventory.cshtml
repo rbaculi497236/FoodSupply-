@@ -1,0 +1,200 @@
+@model IEnumerable<FoodSupply.Models.InventoryReportViewModel>
+
+@{
+    ViewData["Title"] = "Inventory Report";
+}
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="fw-bold">
+                <i class="bi bi-box-seam text-primary me-2"></i>
+                Inventory Report
+            </h1>
+
+            <p class="text-muted">
+                Current inventory and stock levels.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Back to Reports
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-body">
+
+            <form method="get"
+                  asp-action="Inventory"
+                  class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Stock Status
+                    </label>
+
+                    <select name="status"
+                            class="form-select">
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option value="In Stock"
+                                selected="@(ViewBag.Status == "In Stock")">
+                            In Stock
+                        </option>
+
+                        <option value="Low Stock"
+                                selected="@(ViewBag.Status == "Low Stock")">
+                            Low Stock
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                        Filter
+                    </button>
+
+                    <a asp-action="Inventory"
+                       class="btn btn-outline-secondary">
+                        Clear
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+                            <th>Product Code</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Unit</th>
+                            <th>Stock</th>
+                            <th>Reorder Level</th>
+                            <th>Status</th>
+                            <th>Damaged</th>
+                            <th>Spoiled</th>
+                            <th>Last Updated</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="10"
+                                    class="text-center text-muted py-4">
+                                    No inventory records found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                var isLowStock =
+                                    item.StockQuantity <= item.ReorderLevel;
+
+                                <tr>
+
+                                    <td>
+                                        @item.ProductCode
+                                    </td>
+
+                                    <td class="fw-semibold">
+                                        @item.ProductName
+                                    </td>
+
+                                    <td>
+                                        @item.CategoryName
+                                    </td>
+
+                                    <td>
+                                        @item.Unit
+                                    </td>
+
+                                    <td class="fw-bold">
+                                        @item.StockQuantity
+                                    </td>
+
+                                    <td>
+                                        @item.ReorderLevel
+                                    </td>
+
+                                    <td>
+
+                                        @if (isLowStock)
+                                        {
+                                            <span class="badge bg-danger">
+                                                Low Stock
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">
+                                                In Stock
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    <td>
+                                        @item.DamagedQuantity
+                                    </td>
+
+                                    <td>
+                                        @item.SpoiledQuantity
+                                    </td>
+
+                                    <td>
+                                        @item.LastUpdated.ToString("MMM dd, yyyy")
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

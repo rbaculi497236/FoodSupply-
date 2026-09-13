@@ -1,0 +1,193 @@
+@model IEnumerable<FoodSupply.Models.SalesReportViewModel>
+
+@{
+    ViewData["Title"] = "Sales Report";
+}
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold">
+                <i class="bi bi-graph-up-arrow text-success me-2"></i>
+                Sales Report
+            </h1>
+
+            <p class="text-muted">
+                Sales orders and sales performance.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Back to Reports
+        </a>
+    </div>
+
+
+    <!-- Filter -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+
+            <form method="get"
+                  asp-action="Sales"
+                  class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+                    <label class="form-label">
+                        From Date
+                    </label>
+
+                    <input type="date"
+                           name="fromDate"
+                           value="@ViewBag.FromDate"
+                           class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">
+                        To Date
+                    </label>
+
+                    <input type="date"
+                           name="toDate"
+                           value="@ViewBag.ToDate"
+                           class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                        Generate Report
+                    </button>
+
+                    <a asp-action="Sales"
+                       class="btn btn-outline-secondary">
+                        Clear
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- Summary -->
+    <div class="row mb-4">
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <small class="text-muted">
+                        Total Orders
+                    </small>
+
+                    <h3 class="fw-bold">
+                        @ViewBag.TotalOrders
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <small class="text-muted">
+                        Total Sales
+                    </small>
+
+                    <h3 class="fw-bold text-success">
+                        ₱@Convert.ToDecimal(ViewBag.TotalSales).ToString("N2")
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Status</th>
+                            <th>Items</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6"
+                                    class="text-center text-muted py-4">
+                                    No sales records found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+
+                                    <td>
+                                        SO-@item.Id.ToString("D6")
+                                    </td>
+
+                                    <td>
+                                        @item.OrderDate.ToString("MMM dd, yyyy")
+                                    </td>
+
+                                    <td>
+                                        @item.CustomerName
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            @item.Status
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @item.ItemCount
+                                    </td>
+
+                                    <td class="text-end fw-bold">
+                                        ₱@item.TotalAmount.ToString("N2")
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

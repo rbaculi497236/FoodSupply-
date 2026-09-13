@@ -1,0 +1,285 @@
+@model FoodSupply.Models.ReportsDashboardViewModel
+
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold">
+                <i class="bi bi-bar-chart-fill text-primary me-2"></i>
+                Reports
+            </h1>
+
+            <p class="text-muted mb-0">
+                Monitor sales, purchases, inventory, billing, and deliveries.
+            </p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">
+                                Total Products
+                            </h6>
+
+                            <h2 class="fw-bold">
+                                @Model.TotalProducts
+                            </h2>
+                        </div>
+
+                        <i class="bi bi-box-seam fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">
+                                Customers
+                            </h6>
+
+                            <h2 class="fw-bold">
+                                @Model.TotalCustomers
+                            </h2>
+                        </div>
+
+                        <i class="bi bi-people fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">
+                                Total Sales
+                            </h6>
+
+                            <h2 class="fw-bold">
+                                ₱@Model.TotalSales.ToString("N2")
+                            </h2>
+                        </div>
+
+                        <i class="bi bi-graph-up-arrow fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">
+                                Total Purchases
+                            </h6>
+
+                            <h2 class="fw-bold">
+                                ₱@Model.TotalPurchases.ToString("N2")
+                            </h2>
+                        </div>
+
+                        <i class="bi bi-cart-check fs-1 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Financial Summary -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">
+                        Total Billed
+                    </h6>
+
+                    <h3 class="fw-bold">
+                        ₱@Model.TotalBilled.ToString("N2")
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">
+                        Total Paid
+                    </h6>
+
+                    <h3 class="fw-bold text-success">
+                        ₱@Model.TotalPaid.ToString("N2")
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">
+                        Outstanding Balance
+                    </h6>
+
+                    <h3 class="fw-bold text-danger">
+                        ₱@Model.TotalBalance.ToString("N2")
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Report Links -->
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <a asp-action="Sales"
+               class="text-decoration-none">
+
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center p-4">
+
+                        <i class="bi bi-graph-up-arrow display-4 text-success"></i>
+
+                        <h4 class="fw-bold mt-3">
+                            Sales Report
+                        </h4>
+
+                        <p class="text-muted">
+                            View sales orders, customers, and sales totals.
+                        </p>
+
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+
+        <div class="col-md-4">
+            <a asp-action="Inventory"
+               class="text-decoration-none">
+
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center p-4">
+
+                        <i class="bi bi-box-seam display-4 text-primary"></i>
+
+                        <h4 class="fw-bold mt-3">
+                            Inventory Report
+                        </h4>
+
+                        <p class="text-muted">
+                            Monitor stock levels and low-stock products.
+                        </p>
+
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+
+        <div class="col-md-4">
+            <a asp-action="Purchases"
+               class="text-decoration-none">
+
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center p-4">
+
+                        <i class="bi bi-cart-check display-4 text-warning"></i>
+
+                        <h4 class="fw-bold mt-3">
+                            Purchase Report
+                        </h4>
+
+                        <p class="text-muted">
+                            View purchases and supplier transactions.
+                        </p>
+
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+
+        <div class="col-md-4">
+            <a asp-action="Billing"
+               class="text-decoration-none">
+
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center p-4">
+
+                        <i class="bi bi-receipt display-4 text-info"></i>
+
+                        <h4 class="fw-bold mt-3">
+                            Billing Report
+                        </h4>
+
+                        <p class="text-muted">
+                            Monitor invoices, payments, and balances.
+                        </p>
+
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+
+        <div class="col-md-4">
+            <a asp-action="Deliveries"
+               class="text-decoration-none">
+
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center p-4">
+
+                        <i class="bi bi-truck display-4 text-danger"></i>
+
+                        <h4 class="fw-bold mt-3">
+                            Delivery Report
+                        </h4>
+
+                        <p class="text-muted">
+                            Monitor delivery status, drivers, and vehicles.
+                        </p>
+
+                    </div>
+                </div>
+
+            </a>
+        </div>
+
+    </div>
+
+</div>

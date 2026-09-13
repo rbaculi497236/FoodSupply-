@@ -1,0 +1,184 @@
+@model IEnumerable<FoodSupply.Models.DeliveryReportViewModel>
+
+@{
+    ViewData["Title"] = "Delivery Report";
+}
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="fw-bold">
+                <i class="bi bi-truck text-danger me-2"></i>
+                Delivery Report
+            </h1>
+
+            <p class="text-muted">
+                Delivery schedules, drivers, vehicles, and status.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Back to Reports
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-body">
+
+            <form method="get"
+                  asp-action="Deliveries"
+                  class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+
+                    <label class="form-label">
+                        Delivery Status
+                    </label>
+
+                    <select name="status"
+                            class="form-select">
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option value="Pending">
+                            Pending
+                        </option>
+
+                        <option value="Out for Delivery">
+                            Out for Delivery
+                        </option>
+
+                        <option value="Delivered">
+                            Delivered
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                        Filter
+                    </button>
+
+                    <a asp-action="Deliveries"
+                       class="btn btn-outline-secondary">
+                        Clear
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-dark">
+
+                        <tr>
+                            <th>Delivery ID</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Status</th>
+                            <th>Address</th>
+                            <th>Driver</th>
+                            <th>Vehicle</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7"
+                                    class="text-center text-muted py-4">
+                                    No delivery records found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+
+                                    <td class="fw-semibold">
+                                        DEL-@item.Id.ToString("D6")
+                                    </td>
+
+                                    <td>
+                                        @item.DeliveryDate.ToString("MMM dd, yyyy")
+                                    </td>
+
+                                    <td>
+                                        @item.CustomerName
+                                    </td>
+
+                                    <td>
+
+                                        @if (item.Status == "Delivered")
+                                        {
+                                            <span class="badge bg-success">
+                                                Delivered
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                @item.Status
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    <td>
+                                        @(item.DeliveryAddress ?? "-")
+                                    </td>
+
+                                    <td>
+                                        @(item.Driver ?? "-")
+                                    </td>
+
+                                    <td>
+                                        @(item.Vehicle ?? "-")
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

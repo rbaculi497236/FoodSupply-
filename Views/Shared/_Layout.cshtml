@@ -1,254 +1,480 @@
-﻿@{
-    var isAdmin = User.IsInRole("Admin") || User.IsInRole("Main Admin");
-    var isManager = isAdmin || User.IsInRole("Manager");
-    var isDeliveryOnly = User.IsInRole("Delivery Staff") && !isAdmin && !User.IsInRole("Manager");
-    var canManageWarehouse = !isDeliveryOnly && (isManager || User.IsInRole("Warehouse Staff"));
-    var canViewProducts = !isDeliveryOnly && (canManageWarehouse || User.IsInRole("Sales Staff / Billing Staff") || User.IsInRole("Sales/Customer Staff"));
-    var canManagePurchasing = !isDeliveryOnly && (isManager || User.IsInRole("Purchasing/Supplier Staff"));
-    var canManageSales = !isDeliveryOnly && (isManager || User.IsInRole("Sales Staff / Billing Staff") || User.IsInRole("Sales/Customer Staff"));
-    var canManageDelivery = isManager || User.IsInRole("Delivery Staff");
-    var canViewBilling = !isDeliveryOnly && (isManager || User.IsInRole("Sales Staff / Billing Staff") || User.IsInRole("Sales/Customer Staff") || User.IsInRole("Billing Staff"));
-}
+﻿@using Microsoft.EntityFrameworkCore
 @inject FoodSupply.Data.ApplicationDbContext DbContext
-@{ var inventoryAlertCount = User.Identity?.IsAuthenticated == true ? await DbContext.Inventories.CountAsync(i => i.StockQuantity <= i.ReorderLevel || (i.ExpirationDate.HasValue && i.ExpirationDate.Value <= DateTime.Today.AddDays(30)) || i.SpoiledQuantity > 0 || i.DamagedQuantity > 0) : 0; }
+
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+
+    // =========================================================
+    // FOODSUPPLY - CURRENT 4 ROLE SYSTEM
+    // =========================================================
+
+    var isAdmin = User.IsInRole("Admin");
+
+    var isManager =
+        isAdmin ||
+        User.IsInRole("Manager");
+
+    var isSalesBilling =
+        User.IsInRole("Sales Staff / Billing Staff");
+
+    var isDelivery =
+        User.IsInRole("Delivery Staff");
+
+    // =========================================================
+    // MODULE ACCESS
+    // =========================================================
+
+    // Dashboard
+    var canViewDashboard =
+        isAdmin ||
+        isManager ||
+        isSalesBilling ||
+        isDelivery;
+
+    // Products
+    // Admin / Manager can manage products.
+    // Sales/Billing can view products.
+    var canViewProducts =
+        isAdmin ||
+        isManager ||
+        isSalesBilling;
+
+    var canManageProducts =
+        isAdmin ||
+        isManager;
+
+    // Categories
+    var canManageCategories =
+        isAdmin ||
+        isManager;
+
+    // Suppliers
+    var canManageSuppliers =
+        isAdmin ||
+        isManager;
+
+    // Customers
+    // Manager/Admin manage customers.
+    // Sales/Billing can also access customers.
+    var canViewCustomers =
+        isAdmin ||
+        isManager ||
+        isSalesBilling;
+
+    var canManageCustomers =
+        isAdmin ||
+        isManager ||
+        isSalesBilling;
+
+    // CRM
+    var canViewCRM =
+        isAdmin ||
+        isManager ||
+        isSalesBilling;
+
+    // Inventory
+    var canViewInventory =
+        isAdmin ||
+        isManager;
+
+    // Purchasing
+    var canManagePurchasing =
+        isAdmin ||
+        isManager;
+
+    // Sales Orders
+    var canManageSales =
+        isAdmin ||
+        isManager ||
+        isSalesBilling;
+
+    // Deliveries
+    var canManageDelivery =
+        isAdmin ||
+        isManager ||
+        isDelivery;
+
+    // Billing
+    var canViewBilling =
+        isAdmin ||
+        isManager ||
+        isSalesBilling;
+
+    // Reports
+    // Delivery Staff is included because your ReportsController
+    // currently authorizes Delivery Staff.
+    var canViewReports =
+        isAdmin ||
+        isManager ||
+        isSalesBilling ||
+        isDelivery;
+
+    // Users
+    var canManageUsers =
+        isAdmin;
+
+    // Notifications
+    var canViewNotifications =
+        isAdmin ||
+        isManager ||
+        isSalesBilling ||
+        isDelivery;
+
+    // =========================================================
+    // INVENTORY ALERT COUNT
+    // =========================================================
+
+    var inventoryAlertCount = 0;
+
+    if (isAuthenticated)
+    {
+        inventoryAlertCount = await DbContext.Inventories
+            .CountAsync(i =>
+                !i.IsArchived &&
+                (
+                    i.StockQuantity <= i.ReorderLevel ||
+                    (
+                        i.ExpirationDate.HasValue &&
+                        i.ExpirationDate.Value <= DateTime.Today.AddDays(30)
+                    ) ||
+                    i.SpoiledQuantity > 0 ||
+                    i.DamagedQuantity > 0
+                )
+            );
+    }
+}
 
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
     <meta charset="utf-8" />
 
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
 
-    <title>@ViewData["Title"] - FoodSupply</title>
+    <title>
+        @ViewData["Title"] - FoodSupply
+    </title>
 
-    <script type="importmap"></script>
-
+    <!-- Bootstrap 5 -->
     <link rel="stylesheet"
-          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
-    <link rel="stylesheet"
-          href="~/css/site.css"
-          asp-append-version="true" />
-
-    <link rel="stylesheet"
-          href="~/FoodSupply.styles.css"
-          asp-append-version="true" />
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
+    <!-- FoodSupply Site CSS -->
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
     <style>
+
+        /* =====================================================
+           GLOBAL
+           ===================================================== */
+
+        html,
+        body {
+            height: 100%;
+        }
 
         body {
             margin: 0;
-            background: #f4f8f5;
-            color: #18324b;
+            background-color: #f5f7fb;
+            font-family:
+                "Segoe UI",
+                Tahoma,
+                Geneva,
+                Verdana,
+                sans-serif;
         }
 
-        :root {
-            --food-navy: #123d68;
-            --food-green: #4b9b28;
-            --food-ink: #18324b;
-            --food-border: #d8e4dc;
+        a {
+            text-decoration: none;
         }
 
-        /* =========================
+        /* =====================================================
            SIDEBAR
-        ========================= */
+           ===================================================== */
 
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
+            bottom: 0;
+
             width: 250px;
-            height: 100vh;
-            background: #123d68;
-            color: white;
+
+            background: #ffffff;
+
+            border-right: 1px solid #e5e7eb;
+
             overflow-y: auto;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
+
+            z-index: 1030;
         }
 
         .sidebar-brand {
-            height: 70px;
+            height: 75px;
+
             display: flex;
             align-items: center;
-            padding: 0 24px;
-            color: white;
-            text-decoration: none;
-            border-bottom: 1px solid rgba(255,255,255,.1);
+
+            padding: 15px 20px;
+
+            border-bottom: 1px solid #e5e7eb;
         }
 
-        .sidebar-brand:hover {
-            color: white;
-            background-color: #343a40;
-        }
+        .sidebar-brand img {
+            max-width: 185px;
+            max-height: 55px;
 
-        .sidebar-menu {
-            padding: 20px 12px;
-            flex: 1;
-        }
-
-        .sidebar-account {
-            padding: 16px;
-            border-top: 1px solid rgba(255,255,255,.15);
-            background: rgba(0,0,0,.12);
-        }
-
-        .sidebar-account .account-name {
-            display: block;
-            color: #ffffff;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .sidebar-account .btn {
-            width: 100%;
+            object-fit: contain;
         }
 
         .sidebar-section {
+            padding: 18px 15px 7px;
+
             font-size: 11px;
+
             font-weight: 700;
+
             text-transform: uppercase;
-            color: #adb5bd;
-            padding: 10px 14px 6px;
-            letter-spacing: .5px;
+
+            color: #9ca3af;
+
+            letter-spacing: 0.08em;
         }
 
         .sidebar-link {
             display: flex;
             align-items: center;
+
             gap: 12px;
-            padding: 11px 14px;
-            margin-bottom: 4px;
-            color: #ced4da;
-            text-decoration: none;
+
+            margin: 3px 10px;
+
+            padding: 10px 13px;
+
             border-radius: 8px;
-            font-size: 15px;
-            transition: all .2s ease;
+
+            color: #4b5563;
+
+            font-size: 14px;
+
+            transition: all 0.2s ease;
         }
 
         .sidebar-link:hover {
-            background-color: #2d6b45;
-            color: white;
+            background-color: #f0f4ff;
+
+            color: #2563eb;
+        }
+
+        .sidebar-link.active {
+            background-color: #e8f0ff;
+
+            color: #2563eb;
+
+            font-weight: 600;
         }
 
         .sidebar-icon {
-            width: 22px;
-            text-align: center;
+            width: 24px;
+
+            display: inline-flex;
+
+            justify-content: center;
+
             font-size: 17px;
         }
 
-        /* Dashboard highlight */
-
-        .dashboard-link {
-            background-color: #4b9b28;
-            color: white;
-        }
-
-        .dashboard-link:hover {
-            background-color: #3e8122;
-            color: white;
-        }
-
-        /* =========================
+        /* =====================================================
            MAIN CONTENT
-        ========================= */
+           ===================================================== */
 
         .main-wrapper {
             margin-left: 250px;
+
             min-height: 100vh;
+
+            display: flex;
+
+            flex-direction: column;
         }
 
-        /* =========================
-           TOP BAR
-        ========================= */
+        /* =====================================================
+           TOPBAR
+           ===================================================== */
 
         .topbar {
-            height: 70px;
+            height: 75px;
+
             background: #ffffff;
-            border-bottom: 1px solid var(--food-border);
+
+            border-bottom: 1px solid #e5e7eb;
+
             display: flex;
+
             align-items: center;
-            padding: 0 30px;
-        }
 
-        .brand-logo {
-            width: 58px;
-            height: 58px;
-            object-fit: contain;
-        }
+            justify-content: space-between;
 
-        .topbar .btn-primary,
-        .btn-primary {
-            background-color: var(--food-navy);
-            border-color: var(--food-navy);
-        }
+            padding: 0 25px;
 
-        .topbar .btn-primary:hover,
-        .btn-primary:hover {
-            background-color: var(--food-green);
-            border-color: var(--food-green);
+            position: sticky;
+
+            top: 0;
+
+            z-index: 1020;
         }
 
         .topbar-title {
-            color: var(--food-navy);
-            border-left: 3px solid var(--food-green);
-            padding-left: 12px;
+            font-size: 20px;
+
+            font-weight: 600;
+
+            color: #1f2937;
         }
 
-        .brand-login {
-            display: block;
-            width: min(330px, 80vw);
-            height: auto;
-            margin: 0 auto 18px;
+        .topbar-user {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
         }
 
-        /* =========================
-           PAGE CONTENT
-        ========================= */
+        .user-avatar {
+            width: 38px;
 
-        .page-content {
-            padding: 30px;
-            min-height: calc(100vh - 140px);
+            height: 38px;
+
+            border-radius: 50%;
+
+            background: #2563eb;
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-weight: 600;
         }
 
-        /* =========================
+        .user-info {
+            line-height: 1.2;
+        }
+
+        .user-name {
+            font-weight: 600;
+
+            font-size: 14px;
+
+            color: #1f2937;
+        }
+
+        .user-role {
+            font-size: 12px;
+
+            color: #6b7280;
+        }
+
+        /* =====================================================
+           NOTIFICATION
+           ===================================================== */
+
+        .notification-link {
+            position: relative;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            width: 40px;
+
+            height: 40px;
+
+            border-radius: 50%;
+
+            color: #4b5563;
+        }
+
+        .notification-link:hover {
+            background: #f3f4f6;
+
+            color: #2563eb;
+        }
+
+        .notification-badge {
+            position: absolute;
+
+            top: 2px;
+
+            right: 2px;
+
+            min-width: 18px;
+
+            height: 18px;
+
+            padding: 0 4px;
+
+            border-radius: 50px;
+
+            background: #dc3545;
+
+            color: white;
+
+            font-size: 10px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border: 2px solid white;
+        }
+
+        /* =====================================================
+           CONTENT
+           ===================================================== */
+
+        .content {
+            flex: 1;
+
+            padding: 25px;
+        }
+
+        /* =====================================================
            FOOTER
-        ========================= */
+           ===================================================== */
 
         .footer {
-            margin-left: 250px;
+            background: #ffffff;
+
+            border-top: 1px solid #e5e7eb;
+
+            padding: 15px 25px;
+
+            color: #6b7280;
+
+            font-size: 13px;
         }
 
-        /* =========================
-           SIDEBAR SCROLLBAR
-        ========================= */
-
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: #123d68;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: #4b9b28;
-            border-radius: 10px;
-        }
-
-        /* =========================
-           TABLET
-        ========================= */
+        /* =====================================================
+           RESPONSIVE
+           ===================================================== */
 
         @@media (max-width: 991.98px) {
+
             .sidebar {
                 width: 220px;
             }
@@ -256,107 +482,109 @@
             .main-wrapper {
                 margin-left: 220px;
             }
-
-            .footer {
-                margin-left: 220px;
-            }
-
         }
 
-        /* =========================
-           MOBILE
-        ========================= */
-
         @@media (max-width: 767.98px) {
+
             .sidebar {
                 position: relative;
+
                 width: 100%;
+
                 height: auto;
+
+                max-height: none;
             }
 
             .main-wrapper {
                 margin-left: 0;
             }
 
-            .footer {
-                margin-left: 0;
-            }
-
             .topbar {
-                padding: 0 20px;
+                position: relative;
+
+                height: auto;
+
+                min-height: 70px;
+
+                padding: 12px 15px;
             }
 
-            .page-content {
-                padding: 20px;
+            .content {
+                padding: 15px;
             }
 
+            .sidebar-brand {
+                justify-content: center;
+            }
         }
 
     </style>
 
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-
 
 <body>
 
-    <!-- =========================
+    <!-- =====================================================
          SIDEBAR
-    ========================= -->
+         ===================================================== -->
 
     <aside class="sidebar">
 
-        <!-- BRAND -->
+        <!-- Logo -->
+        <div class="sidebar-brand">
 
-        <a class="sidebar-brand"
-           asp-controller="Dashboard"
-           asp-action="Index">
-            <img src="~/images/foodsupply-logo.png"
-                 alt="FoodSupply"
-                 class="w-100"
-                  style="max-height: 62px; object-fit: contain;" />
+            <a asp-controller="Home"
+               asp-action="Index">
 
-        </a>
+                <img src="~/images/foodsupply-logo.png"
+                     alt="FoodSupply Logo" />
 
+            </a>
 
-        <div class="sidebar-menu">
-
-            <!-- MAIN -->
-
-            <div class="sidebar-section">
-                Main
-            </div>
+        </div>
 
 
-            <!-- DASHBOARD -->
+        <!-- =================================================
+             MAIN
+             ================================================= -->
 
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-            <a class="sidebar-link dashboard-link"
-               asp-controller="Dashboard"
+        <div class="sidebar-section">
+            Main
+        </div>
+
+
+        @if (canViewDashboard)
+        {
+            <a class="sidebar-link"
+               asp-controller="Home"
                asp-action="Index">
 
                 <span class="sidebar-icon">
                     <i class="bi bi-speedometer2"></i>
                 </span>
 
-                <span>Dashboard</span>
+                <span>
+                    Dashboard
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- MANAGEMENT -->
+        <!-- =================================================
+             MANAGEMENT
+             ================================================= -->
 
-            <div class="sidebar-section mt-3">
-                Management
-            </div>
+        <div class="sidebar-section">
+            Management
+        </div>
 
 
-            <!-- PRODUCTS -->
-
-                @if (canViewProducts)
-                {
-                <a class="sidebar-link"
+        @if (canViewProducts)
+        {
+            <a class="sidebar-link"
                asp-controller="Products"
                asp-action="Index">
 
@@ -364,17 +592,17 @@
                     <i class="bi bi-box-seam"></i>
                 </span>
 
-                <span>Products</span>
+                <span>
+                    Products
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- CATEGORIES -->
-
-                @if (canManageWarehouse)
-                {
-                <a class="sidebar-link"
+        @if (canManageCategories)
+        {
+            <a class="sidebar-link"
                asp-controller="Categories"
                asp-action="Index">
 
@@ -382,17 +610,17 @@
                     <i class="bi bi-tags"></i>
                 </span>
 
-                <span>Categories</span>
+                <span>
+                    Categories
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- SUPPLIERS -->
-
-                @if (canManagePurchasing)
-                {
-                <a class="sidebar-link"
+        @if (canManageSuppliers)
+        {
+            <a class="sidebar-link"
                asp-controller="Suppliers"
                asp-action="Index">
 
@@ -400,17 +628,17 @@
                     <i class="bi bi-truck"></i>
                 </span>
 
-                <span>Suppliers</span>
+                <span>
+                    Suppliers
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- CUSTOMERS -->
-
-                @if (canManageSales)
-                {
-                <a class="sidebar-link"
+        @if (canViewCustomers)
+        {
+            <a class="sidebar-link"
                asp-controller="Customers"
                asp-action="Index">
 
@@ -418,70 +646,80 @@
                     <i class="bi bi-people"></i>
                 </span>
 
-                <span>Customers</span>
+                <span>
+                    Customers
+                </span>
 
             </a>
+        }
 
-            @if (canManageSales)
-            {
+
+        @if (canViewCRM)
+        {
             <a class="sidebar-link"
-               asp-controller="Customers"
-               asp-action="Crm">
-                <span class="sidebar-icon"><i class="bi bi-person-lines-fill"></i></span>
-                <span>CRM</span>
+               asp-controller="CRM"
+               asp-action="Index">
+
+                <span class="sidebar-icon">
+                    <i class="bi bi-person-lines-fill"></i>
+                </span>
+
+                <span>
+                    CRM
+                </span>
+
             </a>
-            }
-            }
+        }
 
 
-            <!-- OPERATIONS -->
+        <!-- =================================================
+             OPERATIONS
+             ================================================= -->
 
-            <div class="sidebar-section mt-3">
-                Operations
-            </div>
+        <div class="sidebar-section">
+            Operations
+        </div>
 
 
-            <!-- INVENTORY -->
-
-                @if (canManageWarehouse)
-                {
-                <a class="sidebar-link"
-               asp-controller="Inventories"
+        @if (canViewInventory)
+        {
+            <a class="sidebar-link"
+               asp-controller="Inventory"
                asp-action="Index">
 
                 <span class="sidebar-icon">
                     <i class="bi bi-clipboard-data"></i>
                 </span>
 
-                <span>Inventory</span>
+                <span>
+                    Inventory
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- PURCHASING -->
-
-                @if (canManagePurchasing)
-                {
-                <a class="sidebar-link"
+        @if (canManagePurchasing)
+        {
+            <a class="sidebar-link"
                asp-controller="Purchases"
                asp-action="Index">
 
                 <span class="sidebar-icon">
-                    <i class="bi bi-cart3"></i>
+                    <i class="bi bi-cart-check"></i>
                 </span>
 
-                <span>Purchasing</span>
+                <span>
+                    Purchasing
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- SALES ORDERS -->
-
-                @if (canManageSales)
-                {
-                <a class="sidebar-link"
+        @if (canManageSales)
+        {
+            <a class="sidebar-link"
                asp-controller="SalesOrders"
                asp-action="Index">
 
@@ -489,59 +727,79 @@
                     <i class="bi bi-receipt"></i>
                 </span>
 
-                <span>Sales Orders</span>
+                <span>
+                    Sales Orders
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- DELIVERIES -->
-
-                @if (canManageDelivery)
-                {
-                <a class="sidebar-link"
+        @if (canManageDelivery)
+        {
+            <a class="sidebar-link"
                asp-controller="Deliveries"
                asp-action="Index">
 
                 <span class="sidebar-icon">
-                    <i class="bi bi-truck"></i>
+                    <i class="bi bi-truck-front"></i>
                 </span>
 
-                <span>Deliveries</span>
+                <span>
+                    Deliveries
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- BILLING -->
-
-                @if (canViewBilling)
-                {
-                <a class="sidebar-link"
-               asp-controller="Billings"
+        @if (canViewBilling)
+        {
+            <a class="sidebar-link"
+               asp-controller="Billing"
                asp-action="Index">
 
                 <span class="sidebar-icon">
                     <i class="bi bi-cash-stack"></i>
                 </span>
 
-                <span>Billing</span>
+                <span>
+                    Billing
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- SYSTEM -->
+        @if (canViewReports)
+        {
+            <a class="sidebar-link"
+               asp-controller="Reports"
+               asp-action="Index">
 
-            <div class="sidebar-section mt-3">
-                System
-            </div>
+                <span class="sidebar-icon">
+                    <i class="bi bi-bar-chart-line"></i>
+                </span>
+
+                <span>
+                    Reports
+                </span>
+
+            </a>
+        }
 
 
-            <!-- USERS -->
+        <!-- =================================================
+             SYSTEM
+             ================================================= -->
 
-            @if (isAdmin)
-            {
+        <div class="sidebar-section">
+            System
+        </div>
+
+
+        @if (canManageUsers)
+        {
             <a class="sidebar-link"
                asp-controller="Users"
                asp-action="Index">
@@ -550,131 +808,238 @@
                     <i class="bi bi-person-gear"></i>
                 </span>
 
-                <span>Users</span>
+                <span>
+                    Users
+                </span>
 
             </a>
-            }
+        }
 
 
-            <!-- PRIVACY -->
-
+        @if (isAuthenticated)
+        {
             <a class="sidebar-link"
                asp-controller="Home"
                asp-action="Privacy">
 
                 <span class="sidebar-icon">
-                    <i class="bi bi-shield-lock"></i>
+                    <i class="bi bi-shield-check"></i>
                 </span>
 
-                <span>Privacy</span>
+                <span>
+                    Privacy
+                </span>
 
             </a>
+        }
 
-        </div>
 
-        @if (User.Identity?.IsAuthenticated == true)
+        <!-- =================================================
+             NOTIFICATIONS
+             ================================================= -->
+
+        @if (canViewNotifications)
         {
-            <div class="sidebar-account">
-                @if (canManageWarehouse)
-                {
-                    <a asp-controller="Inventories" asp-action="Alerts" class="sidebar-link px-0" title="Inventory alerts">
-                        <span class="sidebar-icon position-relative">
-                            <i class="bi bi-bell"></i>
-                            @if (inventoryAlertCount > 0) { <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@inventoryAlertCount</span> }
+            <a class="sidebar-link"
+               asp-controller="Notifications"
+               asp-action="Index">
+
+                <span class="sidebar-icon position-relative">
+
+                    <i class="bi bi-bell"></i>
+
+                    @if (inventoryAlertCount > 0)
+                    {
+                        <span class="notification-badge">
+                            @(inventoryAlertCount > 99 ? "99+" : inventoryAlertCount)
                         </span>
-                        <span>Notifications</span>
-                    </a>
-                }
-                <span class="account-name"><i class="bi bi-person-circle me-1"></i>@User.Identity.Name</span>
-                <form asp-controller="Account" asp-action="Logout" method="post">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-outline-light btn-sm">
-                        <i class="bi bi-box-arrow-right me-1"></i>Logout
-                    </button>
-                </form>
-            </div>
+                    }
+
+                </span>
+
+                <span>
+                    Notifications
+                </span>
+
+            </a>
         }
 
     </aside>
 
 
-    <!-- =========================
+    <!-- =====================================================
          MAIN WRAPPER
-    ========================= -->
+         ===================================================== -->
 
     <div class="main-wrapper">
 
-
-        <!-- =========================
-             TOP BAR
-        ========================= -->
+        <!-- =================================================
+             TOPBAR
+             ================================================= -->
 
         <header class="topbar">
-            <a asp-controller="Dashboard" asp-action="Index" class="me-4">
-                <img src="~/images/foodsupply-logo.png" alt="FoodSupply" class="brand-logo" />
-            </a>
-            <!-- PAGE TITLE -->
 
-            <div>
+            <div class="topbar-title">
 
-                <h5 class="mb-0 fw-bold topbar-title">
-                    @ViewData["Title"]
-                </h5>
+                @ViewData["Title"]
 
             </div>
 
 
+            @if (isAuthenticated)
+            {
+                <div class="topbar-user">
+
+                    <!-- Notification Icon -->
+
+                    @if (canViewNotifications)
+                    {
+                        <a class="notification-link"
+                           asp-controller="Notifications"
+                           asp-action="Index"
+                           title="Notifications">
+
+                            <i class="bi bi-bell fs-5"></i>
+
+                            @if (inventoryAlertCount > 0)
+                            {
+                                <span class="notification-badge">
+                                    @(inventoryAlertCount > 99 ? "99+" : inventoryAlertCount)
+                                </span>
+                            }
+
+                        </a>
+                    }
+
+
+                    <!-- User -->
+
+                    <div class="user-avatar">
+
+                        @{
+                            var displayName =
+                                User.Identity?.Name ?? "User";
+
+                            var firstLetter =
+                                displayName.Length > 0
+                                    ? displayName.Substring(0, 1).ToUpper()
+                                    : "U";
+                        }
+
+                        @firstLetter
+
+                    </div>
+
+
+                    <div class="user-info">
+
+                        <div class="user-name">
+                            @(User.Identity?.Name ?? "User")
+                        </div>
+
+                        <div class="user-role">
+
+                            @if (isAdmin)
+                            {
+                                <span>Admin</span>
+                            }
+                            else if (User.IsInRole("Manager"))
+                            {
+                                <span>Manager</span>
+                            }
+                            else if (isSalesBilling)
+                            {
+                                <span>Sales Staff / Billing Staff</span>
+                            }
+                            else if (isDelivery)
+                            {
+                                <span>Delivery Staff</span>
+                            }
+                            else
+                            {
+                                <span>User</span>
+                            }
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Logout -->
+
+                    <form asp-controller="Account"
+                          asp-action="Logout"
+                          method="post"
+                          class="ms-2">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit"
+                                class="btn btn-outline-danger btn-sm"
+                                title="Logout">
+
+                            <i class="bi bi-box-arrow-right"></i>
+
+                        </button>
+
+                    </form>
+
+                </div>
+            }
+
         </header>
 
 
-        <!-- =========================
+        <!-- =================================================
              PAGE CONTENT
-        ========================= -->
+             ================================================= -->
 
-        <main class="page-content">
+        <main class="content">
 
             @RenderBody()
 
         </main>
 
+
+        <!-- =================================================
+             FOOTER
+             ================================================= -->
+
+        <footer class="footer">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+                <div>
+                    &copy; @DateTime.Now.Year
+                    <strong>FoodSupply</strong>.
+                    All rights reserved.
+                </div>
+
+                <div>
+                    <span class="text-muted">
+                        Food Supply ERP System
+                    </span>
+                </div>
+
+            </div>
+
+        </footer>
+
     </div>
 
 
-    <!-- =========================
-         FOOTER
-    ========================= -->
+    <!-- =====================================================
+         JAVASCRIPT
+         ===================================================== -->
 
-    <footer class="border-top footer text-muted py-3">
-
-        <div class="container-fluid px-4">
-
-            &copy; 2026 - FoodSupply -
-
-            <a asp-controller="Home"
-               asp-action="Privacy">
-
-                Privacy
-
-            </a>
-
-        </div>
-
-    </footer>
-
-
-    <!-- =========================
-         SCRIPTS
-    ========================= -->
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
 
     <script src="~/js/site.js"
-            asp-append-version="true"></script>
+            asp-append-version="true">
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>
-
 </html>
