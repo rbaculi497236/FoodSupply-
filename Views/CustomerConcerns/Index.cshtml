@@ -1,0 +1,171 @@
+@model IEnumerable<FoodSupply.Models.CustomerConcern>
+
+@{
+    ViewData["Title"] = "Customer Concerns";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>
+                <i class="bi bi-chat-left-text"></i>
+                Customer Concerns
+            </h1>
+            <p class="text-muted">
+                Manage customer complaints, inquiries, requests, and feedback.
+            </p>
+        </div>
+
+        <div>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
+                New Concern
+            </a>
+
+            <a asp-action="Archived" class="btn btn-secondary">
+                <i class="bi bi-archive"></i>
+                Archived
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            No customer concerns have been recorded yet.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Customer</th>
+                                <th>Concern Type</th>
+                                <th>Subject</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Date Reported</th>
+                                <th style="width: 230px;">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+
+                                    <td>
+                                        @(item.Customer?.CustomerName ?? "N/A")
+                                    </td>
+
+                                    <td>
+                                        @item.ConcernType
+                                    </td>
+
+                                    <td>
+                                        @item.Subject
+                                    </td>
+
+                                    <td>
+                                        @if (item.Priority == "Urgent")
+                                        {
+                                            <span class="badge bg-danger">
+                                                Urgent
+                                            </span>
+                                        }
+                                        else if (item.Priority == "High")
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                High
+                                            </span>
+                                        }
+                                        else if (item.Priority == "Medium")
+                                        {
+                                            <span class="badge bg-info text-dark">
+                                                Medium
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Low
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (item.Status == "Pending")
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                Pending
+                                            </span>
+                                        }
+                                        else if (item.Status == "In Progress")
+                                        {
+                                            <span class="badge bg-primary">
+                                                In Progress
+                                            </span>
+                                        }
+                                        else if (item.Status == "Resolved")
+                                        {
+                                            <span class="badge bg-success">
+                                                Resolved
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                @item.Status
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @item.DateReported.ToString("MMM dd, yyyy")
+                                    </td>
+
+                                    <td>
+
+                                        <a asp-action="Details"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-info text-white">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-warning">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <a asp-action="Archive"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-secondary"
+                                           onclick="return confirm('Are you sure you want to archive this concern?');">
+                                            <i class="bi bi-archive"></i>
+                                        </a>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    }
+
+</div>
