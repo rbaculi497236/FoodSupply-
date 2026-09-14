@@ -1,0 +1,112 @@
+@model IEnumerable<FoodSupply.Models.Category>
+
+@{
+    ViewData["Title"] = "Archived Categories";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-archive"></i> Archived Categories
+        </h2>
+        <p class="text-muted mb-0">
+            View and restore archived categories.
+        </p>
+    </div>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i>
+        Back to Categories
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert">
+        </button>
+    </div>
+}
+
+@if (Model != null && Model.Any())
+{
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Category Code</th>
+                            <th>Category Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.CategoryCode</td>
+
+                                <td>
+                                    <strong>@item.CategoryName</strong>
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrEmpty(item.Description)
+                                        ? "-"
+                                        : item.Description)
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        Archived
+                                    </span>
+                                </td>
+
+                                <td class="text-center">
+
+                                    <form asp-action="Restore"
+                                          asp-route-id="@item.Id"
+                                          method="post"
+                                          class="d-inline">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit"
+                                                class="btn btn-success btn-sm"
+                                                onclick="return confirm('Are you sure you want to restore this category?')">
+
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                            Restore
+
+                                        </button>
+
+                                    </form>
+
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i>
+        No archived categories found.
+    </div>
+}

@@ -1,115 +1,134 @@
 ﻿@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+
 @inject FoodSupply.Data.ApplicationDbContext DbContext
 
 @{
+    /* =========================================================
+       AUTHENTICATION
+       ========================================================= */
+
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
 
-    // =========================================================
-    // FOODSUPPLY - CURRENT 4 ROLE SYSTEM
-    // =========================================================
+    // Get the role directly from the authentication cookie/claims.
+    // Trim whitespace and compare case-insensitively below.
+    var currentRole = User.Claims
+        .FirstOrDefault(c => c.Type == ClaimTypes.Role)
+        ?.Value?
+        .Trim() ?? "";
 
-    var isAdmin = User.IsInRole("Admin");
+    /* =========================================================
+       ROLE CHECKS
+       ========================================================= */
 
-    var isManager =
-        isAdmin ||
-        User.IsInRole("Manager");
+    var isAdmin = string.Equals(
+        currentRole,
+        "Admin",
+        StringComparison.OrdinalIgnoreCase
+    );
 
-    var isSalesBilling =
-        User.IsInRole("Sales Staff / Billing Staff");
+    var isManager = string.Equals(
+        currentRole,
+        "Manager",
+        StringComparison.OrdinalIgnoreCase
+    );
 
-    var isDelivery =
-        User.IsInRole("Delivery Staff");
+    var isSalesBilling = string.Equals(
+        currentRole,
+        "Sales Staff / Billing Staff",
+        StringComparison.OrdinalIgnoreCase
+    );
 
+    var isDelivery = string.Equals(
+        currentRole,
+        "Delivery Staff",
+        StringComparison.OrdinalIgnoreCase
+    );
 
-    // =========================================================
-    // MODULE ACCESS
-    // =========================================================
+    /* =========================================================
+       ROLE HIERARCHY
+       ========================================================= */
 
-    // Dashboard
     var canViewDashboard =
         isAdmin ||
         isManager ||
         isSalesBilling ||
         isDelivery;
 
-    // Products
     var canViewProducts =
         isAdmin ||
         isManager ||
         isSalesBilling;
 
-    // Categories
     var canManageCategories =
         isAdmin ||
         isManager;
 
-    // Suppliers
     var canManageSuppliers =
         isAdmin ||
         isManager;
 
-    // Customers
     var canViewCustomers =
         isAdmin ||
         isManager ||
         isSalesBilling;
 
-    // CRM
     var canViewCRM =
         isAdmin ||
         isManager ||
         isSalesBilling;
 
-    // Inventory
     var canViewInventory =
         isAdmin ||
         isManager;
 
-    // Purchasing
     var canManagePurchasing =
         isAdmin ||
         isManager;
 
-    // Sales Orders
     var canManageSales =
         isAdmin ||
         isManager ||
         isSalesBilling;
 
-    // Deliveries
     var canManageDelivery =
         isAdmin ||
         isManager ||
         isDelivery;
 
-    // Billing
     var canViewBilling =
         isAdmin ||
         isManager ||
         isSalesBilling;
 
-    // Reports
     var canViewReports =
         isAdmin ||
         isManager ||
         isSalesBilling ||
         isDelivery;
 
-    // Users
     var canManageUsers =
         isAdmin;
 
-    // Notifications
     var canViewNotifications =
         isAdmin ||
         isManager ||
         isSalesBilling ||
         isDelivery;
 
+    /* =========================================================
+       CURRENT PAGE
+       ========================================================= */
 
-    // =========================================================
-    // INVENTORY ALERT COUNT
-    // =========================================================
+    var currentController =
+        ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+
+    var currentAction =
+        ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    /* =========================================================
+       INVENTORY ALERT COUNT
+       ========================================================= */
 
     var inventoryAlertCount = 0;
 
@@ -123,7 +142,8 @@
 
                     (
                         i.ExpirationDate.HasValue &&
-                        i.ExpirationDate.Value <= DateTime.Today.AddDays(30)
+                        i.ExpirationDate.Value <=
+                            DateTime.Today.AddDays(30)
                     ) ||
 
                     i.SpoiledQuantity > 0 ||
@@ -132,10 +152,43 @@
                 )
             );
     }
+
+    /* =========================================================
+       USER DISPLAY
+       ========================================================= */
+
+    var displayName =
+        User.Identity?.Name ?? "User";
+
+    var firstLetter =
+        !string.IsNullOrWhiteSpace(displayName)
+            ? displayName.Substring(0, 1).ToUpper()
+            : "U";
+
+    var displayRole = "User";
+
+    if (isAdmin)
+    {
+        displayRole = "Admin";
+    }
+    else if (isManager)
+    {
+        displayRole = "Manager";
+    }
+    else if (isSalesBilling)
+    {
+        displayRole = "Sales Staff / Billing Staff";
+    }
+    else if (isDelivery)
+    {
+        displayRole = "Delivery Staff";
+    }
 }
 
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
 
     <meta charset="utf-8" />
@@ -147,18 +200,31 @@
         @ViewData["Title"] - FoodSupply
     </title>
 
-    <!-- Bootstrap 5 -->
+    <!-- =====================================================
+         BOOTSTRAP
+         ===================================================== -->
+
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
 
-    <!-- Bootstrap Icons -->
+    <!-- =====================================================
+         BOOTSTRAP ICONS
+         ===================================================== -->
+
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
-    <!-- FoodSupply Site CSS -->
+    <!-- =====================================================
+         FOODSUPPLY CSS
+         ===================================================== -->
+
     <link rel="stylesheet"
           href="~/css/site.css"
           asp-append-version="true" />
+
+    <!-- =====================================================
+         LAYOUT CSS
+         ===================================================== -->
 
     <style>
 
@@ -168,13 +234,16 @@
 
         html,
         body {
-            height: 100%;
+            min-height: 100%;
+        }
+
+        html {
+            position: relative;
         }
 
         body {
             margin: 0;
             background-color: #f5f7fb;
-
             font-family:
                 "Segoe UI",
                 Tahoma,
@@ -186,7 +255,6 @@
         a {
             text-decoration: none;
         }
-
 
         /* =====================================================
            SIDEBAR
@@ -201,12 +269,28 @@
             width: 250px;
 
             background: #ffffff;
+
             border-right: 1px solid #e5e7eb;
 
             overflow-y: auto;
 
             z-index: 1030;
+
+            scrollbar-width: thin;
         }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+
+        /* =====================================================
+           SIDEBAR BRAND
+           ===================================================== */
 
         .sidebar-brand {
             height: 75px;
@@ -214,9 +298,15 @@
             display: flex;
             align-items: center;
 
-            padding: 15px 20px;
+            padding: 10px 20px;
 
             border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-brand a {
+            width: 100%;
+            display: flex;
+            align-items: center;
         }
 
         .sidebar-brand img {
@@ -226,10 +316,15 @@
             object-fit: contain;
         }
 
+        /* =====================================================
+           SIDEBAR SECTION
+           ===================================================== */
+
         .sidebar-section {
-            padding: 18px 15px 7px;
+            padding: 20px 15px 7px;
 
             font-size: 11px;
+
             font-weight: 700;
 
             text-transform: uppercase;
@@ -239,8 +334,13 @@
             letter-spacing: 0.08em;
         }
 
+        /* =====================================================
+           SIDEBAR LINK
+           ===================================================== */
+
         .sidebar-link {
             display: flex;
+
             align-items: center;
 
             gap: 12px;
@@ -255,16 +355,23 @@
 
             font-size: 14px;
 
-            transition: all 0.2s ease;
+            transition:
+                background-color 0.2s ease,
+                color 0.2s ease,
+                transform 0.2s ease;
         }
 
         .sidebar-link:hover {
             background-color: #f0f4ff;
+
             color: #2563eb;
+
+            transform: translateX(2px);
         }
 
         .sidebar-link.active {
             background-color: #e8f0ff;
+
             color: #2563eb;
 
             font-weight: 600;
@@ -273,15 +380,23 @@
         .sidebar-icon {
             width: 24px;
 
+            min-width: 24px;
+
             display: inline-flex;
+
+            align-items: center;
+
             justify-content: center;
 
             font-size: 17px;
         }
 
+        .sidebar-link span:last-child {
+            white-space: nowrap;
+        }
 
         /* =====================================================
-           MAIN CONTENT
+           MAIN WRAPPER
            ===================================================== */
 
         .main-wrapper {
@@ -290,9 +405,9 @@
             min-height: 100vh;
 
             display: flex;
+
             flex-direction: column;
         }
-
 
         /* =====================================================
            TOPBAR
@@ -306,12 +421,15 @@
             border-bottom: 1px solid #e5e7eb;
 
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
 
             padding: 0 25px;
 
             position: sticky;
+
             top: 0;
 
             z-index: 1020;
@@ -333,24 +451,42 @@
             gap: 10px;
         }
 
+        /* =====================================================
+           USER AVATAR
+           ===================================================== */
+
         .user-avatar {
             width: 38px;
+
             height: 38px;
+
+            min-width: 38px;
 
             border-radius: 50%;
 
             background: #2563eb;
-            color: white;
+
+            color: #ffffff;
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
             font-weight: 600;
+
+            font-size: 15px;
         }
+
+        /* =====================================================
+           USER INFO
+           ===================================================== */
 
         .user-info {
             line-height: 1.2;
+
+            min-width: 100px;
         }
 
         .user-name {
@@ -365,8 +501,9 @@
             font-size: 12px;
 
             color: #6b7280;
-        }
 
+            margin-top: 3px;
+        }
 
         /* =====================================================
            NOTIFICATION
@@ -378,14 +515,20 @@
             display: inline-flex;
 
             align-items: center;
+
             justify-content: center;
 
             width: 40px;
+
             height: 40px;
 
             border-radius: 50%;
 
             color: #4b5563;
+
+            transition:
+                background-color 0.2s ease,
+                color 0.2s ease;
         }
 
         .notification-link:hover {
@@ -397,10 +540,12 @@
         .notification-badge {
             position: absolute;
 
-            top: 2px;
-            right: 2px;
+            top: 0;
+
+            right: 0;
 
             min-width: 18px;
+
             height: 18px;
 
             padding: 0 4px;
@@ -409,17 +554,20 @@
 
             background: #dc3545;
 
-            color: white;
+            color: #ffffff;
 
             font-size: 10px;
 
+            font-weight: 600;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
-            border: 2px solid white;
+            border: 2px solid #ffffff;
         }
-
 
         /* =====================================================
            CONTENT
@@ -429,8 +577,9 @@
             flex: 1;
 
             padding: 25px;
-        }
 
+            width: 100%;
+        }
 
         /* =====================================================
            FOOTER
@@ -446,11 +595,32 @@
             color: #6b7280;
 
             font-size: 13px;
+
+            line-height: normal;
+
+            white-space: normal;
         }
 
+        /* =====================================================
+           LOGOUT BUTTON
+           ===================================================== */
+
+        .logout-button {
+            width: 38px;
+
+            height: 38px;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 8px;
+        }
 
         /* =====================================================
-           RESPONSIVE
+           RESPONSIVE - TABLET
            ===================================================== */
 
         @@media (max-width: 991.98px) {
@@ -463,8 +633,19 @@
                 margin-left: 220px;
             }
 
+            .topbar {
+                padding: 0 20px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
         }
 
+        /* =====================================================
+           RESPONSIVE - MOBILE
+           ===================================================== */
 
         @@media (max-width: 767.98px) {
 
@@ -476,6 +657,10 @@
                 height: auto;
 
                 max-height: none;
+
+                border-right: none;
+
+                border-bottom: 1px solid #e5e7eb;
             }
 
             .main-wrapper {
@@ -492,12 +677,44 @@
                 padding: 12px 15px;
             }
 
+            .topbar-title {
+                font-size: 18px;
+            }
+
             .content {
                 padding: 15px;
             }
 
             .sidebar-brand {
                 justify-content: center;
+            }
+
+            .user-info {
+                display: none;
+            }
+
+            .topbar-user {
+                gap: 6px;
+            }
+
+        }
+
+        /* =====================================================
+           VERY SMALL MOBILE
+           ===================================================== */
+
+        @@media (max-width: 480px) {
+
+            .topbar-title {
+                font-size: 16px;
+            }
+
+            .topbar {
+                padding: 10px;
+            }
+
+            .content {
+                padding: 10px;
             }
 
         }
@@ -516,7 +733,9 @@
 
     <aside class="sidebar">
 
-        <!-- LOGO -->
+        <!-- =================================================
+             LOGO
+             ================================================= -->
 
         <div class="sidebar-brand">
 
@@ -541,7 +760,7 @@
 
         @if (canViewDashboard)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Dashboard" ? "active" : "")"
                asp-controller="Dashboard"
                asp-action="Index">
 
@@ -567,7 +786,7 @@
 
         @if (canViewProducts)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Products" ? "active" : "")"
                asp-controller="Products"
                asp-action="Index">
 
@@ -582,10 +801,9 @@
             </a>
         }
 
-
         @if (canManageCategories)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Categories" ? "active" : "")"
                asp-controller="Categories"
                asp-action="Index">
 
@@ -600,10 +818,9 @@
             </a>
         }
 
-
         @if (canManageSuppliers)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Suppliers" ? "active" : "")"
                asp-controller="Suppliers"
                asp-action="Index">
 
@@ -618,10 +835,9 @@
             </a>
         }
 
-
         @if (canViewCustomers)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Customers" ? "active" : "")"
                asp-controller="Customers"
                asp-action="Index">
 
@@ -636,10 +852,9 @@
             </a>
         }
 
-
         @if (canViewCRM)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "CRM" ? "active" : "")"
                asp-controller="CRM"
                asp-action="Index">
 
@@ -663,10 +878,9 @@
             Operations
         </div>
 
-
         @if (canViewInventory)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Inventories" ? "active" : "")"
                asp-controller="Inventories"
                asp-action="Index">
 
@@ -681,10 +895,9 @@
             </a>
         }
 
-
         @if (canManagePurchasing)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Purchases" ? "active" : "")"
                asp-controller="Purchases"
                asp-action="Index">
 
@@ -699,10 +912,9 @@
             </a>
         }
 
-
         @if (canManageSales)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "SalesOrders" ? "active" : "")"
                asp-controller="SalesOrders"
                asp-action="Index">
 
@@ -717,10 +929,9 @@
             </a>
         }
 
-
         @if (canManageDelivery)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Deliveries" ? "active" : "")"
                asp-controller="Deliveries"
                asp-action="Index">
 
@@ -735,10 +946,9 @@
             </a>
         }
 
-
         @if (canViewBilling)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Billings" ? "active" : "")"
                asp-controller="Billings"
                asp-action="Index">
 
@@ -753,10 +963,9 @@
             </a>
         }
 
-
         @if (canViewReports)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Reports" ? "active" : "")"
                asp-controller="Reports"
                asp-action="Index">
 
@@ -780,10 +989,9 @@
             System
         </div>
 
-
         @if (canManageUsers)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Users" ? "active" : "")"
                asp-controller="Users"
                asp-action="Index">
 
@@ -798,10 +1006,9 @@
             </a>
         }
 
-
         @if (isAuthenticated)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")"
                asp-controller="Home"
                asp-action="Privacy">
 
@@ -816,14 +1023,9 @@
             </a>
         }
 
-
-        <!-- =================================================
-             NOTIFICATIONS
-             ================================================= -->
-
         @if (canViewNotifications)
         {
-            <a class="sidebar-link"
+            <a class="sidebar-link @(currentController == "Notifications" ? "active" : "")"
                asp-controller="Notifications"
                asp-action="Index">
 
@@ -878,8 +1080,9 @@
             {
                 <div class="topbar-user">
 
-
-                    <!-- Notification -->
+                    <!-- =====================================
+                         NOTIFICATIONS
+                         ===================================== -->
 
                     @if (canViewNotifications)
                     {
@@ -905,75 +1108,41 @@
                     }
 
 
-                    <!-- User Avatar -->
+                    <!-- =====================================
+                         USER AVATAR
+                         ===================================== -->
 
                     <div class="user-avatar">
-
-                        @{
-                            var displayName =
-                                User.Identity?.Name ?? "User";
-
-                            var firstLetter =
-                                displayName.Length > 0
-                                    ? displayName.Substring(0, 1).ToUpper()
-                                    : "U";
-                        }
 
                         @firstLetter
 
                     </div>
 
 
-                    <!-- User Information -->
+                    <!-- =====================================
+                         USER INFORMATION
+                         ===================================== -->
 
                     <div class="user-info">
 
                         <div class="user-name">
 
-                            @(User.Identity?.Name ?? "User")
+                            @displayName
 
                         </div>
 
-
                         <div class="user-role">
 
-                            @if (isAdmin)
-                            {
-                                <span>
-                                    Admin
-                                </span>
-                            }
-                            else if (User.IsInRole("Manager"))
-                            {
-                                <span>
-                                    Manager
-                                </span>
-                            }
-                            else if (isSalesBilling)
-                            {
-                                <span>
-                                    Sales Staff / Billing Staff
-                                </span>
-                            }
-                            else if (isDelivery)
-                            {
-                                <span>
-                                    Delivery Staff
-                                </span>
-                            }
-                            else
-                            {
-                                <span>
-                                    User
-                                </span>
-                            }
+                            @displayRole
 
                         </div>
 
                     </div>
 
 
-                    <!-- Logout -->
+                    <!-- =====================================
+                         LOGOUT
+                         ===================================== -->
 
                     <form asp-controller="Account"
                           asp-action="Logout"
@@ -983,7 +1152,7 @@
                         @Html.AntiForgeryToken()
 
                         <button type="submit"
-                                class="btn btn-outline-danger btn-sm"
+                                class="btn btn-outline-danger btn-sm logout-button"
                                 title="Logout">
 
                             <i class="bi bi-box-arrow-right"></i>
@@ -1015,7 +1184,10 @@
 
         <footer class="footer">
 
-            <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="d-flex
+                        justify-content-between
+                        align-items-center
+                        flex-wrap">
 
                 <div>
 
@@ -1028,7 +1200,6 @@
                     All rights reserved.
 
                 </div>
-
 
                 <div>
 
@@ -1049,12 +1220,15 @@
          JAVASCRIPT
          ===================================================== -->
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
 
     <script src="~/js/site.js"
-            asp-append-version="true"></script>
+            asp-append-version="true">
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>
+
 </html>
