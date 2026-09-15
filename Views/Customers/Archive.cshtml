@@ -1,0 +1,190 @@
+@model FoodSupply.Models.Customer
+
+@{
+    ViewData["Title"] = "Archive Customer";
+}
+
+<div class="container mt-4">
+
+    <div class="mb-4">
+        <h1 class="fw-bold" style="color: #123D68;">
+            <i class="bi bi-archive-fill me-2"
+               style="color: #4B9B28;"></i>
+            Archive Customer
+        </h1>
+
+        <p class="text-muted">
+            Confirm that you want to archive this customer record.
+        </p>
+    </div>
+
+
+    <div class="card shadow-sm border-0">
+
+        <!-- Header -->
+        <div class="card-header text-white"
+             style="background: linear-gradient(135deg, #123D68, #4B9B28);">
+
+            <h5 class="mb-0">
+                <i class="bi bi-person-fill me-2"></i>
+                Customer Information
+            </h5>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+            <!-- Warning -->
+            <div class="alert alert-warning">
+
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+
+                <strong>Are you sure you want to archive this customer?</strong>
+
+                <br />
+
+                <small>
+                    The customer will not be deleted. It will be moved to the
+                    Archived Customers list and can be restored later.
+                </small>
+
+            </div>
+
+
+            <!-- Customer Information -->
+            <dl class="row mb-4">
+
+                <dt class="col-sm-4">
+                    Customer Code
+                </dt>
+
+                <dd class="col-sm-8">
+                    @Model.CustomerCode
+                </dd>
+
+
+                <dt class="col-sm-4">
+                    Customer Name
+                </dt>
+
+                <dd class="col-sm-8 fw-semibold">
+                    @Model.CustomerName
+                </dd>
+
+
+                <dt class="col-sm-4">
+                    Contact Person
+                </dt>
+
+                <dd class="col-sm-8">
+                    @(Model.ContactPerson ?? "-")
+                </dd>
+
+
+                <dt class="col-sm-4">
+                    Phone Number
+                </dt>
+
+                <dd class="col-sm-8">
+                    @(Model.PhoneNumber ?? "-")
+                </dd>
+
+
+                <dt class="col-sm-4">
+                    Email
+                </dt>
+
+                <dd class="col-sm-8">
+                    @(Model.Email ?? "-")
+                </dd>
+
+
+                <dt class="col-sm-4">
+                    Customer Type
+                </dt>
+
+                <dd class="col-sm-8">
+                    @Model.CustomerType
+                </dd>
+
+
+                <dt class="col-sm-4">
+                    Status
+                </dt>
+
+                <dd class="col-sm-8">
+
+                    @if (Model.Status == "Active")
+                    {
+                        <span class="badge bg-success">
+                            Active
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">
+                            @Model.Status
+                        </span>
+                    }
+
+                </dd>
+
+            </dl>
+
+
+            <hr />
+
+
+            <!-- Actions -->
+            <div class="d-flex gap-2">
+
+                <!-- Confirm Archive -->
+                <form asp-action="ArchiveConfirmed"
+                      asp-route-id="@Model.Id"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn btn-warning"
+                            onclick="return confirm('Are you sure you want to archive @Model.CustomerName?');">
+
+                        <i class="bi bi-archive me-1"></i>
+
+                        Confirm Archive
+
+                    </button>
+
+                </form>
+
+
+                <!-- View Details -->
+                <a asp-action="Details"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-primary">
+
+                    <i class="bi bi-eye me-1"></i>
+
+                    View Details
+
+                </a>
+
+
+                <!-- Cancel -->
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    <i class="bi bi-x-circle me-1"></i>
+
+                    Cancel
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

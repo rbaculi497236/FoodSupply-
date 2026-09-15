@@ -1,69 +1,314 @@
 ﻿@model FoodSupply.Models.Billing
 
 @{
-    ViewData["Title"] = "Archive Invoice";
+    ViewData["Title"] = "Archive Billing";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-7">
+<div class="container-fluid">
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body text-center p-5">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-                <i class="bi bi-archive text-warning"
-                   style="font-size: 4rem;"></i>
+        <div>
+            <h1 class="fw-bold mb-1">
+                <i class="bi bi-archive-fill me-2"
+                   style="color: #4B9B28;"></i>
+                Archive Billing
+            </h1>
 
-                <h2 class="fw-bold mt-3">
-                    Archive Invoice?
-                </h2>
+            <p class="text-muted mb-0">
+                Confirm that you want to archive this invoice.
+            </p>
+        </div>
 
-                <p class="text-muted">
-                    Are you sure you want to archive
-                    <strong>@Model.InvoiceNumber</strong>?
-                </p>
+        <a asp-action="Index"
+           class="btn btn-secondary">
 
-                <div class="alert alert-warning text-start">
-                    <strong>Invoice:</strong>
-                    @Model.InvoiceNumber
-                    <br />
+            <i class="bi bi-arrow-left me-1"></i>
+            Back to Billings
 
-                    <strong>Sales Order:</strong>
-                    #@Model.SalesOrderId
-                    <br />
+        </a>
 
-                    <strong>Total:</strong>
-                    ₱@Model.TotalAmount.ToString("N2")
-                    <br />
+    </div>
 
-                    <strong>Status:</strong>
-                    @Model.PaymentStatus
+
+    <!-- Billing Information Card -->
+    <div class="card shadow-sm border-0">
+
+        <!-- Blue + Green Header -->
+        <div class="card-header text-white"
+             style="background: linear-gradient(135deg, #123D68, #4B9B28);">
+
+            <h5 class="mb-0">
+
+                <i class="bi bi-receipt me-2"></i>
+
+                Invoice Information
+
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <!-- Invoice Number / Date -->
+            <div class="row mb-4">
+
+                <div class="col-md-6">
+
+                    <strong>Invoice Number:</strong>
+
+                    <p class="mb-0">
+                        @Model.InvoiceNumber
+                    </p>
+
                 </div>
 
+
+                <div class="col-md-6">
+
+                    <strong>Invoice Date:</strong>
+
+                    <p class="mb-0">
+                        @Model.InvoiceDate.ToString("MMM dd, yyyy hh:mm tt")
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Sales Order / Payment Status -->
+            <div class="row mb-4">
+
+                <div class="col-md-6">
+
+                    <strong>Sales Order:</strong>
+
+                    <p class="mb-0">
+                        #@Model.SalesOrderId
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Payment Status:</strong>
+
+                    <p class="mb-0">
+
+                        @if (Model.PaymentStatus == "Paid")
+                        {
+                            <span class="badge bg-success">
+                                Paid
+                            </span>
+                        }
+                        else if (Model.PaymentStatus == "Partially Paid")
+                        {
+                            <span class="badge bg-warning text-dark">
+                                Partially Paid
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">
+                                @Model.PaymentStatus
+                            </span>
+                        }
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Financial Information -->
+            <div class="row mb-4">
+
+                <div class="col-md-4">
+
+                    <strong>Total Amount:</strong>
+
+                    <p class="mb-0">
+                        ₱@Model.TotalAmount.ToString("N2")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Amount Paid:</strong>
+
+                    <p class="mb-0">
+                        ₱@Model.AmountPaid.ToString("N2")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Balance:</strong>
+
+                    <p class="mb-0">
+                        ₱@Model.Balance.ToString("N2")
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Sales Order Information -->
+            @if (Model.SalesOrder != null)
+            {
+                <hr />
+
+                <h5 class="mb-3">
+
+                    <i class="bi bi-cart-check me-2"
+                       style="color: #123D68;"></i>
+
+                    Sales Order Information
+
+                </h5>
+
+
+                <div class="row mb-3">
+
+                    <div class="col-md-6">
+
+                        <strong>Sales Order #:</strong>
+
+                        <p class="mb-0">
+                            #@Model.SalesOrder.Id
+                        </p>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <strong>Order Date:</strong>
+
+                        <p class="mb-0">
+                            @Model.SalesOrder.OrderDate.ToString("MMM dd, yyyy")
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <strong>Sales Order Status:</strong>
+
+                    <p class="mb-0">
+
+                        <span class="badge bg-secondary">
+                            @Model.SalesOrder.Status
+                        </span>
+
+                    </p>
+
+                </div>
+            }
+
+
+            <!-- Remarks -->
+            @if (!string.IsNullOrWhiteSpace(Model.Remarks))
+            {
+                <hr />
+
+                <div class="mb-3">
+
+                    <strong>Remarks:</strong>
+
+                    <p class="mb-0">
+                        @Model.Remarks
+                    </p>
+
+                </div>
+            }
+
+
+            <!-- Archive Warning -->
+            <div class="alert alert-warning mt-4">
+
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+
+                <strong>Are you sure?</strong>
+
+                <p class="mb-0 mt-1">
+
+                    This will archive invoice
+
+                    <strong>
+                        @Model.InvoiceNumber
+                    </strong>.
+
+                    The invoice will not be deleted and can be restored
+                    from the Archived Billings page.
+
+                </p>
+
+            </div>
+
+
+            <!-- ACTION BUTTONS -->
+            <div class="d-flex gap-2">
+
+                <!-- Confirm Archive -->
                 <form asp-action="ArchiveConfirmed"
                       asp-route-id="@Model.Id"
                       method="post">
 
                     @Html.AntiForgeryToken()
 
-                    <div class="d-flex justify-content-center gap-2">
+                    <button type="submit"
+                            class="btn btn-success"
+                            onclick="return confirm('Are you sure you want to archive invoice @Model.InvoiceNumber?');">
 
-                        <a asp-action="Index"
-                           class="btn btn-outline-secondary">
-                            Cancel
-                        </a>
+                        <i class="bi bi-archive me-1"></i>
 
-                        <button type="submit"
-                                class="btn btn-warning">
-                            <i class="bi bi-archive me-1"></i>
-                            Yes, Archive
-                        </button>
+                        Confirm Archive
 
-                    </div>
+                    </button>
 
                 </form>
 
+
+                <!-- View Details -->
+                <a asp-action="Details"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-primary">
+
+                    <i class="bi bi-eye me-1"></i>
+
+                    View Details
+
+                </a>
+
+
+                <!-- Cancel -->
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    <i class="bi bi-x-circle me-1"></i>
+
+                    Cancel
+
+                </a>
+
             </div>
+
         </div>
 
     </div>
+
 </div>

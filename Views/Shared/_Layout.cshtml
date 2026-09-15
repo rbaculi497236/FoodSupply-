@@ -1,25 +1,22 @@
 ﻿@using Microsoft.EntityFrameworkCore
 @using System.Security.Claims
-
 @inject FoodSupply.Data.ApplicationDbContext DbContext
 
 @{
-    /* =========================================================
-       AUTHENTICATION
-       ========================================================= */
+    // =========================================================
+    // AUTHENTICATION
+    // =========================================================
 
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
 
-    // Get the role directly from the authentication cookie/claims.
-    // Trim whitespace and compare case-insensitively below.
     var currentRole = User.Claims
         .FirstOrDefault(c => c.Type == ClaimTypes.Role)
         ?.Value?
         .Trim() ?? "";
 
-    /* =========================================================
-       ROLE CHECKS
-       ========================================================= */
+    // =========================================================
+    // ROLE CHECKS
+    // =========================================================
 
     var isAdmin = string.Equals(
         currentRole,
@@ -45,9 +42,9 @@
         StringComparison.OrdinalIgnoreCase
     );
 
-    /* =========================================================
-       ROLE HIERARCHY
-       ========================================================= */
+    // =========================================================
+    // ROLE PERMISSIONS
+    // =========================================================
 
     var canViewDashboard =
         isAdmin ||
@@ -116,9 +113,9 @@
         isSalesBilling ||
         isDelivery;
 
-    /* =========================================================
-       CURRENT PAGE
-       ========================================================= */
+    // =========================================================
+    // CURRENT PAGE
+    // =========================================================
 
     var currentController =
         ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
@@ -126,9 +123,9 @@
     var currentAction =
         ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 
-    /* =========================================================
-       INVENTORY ALERT COUNT
-       ========================================================= */
+    // =========================================================
+    // INVENTORY ALERT COUNT
+    // =========================================================
 
     var inventoryAlertCount = 0;
 
@@ -153,9 +150,9 @@
             );
     }
 
-    /* =========================================================
-       USER DISPLAY
-       ========================================================= */
+    // =========================================================
+    // USER DISPLAY
+    // =========================================================
 
     var displayName =
         User.Identity?.Name ?? "User";
@@ -223,10 +220,45 @@
           asp-append-version="true" />
 
     <!-- =====================================================
-         LAYOUT CSS
+         FOODSUPPLY THEME
          ===================================================== -->
 
     <style>
+
+        /* =====================================================
+           FOODSUPPLY BRAND COLORS
+           ===================================================== */
+
+        :root {
+
+            --food-blue: #123D68;
+            --food-blue-light: #1F5A91;
+            --food-blue-soft: #EAF2F9;
+
+            --food-green: #4B9B28;
+            --food-green-light: #65B33C;
+            --food-green-soft: #EEF7E9;
+
+            --food-gradient:
+                linear-gradient(
+                    135deg,
+                    #123D68 0%,
+                    #1F5A91 48%,
+                    #4B9B28 100%
+                );
+
+            --food-gradient-soft:
+                linear-gradient(
+                    135deg,
+                    #EAF2F9 0%,
+                    #EEF7E9 100%
+                );
+
+            --food-border: #D9E5EE;
+            --food-text: #263746;
+            --food-muted: #6B7C8C;
+        }
+
 
         /* =====================================================
            GLOBAL
@@ -243,25 +275,37 @@
 
         body {
             margin: 0;
-            background-color: #f5f7fb;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #F7FAFC 0%,
+                    #F1F7F2 100%
+                );
+
             font-family:
                 "Segoe UI",
                 Tahoma,
                 Geneva,
                 Verdana,
                 sans-serif;
+
+            color: var(--food-text);
         }
 
         a {
             text-decoration: none;
         }
 
+
         /* =====================================================
            SIDEBAR
            ===================================================== */
 
         .sidebar {
+
             position: fixed;
+
             top: 0;
             left: 0;
             bottom: 0;
@@ -270,58 +314,93 @@
 
             background: #ffffff;
 
-            border-right: 1px solid #e5e7eb;
+            border-right:
+                1px solid var(--food-border);
 
             overflow-y: auto;
 
             z-index: 1030;
 
             scrollbar-width: thin;
+
+            box-shadow:
+                4px 0 18px rgba(18, 61, 104, 0.06);
         }
+
 
         .sidebar::-webkit-scrollbar {
             width: 6px;
         }
 
         .sidebar::-webkit-scrollbar-thumb {
-            background: #d1d5db;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    var(--food-blue),
+                    var(--food-green)
+                );
+
             border-radius: 10px;
         }
+
 
         /* =====================================================
            SIDEBAR BRAND
            ===================================================== */
 
         .sidebar-brand {
-            height: 75px;
+
+            height: 90px;
 
             display: flex;
+
             align-items: center;
 
-            padding: 10px 20px;
+            padding: 10px 18px;
 
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom:
+                1px solid var(--food-border);
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffffff 0%,
+                    #F3F8F1 100%
+                );
         }
+
 
         .sidebar-brand a {
+
             width: 100%;
+
             display: flex;
+
             align-items: center;
+
+            justify-content: center;
         }
 
+
         .sidebar-brand img {
-            max-width: 185px;
-            max-height: 55px;
+
+            max-width: 190px;
+
+            max-height: 65px;
 
             object-fit: contain;
         }
+
 
         /* =====================================================
            SIDEBAR SECTION
            ===================================================== */
 
         .sidebar-section {
-            padding: 20px 15px 7px;
+
+            padding:
+                20px 15px 7px;
 
             font-size: 11px;
 
@@ -329,16 +408,18 @@
 
             text-transform: uppercase;
 
-            color: #9ca3af;
+            color: var(--food-green);
 
-            letter-spacing: 0.08em;
+            letter-spacing: 0.1em;
         }
 
+
         /* =====================================================
-           SIDEBAR LINK
+           SIDEBAR LINKS
            ===================================================== */
 
         .sidebar-link {
+
             display: flex;
 
             align-items: center;
@@ -347,37 +428,57 @@
 
             margin: 3px 10px;
 
-            padding: 10px 13px;
+            padding: 11px 13px;
 
-            border-radius: 8px;
+            border-radius: 9px;
 
-            color: #4b5563;
+            color: #526271;
 
             font-size: 14px;
 
             transition:
                 background-color 0.2s ease,
                 color 0.2s ease,
-                transform 0.2s ease;
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
         }
 
-        .sidebar-link:hover {
-            background-color: #f0f4ff;
 
-            color: #2563eb;
+        .sidebar-link:hover {
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--food-blue-soft),
+                    var(--food-green-soft)
+                );
+
+            color: var(--food-blue);
 
             transform: translateX(2px);
         }
 
+
         .sidebar-link.active {
-            background-color: #e8f0ff;
 
-            color: #2563eb;
+            background:
+                linear-gradient(
+                    90deg,
+                    #E8F1F8 0%,
+                    #EEF7E9 100%
+                );
 
-            font-weight: 600;
+            color: var(--food-blue);
+
+            font-weight: 700;
+
+            box-shadow:
+                inset 4px 0 0 var(--food-green);
         }
 
+
         .sidebar-icon {
+
             width: 24px;
 
             min-width: 24px;
@@ -389,17 +490,29 @@
             justify-content: center;
 
             font-size: 17px;
+
+            color: var(--food-blue);
         }
 
+
+        .sidebar-link.active .sidebar-icon {
+
+            color: var(--food-green);
+        }
+
+
         .sidebar-link span:last-child {
+
             white-space: nowrap;
         }
+
 
         /* =====================================================
            MAIN WRAPPER
            ===================================================== */
 
         .main-wrapper {
+
             margin-left: 250px;
 
             min-height: 100vh;
@@ -409,16 +522,25 @@
             flex-direction: column;
         }
 
+
         /* =====================================================
            TOPBAR
            ===================================================== */
 
         .topbar {
+
             height: 75px;
 
-            background: #ffffff;
+            background:
+                linear-gradient(
+                    90deg,
+                    #ffffff 0%,
+                    #F8FBFC 55%,
+                    #F3F8F1 100%
+                );
 
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom:
+                1px solid var(--food-border);
 
             display: flex;
 
@@ -433,17 +555,57 @@
             top: 0;
 
             z-index: 1020;
+
+            box-shadow:
+                0 2px 12px rgba(18, 61, 104, 0.05);
         }
+
 
         .topbar-title {
+
             font-size: 20px;
 
-            font-weight: 600;
+            font-weight: 700;
 
-            color: #1f2937;
+            color: var(--food-blue);
+
+            position: relative;
+
+            padding-left: 13px;
         }
 
+
+        .topbar-title::before {
+
+            content: "";
+
+            position: absolute;
+
+            left: 0;
+
+            top: 3px;
+
+            bottom: 3px;
+
+            width: 4px;
+
+            border-radius: 5px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    var(--food-blue),
+                    var(--food-green)
+                );
+        }
+
+
+        /* =====================================================
+           USER AREA
+           ===================================================== */
+
         .topbar-user {
+
             display: flex;
 
             align-items: center;
@@ -451,20 +613,23 @@
             gap: 10px;
         }
 
-        /* =====================================================
-           USER AVATAR
-           ===================================================== */
 
         .user-avatar {
-            width: 38px;
 
-            height: 38px;
+            width: 40px;
 
-            min-width: 38px;
+            height: 40px;
+
+            min-width: 40px;
 
             border-radius: 50%;
 
-            background: #2563eb;
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--food-blue),
+                    var(--food-green)
+                );
 
             color: #ffffff;
 
@@ -474,42 +639,51 @@
 
             justify-content: center;
 
-            font-weight: 600;
+            font-weight: 700;
 
             font-size: 15px;
+
+            box-shadow:
+                0 3px 8px rgba(18, 61, 104, 0.2);
         }
 
-        /* =====================================================
-           USER INFO
-           ===================================================== */
 
         .user-info {
+
             line-height: 1.2;
 
-            min-width: 100px;
+            min-width: 120px;
         }
 
+
         .user-name {
-            font-weight: 600;
+
+            font-weight: 700;
 
             font-size: 14px;
 
-            color: #1f2937;
+            color: var(--food-blue);
         }
+
 
         .user-role {
+
             font-size: 12px;
 
-            color: #6b7280;
+            color: var(--food-green);
 
             margin-top: 3px;
+
+            font-weight: 600;
         }
+
 
         /* =====================================================
            NOTIFICATION
            ===================================================== */
 
         .notification-link {
+
             position: relative;
 
             display: inline-flex;
@@ -524,20 +698,28 @@
 
             border-radius: 50%;
 
-            color: #4b5563;
+            color: var(--food-blue);
 
             transition:
                 background-color 0.2s ease,
-                color 0.2s ease;
+                color 0.2s ease,
+                transform 0.2s ease;
         }
+
 
         .notification-link:hover {
-            background: #f3f4f6;
 
-            color: #2563eb;
+            background:
+                var(--food-green-soft);
+
+            color: var(--food-green);
+
+            transform: translateY(-1px);
         }
 
+
         .notification-badge {
+
             position: absolute;
 
             top: 0;
@@ -552,13 +734,13 @@
 
             border-radius: 50px;
 
-            background: #dc3545;
+            background: var(--food-green);
 
             color: #ffffff;
 
             font-size: 10px;
 
-            font-weight: 600;
+            font-weight: 700;
 
             display: flex;
 
@@ -566,14 +748,17 @@
 
             justify-content: center;
 
-            border: 2px solid #ffffff;
+            border:
+                2px solid #ffffff;
         }
+
 
         /* =====================================================
            CONTENT
            ===================================================== */
 
         .content {
+
             flex: 1;
 
             padding: 25px;
@@ -581,18 +766,196 @@
             width: 100%;
         }
 
+
+        /* =====================================================
+           CARDS
+           ===================================================== */
+
+        .card {
+
+            border:
+                1px solid var(--food-border);
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 4px 14px rgba(18, 61, 104, 0.06);
+
+            overflow: hidden;
+        }
+
+
+        .card-header {
+
+            border-bottom:
+                1px solid var(--food-border);
+        }
+
+
+        /* =====================================================
+           FOODSUPPLY BUTTONS
+           ===================================================== */
+
+        .btn-primary {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--food-blue),
+                    var(--food-blue-light)
+                ) !important;
+
+            border-color:
+                var(--food-blue) !important;
+        }
+
+
+        .btn-primary:hover {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0D3154,
+                    var(--food-blue)
+                ) !important;
+
+            border-color:
+                #0D3154 !important;
+        }
+
+
+        .btn-success {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--food-green),
+                    var(--food-green-light)
+                ) !important;
+
+            border-color:
+                var(--food-green) !important;
+        }
+
+
+        .btn-success:hover {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #3D8520,
+                    var(--food-green)
+                ) !important;
+        }
+
+
+        .btn-outline-primary {
+
+            color: var(--food-blue) !important;
+
+            border-color:
+                var(--food-blue) !important;
+        }
+
+
+        .btn-outline-primary:hover {
+
+            color: #ffffff !important;
+
+            background:
+                var(--food-blue) !important;
+
+            border-color:
+                var(--food-blue) !important;
+        }
+
+
+        .btn-outline-success {
+
+            color: var(--food-green) !important;
+
+            border-color:
+                var(--food-green) !important;
+        }
+
+
+        .btn-outline-success:hover {
+
+            color: #ffffff !important;
+
+            background:
+                var(--food-green) !important;
+
+            border-color:
+                var(--food-green) !important;
+        }
+
+
+        /* =====================================================
+           TABLES
+           ===================================================== */
+
+        .table thead {
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--food-blue-soft),
+                    var(--food-green-soft)
+                );
+        }
+
+
+        .table thead th {
+
+            color: var(--food-blue);
+
+            font-weight: 700;
+
+            border-bottom:
+                2px solid var(--food-green);
+        }
+
+
+        .table-hover tbody tr:hover {
+
+            background-color:
+                #F4F9F3;
+        }
+
+
+        /* =====================================================
+           BADGES
+           ===================================================== */
+
+        .badge.bg-success {
+
+            background-color:
+                var(--food-green) !important;
+        }
+
+
         /* =====================================================
            FOOTER
            ===================================================== */
 
         .footer {
-            background: #ffffff;
 
-            border-top: 1px solid #e5e7eb;
+            background:
+                linear-gradient(
+                    90deg,
+                    #ffffff,
+                    #F3F8F1
+                );
 
-            padding: 15px 25px;
+            border-top:
+                1px solid var(--food-border);
 
-            color: #6b7280;
+            padding:
+                15px 25px;
+
+            color:
+                var(--food-muted);
 
             font-size: 13px;
 
@@ -601,11 +964,20 @@
             white-space: normal;
         }
 
+
+        .footer strong {
+
+            color:
+                var(--food-blue);
+        }
+
+
         /* =====================================================
-           LOGOUT BUTTON
+           LOGOUT
            ===================================================== */
 
         .logout-button {
+
             width: 38px;
 
             height: 38px;
@@ -617,7 +989,77 @@
             justify-content: center;
 
             border-radius: 8px;
+
+            color: var(--food-blue);
+
+            border-color:
+                var(--food-blue);
         }
+
+
+        .logout-button:hover {
+
+            background:
+                var(--food-blue);
+
+            border-color:
+                var(--food-blue);
+
+            color: #ffffff;
+        }
+
+
+        /* =====================================================
+           FORM CONTROLS
+           ===================================================== */
+
+        .form-control:focus,
+        .form-select:focus {
+
+            border-color:
+                var(--food-green);
+
+            box-shadow:
+                0 0 0 0.2rem
+                rgba(75, 155, 40, 0.15);
+        }
+
+
+        /* =====================================================
+           LINKS
+           ===================================================== */
+
+        .content a:not(.btn) {
+
+            color:
+                var(--food-blue);
+        }
+
+
+        .content a:not(.btn):hover {
+
+            color:
+                var(--food-green);
+        }
+
+
+        /* =====================================================
+           ALERTS
+           ===================================================== */
+
+        .alert-success {
+
+            border-left:
+                4px solid var(--food-green);
+        }
+
+
+        .alert-info {
+
+            border-left:
+                4px solid var(--food-blue);
+        }
+
 
         /* =====================================================
            RESPONSIVE - TABLET
@@ -626,22 +1068,26 @@
         @@media (max-width: 991.98px) {
 
             .sidebar {
+
                 width: 220px;
             }
 
             .main-wrapper {
+
                 margin-left: 220px;
             }
 
             .topbar {
+
                 padding: 0 20px;
             }
 
             .content {
+
                 padding: 20px;
             }
-
         }
+
 
         /* =====================================================
            RESPONSIVE - MOBILE
@@ -650,6 +1096,7 @@
         @@media (max-width: 767.98px) {
 
             .sidebar {
+
                 position: relative;
 
                 width: 100%;
@@ -660,14 +1107,17 @@
 
                 border-right: none;
 
-                border-bottom: 1px solid #e5e7eb;
+                border-bottom:
+                    1px solid var(--food-border);
             }
 
             .main-wrapper {
+
                 margin-left: 0;
             }
 
             .topbar {
+
                 position: relative;
 
                 height: auto;
@@ -678,26 +1128,31 @@
             }
 
             .topbar-title {
+
                 font-size: 18px;
             }
 
             .content {
+
                 padding: 15px;
             }
 
             .sidebar-brand {
+
                 justify-content: center;
             }
 
             .user-info {
+
                 display: none;
             }
 
             .topbar-user {
+
                 gap: 6px;
             }
-
         }
+
 
         /* =====================================================
            VERY SMALL MOBILE
@@ -706,17 +1161,19 @@
         @@media (max-width: 480px) {
 
             .topbar-title {
+
                 font-size: 16px;
             }
 
             .topbar {
+
                 padding: 10px;
             }
 
             .content {
+
                 padding: 10px;
             }
-
         }
 
     </style>
@@ -724,6 +1181,7 @@
     @await RenderSectionAsync("Styles", required: false)
 
 </head>
+
 
 <body>
 
@@ -733,9 +1191,7 @@
 
     <aside class="sidebar">
 
-        <!-- =================================================
-             LOGO
-             ================================================= -->
+        <!-- LOGO -->
 
         <div class="sidebar-brand">
 
@@ -757,6 +1213,7 @@
         <div class="sidebar-section">
             Main
         </div>
+
 
         @if (canViewDashboard)
         {
@@ -784,6 +1241,7 @@
             Management
         </div>
 
+
         @if (canViewProducts)
         {
             <a class="sidebar-link @(currentController == "Products" ? "active" : "")"
@@ -800,6 +1258,7 @@
 
             </a>
         }
+
 
         @if (canManageCategories)
         {
@@ -818,6 +1277,7 @@
             </a>
         }
 
+
         @if (canManageSuppliers)
         {
             <a class="sidebar-link @(currentController == "Suppliers" ? "active" : "")"
@@ -835,6 +1295,7 @@
             </a>
         }
 
+
         @if (canViewCustomers)
         {
             <a class="sidebar-link @(currentController == "Customers" ? "active" : "")"
@@ -851,6 +1312,7 @@
 
             </a>
         }
+
 
         @if (canViewCRM)
         {
@@ -878,6 +1340,7 @@
             Operations
         </div>
 
+
         @if (canViewInventory)
         {
             <a class="sidebar-link @(currentController == "Inventories" ? "active" : "")"
@@ -894,6 +1357,7 @@
 
             </a>
         }
+
 
         @if (canManagePurchasing)
         {
@@ -912,6 +1376,7 @@
             </a>
         }
 
+
         @if (canManageSales)
         {
             <a class="sidebar-link @(currentController == "SalesOrders" ? "active" : "")"
@@ -928,6 +1393,7 @@
 
             </a>
         }
+
 
         @if (canManageDelivery)
         {
@@ -946,6 +1412,7 @@
             </a>
         }
 
+
         @if (canViewBilling)
         {
             <a class="sidebar-link @(currentController == "Billings" ? "active" : "")"
@@ -962,6 +1429,7 @@
 
             </a>
         }
+
 
         @if (canViewReports)
         {
@@ -989,6 +1457,7 @@
             System
         </div>
 
+
         @if (canManageUsers)
         {
             <a class="sidebar-link @(currentController == "Users" ? "active" : "")"
@@ -1006,6 +1475,7 @@
             </a>
         }
 
+
         @if (isAuthenticated)
         {
             <a class="sidebar-link @(currentController == "Home" && currentAction == "Privacy" ? "active" : "")"
@@ -1022,6 +1492,7 @@
 
             </a>
         }
+
 
         @if (canViewNotifications)
         {
@@ -1080,9 +1551,8 @@
             {
                 <div class="topbar-user">
 
-                    <!-- =====================================
-                         NOTIFICATIONS
-                         ===================================== -->
+
+                    <!-- NOTIFICATIONS -->
 
                     @if (canViewNotifications)
                     {
@@ -1108,9 +1578,7 @@
                     }
 
 
-                    <!-- =====================================
-                         USER AVATAR
-                         ===================================== -->
+                    <!-- USER AVATAR -->
 
                     <div class="user-avatar">
 
@@ -1119,9 +1587,7 @@
                     </div>
 
 
-                    <!-- =====================================
-                         USER INFORMATION
-                         ===================================== -->
+                    <!-- USER INFORMATION -->
 
                     <div class="user-info">
 
@@ -1140,9 +1606,7 @@
                     </div>
 
 
-                    <!-- =====================================
-                         LOGOUT
-                         ===================================== -->
+                    <!-- LOGOUT -->
 
                     <form asp-controller="Account"
                           asp-action="Logout"
@@ -1152,7 +1616,7 @@
                         @Html.AntiForgeryToken()
 
                         <button type="submit"
-                                class="btn btn-outline-danger btn-sm logout-button"
+                                class="btn btn-outline-primary btn-sm logout-button"
                                 title="Logout">
 
                             <i class="bi bi-box-arrow-right"></i>
@@ -1204,7 +1668,9 @@
                 <div>
 
                     <span class="text-muted">
-                        Food Supply ERP System
+
+                        Food Supply ERP & CRM System
+
                     </span>
 
                 </div>

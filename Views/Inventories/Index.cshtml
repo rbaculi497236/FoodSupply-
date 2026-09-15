@@ -6,8 +6,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="fw-bold mb-1">
-            <i class="bi bi-box-seam-fill text-primary me-2"></i>
+        <h1 class="fw-bold mb-1" style="color: #123D68;">
+            <i class="bi bi-box-seam-fill me-2"></i>
             Inventory
         </h1>
 
@@ -16,11 +16,19 @@
         </p>
     </div>
 
-    <a asp-action="Archived" class="btn btn-outline-secondary me-2">Archived</a>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>
-        Add Inventory
-    </a>
+    <div>
+        <a asp-action="Archived"
+           class="btn btn-outline-secondary me-2">
+            <i class="bi bi-archive me-1"></i>
+            Archived
+        </a>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>
+            Add Inventory
+        </a>
+    </div>
 </div>
 
 @await Html.PartialAsync("_TableTools")
@@ -31,23 +39,29 @@
         @if (!Model.Any())
         {
             <div class="text-center py-5">
+
                 <i class="bi bi-box-seam display-4 text-muted"></i>
 
-                <h4 class="mt-3">No inventory records found</h4>
+                <h4 class="mt-3">
+                    No inventory records found
+                </h4>
 
                 <p class="text-muted">
                     Add an inventory record to start managing stock.
                 </p>
 
-                <a asp-action="Create" class="btn btn-primary">
+                <a asp-action="Create"
+                   class="btn btn-primary">
                     <i class="bi bi-plus-circle me-1"></i>
                     Add Inventory
                 </a>
+
             </div>
         }
         else
         {
             <div class="table-responsive">
+
                 <table class="table table-hover align-middle">
 
                     <thead class="table-light">
@@ -63,9 +77,12 @@
                     </thead>
 
                     <tbody>
+
                         @foreach (var item in Model)
                         {
                             <tr>
+
+                                <!-- Product -->
                                 <td>
                                     <strong>
                                         @(item.Product?.ProductName ?? "Unknown Product")
@@ -74,21 +91,28 @@
                                     @if (item.Product != null)
                                     {
                                         <br />
+
                                         <small class="text-muted">
                                             @item.Product.ProductCode
                                         </small>
                                     }
                                 </td>
 
+                                <!-- Stock Quantity -->
                                 <td>
-                                    <strong>@item.StockQuantity</strong>
+                                    <strong>
+                                        @item.StockQuantity
+                                    </strong>
                                 </td>
 
+                                <!-- Reorder Level -->
                                 <td>
                                     @item.ReorderLevel
                                 </td>
 
+                                <!-- Status -->
                                 <td>
+
                                     @if (item.StockStatus == "In Stock")
                                     {
                                         <span class="badge bg-success">
@@ -110,53 +134,86 @@
                                             Out of Stock
                                         </span>
                                     }
+
                                 </td>
 
+                                <!-- Last Updated -->
                                 <td>
                                     @item.LastUpdated.ToString("MMM dd, yyyy hh:mm tt")
                                 </td>
 
+                                <!-- Alerts -->
                                 <td>
-                                    @if (item.ExpirationDate.HasValue && item.ExpirationDate.Value.Date <= DateTime.Today.AddDays(30))
-                                    { <span class="badge bg-warning text-dark">Expiring</span> }
+
+                                    @if (item.ExpirationDate.HasValue &&
+                                        item.ExpirationDate.Value.Date <= DateTime.Today.AddDays(30))
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-calendar-x me-1"></i>
+                                            Expiring
+                                        </span>
+                                    }
+
                                     @if (item.SpoiledQuantity > 0)
-                                    { <span class="badge bg-danger">Spoiled</span> }
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-exclamation-octagon me-1"></i>
+                                            Spoiled
+                                        </span>
+                                    }
+
                                     @if (item.DamagedQuantity > 0)
-                                    { <span class="badge bg-danger">Damaged</span> }
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-box-seam me-1"></i>
+                                            Damaged
+                                        </span>
+                                    }
+
                                 </td>
 
+                                <!-- Actions -->
                                 <td class="text-center">
+
                                     <div class="btn-group" role="group">
 
+                                        <!-- Details -->
                                         <a asp-action="Details"
                                            asp-route-id="@item.Id"
                                            class="btn btn-sm btn-outline-info"
-                                           title="Details">
+                                           title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>
 
+                                        <!-- Edit -->
                                         <a asp-action="Edit"
                                            asp-route-id="@item.Id"
                                            class="btn btn-sm btn-outline-primary"
-                                           title="Edit">
+                                           title="Edit Inventory">
                                             <i class="bi bi-pencil"></i>
                                         </a>
 
-                                        <a asp-action="Delete"
+                                        <!-- Archive -->
+                                        <a asp-action="Archive"
                                            asp-route-id="@item.Id"
-                                           class="btn btn-sm btn-outline-danger"
-                                           title="Archive">
+                                           class="btn btn-sm btn-outline-warning"
+                                           title="Archive Inventory">
                                             <i class="bi bi-archive"></i>
                                         </a>
 
                                     </div>
+
                                 </td>
+
                             </tr>
                         }
+
                     </tbody>
 
                 </table>
+
             </div>
         }
+
     </div>
 </div>

@@ -44,6 +44,9 @@ namespace FoodSupply.Data
         // Billing
         public DbSet<Billing> Billings { get; set; }
 
+        // Customer Concerns
+        public DbSet<CustomerConcern> CustomerConcerns { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
