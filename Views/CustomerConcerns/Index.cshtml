@@ -30,6 +30,8 @@
         </div>
     </div>
 
+    @await Html.PartialAsync("_TableTools")
+
     @if (!Model.Any())
     {
         <div class="alert alert-info">

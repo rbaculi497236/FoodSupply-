@@ -19,12 +19,45 @@
 </form>
 @if (pageCount > 1)
 {
-    <nav aria-label="Table pages">
-        <ul class="pagination pagination-sm mb-0">
+    <nav aria-label="Pagination" class="mt-3">
+        <ul class="pagination mb-0 flex-wrap">
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-controller="@controller"
+                   asp-action="@action"
+                   asp-route-search="@search"
+                   asp-route-page="@(page - 1)"
+                   aria-label="Previous page"
+                   style="color: #123D68;">
+                    <span aria-hidden="true">&laquo;</span> Previous
+                </a>
+            </li>
             @for (var number = 1; number <= pageCount; number++)
             {
-                <li class="page-item @(number == page ? "active" : "")"><a class="page-link" asp-controller="@controller" asp-action="@action" asp-route-search="@search" asp-route-page="@number">@number</a></li>
+                var isCurrentPage = number == page;
+                <li class="page-item @(isCurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       asp-controller="@controller"
+                       asp-action="@action"
+                       asp-route-search="@search"
+                       asp-route-page="@number"
+                       aria-current="@(isCurrentPage ? "page" : null)"
+                       style="color: @(isCurrentPage ? "#ffffff" : "#123D68"); background-color: @(isCurrentPage ? "#4B9B28" : "#ffffff"); border-color: @(isCurrentPage ? "#4B9B28" : "#dee2e6");">
+                        @number
+                    </a>
+                </li>
             }
+            <li class="page-item @(page == pageCount ? "disabled" : "")">
+                <a class="page-link"
+                   asp-controller="@controller"
+                   asp-action="@action"
+                   asp-route-search="@search"
+                   asp-route-page="@(page + 1)"
+                   aria-label="Next page"
+                   style="color: #123D68;">
+                    Next <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
         </ul>
     </nav>
 }

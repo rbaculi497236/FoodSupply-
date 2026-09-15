@@ -1,599 +1,535 @@
 @model FoodSupply.Models.DashboardViewModel
+@inject IConfiguration Configuration
 
 @{
-ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Dashboard";
+
+    var weatherLocation = Configuration["Weather:LocationName"] ?? "Manila, Philippines";
+    var weatherLatitude = Configuration["Weather:Latitude"] ?? "14.5995";
+    var weatherLongitude = Configuration["Weather:Longitude"] ?? "120.9842";
+    var weatherTimezone = Configuration["Weather:Timezone"] ?? "Asia/Manila";
 }
 
-<div class="container-fluid">
+<div class="dashboard-page">
 
-<!-- HEADER -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="fw-bold mb-1">
-            <i class="bi bi-speedometer2 text-primary me-2"></i>
-            Dashboard
-        </h1>
+    <!-- ================= HEADER ================= -->
+    <div class="dashboard-header">
+        <div>
+            <div class="dashboard-title">
+                <div class="title-icon">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
 
-        <p class="text-muted mb-0">
-            Welcome to your FoodSupply ERP dashboard.
-        </p>
-    </div>
+                <div>
+                    <h1>Dashboard</h1>
+                    <p>Welcome to your FoodSupply ERP dashboard.</p>
+                </div>
+            </div>
+        </div>
 
-    <div>
-        <span class="text-muted">
-            <i class="bi bi-calendar3 me-1"></i>
+        <div class="dashboard-date">
+            <i class="bi bi-calendar3"></i>
             @DateTime.Now.ToString("MMMM dd, yyyy")
-        </span>
+        </div>
     </div>
-</div>
 
 
-<!-- SUMMARY CARDS -->
-<div class="row g-4 mb-4">
+    <!-- ================= WEATHER ================= -->
+    <div class="weather-card"
+         id="weather-card"
+         data-location="@weatherLocation"
+         data-latitude="@weatherLatitude"
+         data-longitude="@weatherLongitude"
+         data-timezone="@weatherTimezone">
 
-    <!-- Products -->
-    <div class="col-xl col-md-6">
-        <div class="card dashboard-card shadow-sm border-0 h-100">
-            <div class="card-body">
+        <div class="weather-header">
+            <div>
+                <h5>
+                    <i class="bi bi-cloud-sun"></i>
+                    Weather
+                </h5>
 
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-muted mb-1">
-                            Total Products
-                        </p>
+                <span id="weather-updated">
+                    Loading current conditions...
+                </span>
+            </div>
 
-                        <h2 class="fw-bold mb-0">
-                            @Model.TotalProducts
-                        </h2>
+            <button type="button"
+                    class="weather-refresh"
+                    id="refresh-weather"
+                    aria-label="Refresh weather">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+
+        <div id="weather-content" class="weather-content">
+            <div class="text-muted small">
+                Retrieving forecast...
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= OVERVIEW ================= -->
+    <div class="section-heading">
+        <div>
+            <span class="section-label">OVERVIEW</span>
+            <h4>Business Overview</h4>
+        </div>
+    </div>
+
+    <div class="overview-grid">
+
+        <!-- PRODUCTS -->
+        <a asp-controller="Products"
+           asp-action="Index"
+           class="overview-card">
+
+            <div class="overview-icon blue">
+                <i class="bi bi-box-seam"></i>
+            </div>
+
+            <div class="overview-info">
+                <span>Total Products</span>
+                <strong>@Model.TotalProducts</strong>
+                <small>View products <i class="bi bi-arrow-right"></i></small>
+            </div>
+        </a>
+
+
+        <!-- CUSTOMERS -->
+        <a asp-controller="Customers"
+           asp-action="Index"
+           class="overview-card">
+
+            <div class="overview-icon green">
+                <i class="bi bi-people"></i>
+            </div>
+
+            <div class="overview-info">
+                <span>Customers</span>
+                <strong>@Model.TotalCustomers</strong>
+                <small>View customers <i class="bi bi-arrow-right"></i></small>
+            </div>
+        </a>
+
+
+        <!-- SUPPLIERS -->
+        <a asp-controller="Suppliers"
+           asp-action="Index"
+           class="overview-card">
+
+            <div class="overview-icon orange">
+                <i class="bi bi-truck"></i>
+            </div>
+
+            <div class="overview-info">
+                <span>Suppliers</span>
+                <strong>@Model.TotalSuppliers</strong>
+                <small>View suppliers <i class="bi bi-arrow-right"></i></small>
+            </div>
+        </a>
+
+
+        <!-- CATEGORIES -->
+        <a asp-controller="Categories"
+           asp-action="Index"
+           class="overview-card">
+
+            <div class="overview-icon cyan">
+                <i class="bi bi-tags"></i>
+            </div>
+
+            <div class="overview-info">
+                <span>Categories</span>
+                <strong>@Model.TotalCategories</strong>
+                <small>View categories <i class="bi bi-arrow-right"></i></small>
+            </div>
+        </a>
+
+
+        <!-- USERS -->
+        <a asp-controller="Users"
+           asp-action="Index"
+           class="overview-card">
+
+            <div class="overview-icon purple">
+                <i class="bi bi-person-gear"></i>
+            </div>
+
+            <div class="overview-info">
+                <span>System Users</span>
+                <strong>@Model.TotalUsers</strong>
+                <small>Manage users <i class="bi bi-arrow-right"></i></small>
+            </div>
+        </a>
+
+    </div>
+
+
+    <!-- ================= FINANCIAL ================= -->
+    <div class="section-heading financial-heading">
+        <div>
+            <span class="section-label">FINANCIAL</span>
+            <h4>Financial Summary</h4>
+        </div>
+    </div>
+
+    <div class="financial-grid">
+
+        <!-- TOTAL SALES -->
+        <div class="financial-card sales-card">
+
+            <div class="financial-top">
+                <div class="financial-icon blue">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+
+                <span>Total Sales</span>
+            </div>
+
+            <div class="financial-value">
+                ₱@Model.TotalSales.ToString("N2")
+            </div>
+
+            <div class="financial-footer">
+                <span>
+                    <i class="bi bi-graph-up"></i>
+                    All active sales orders
+                </span>
+            </div>
+
+        </div>
+
+
+        <!-- TOTAL PAID -->
+        <div class="financial-card paid-card">
+
+            <div class="financial-top">
+                <div class="financial-icon green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+
+                <span>Total Paid</span>
+            </div>
+
+            <div class="financial-value">
+                ₱@Model.TotalPaid.ToString("N2")
+            </div>
+
+            <div class="financial-footer success">
+                <i class="bi bi-arrow-up"></i>
+                Payments received
+            </div>
+
+        </div>
+
+
+        <!-- OUTSTANDING -->
+        <a asp-controller="Billings"
+           asp-action="Index"
+           class="financial-card outstanding-card">
+
+            <div class="financial-top">
+                <div class="financial-icon red">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+
+                <span>Outstanding Balance</span>
+            </div>
+
+            <div class="financial-value">
+                ₱@Model.OutstandingBalance.ToString("N2")
+            </div>
+
+            <div class="financial-footer danger">
+                View invoices
+                <i class="bi bi-arrow-right"></i>
+            </div>
+
+        </a>
+
+    </div>
+
+
+    <!-- ================= OPERATIONS ================= -->
+    <div class="section-heading">
+        <div>
+            <span class="section-label">OPERATIONS</span>
+            <h4>Current Status</h4>
+        </div>
+    </div>
+
+    <div class="operations-grid">
+
+        <!-- INVENTORY -->
+        <div class="status-card">
+
+            <div class="status-icon red">
+                <i class="bi bi-boxes"></i>
+            </div>
+
+            <div>
+                <span>Inventory</span>
+
+                <strong class="danger-number">
+                    @Model.LowStockProducts
+                </strong>
+
+                <small>Low-stock products</small>
+            </div>
+
+        </div>
+
+
+        <!-- SALES ORDERS -->
+        <div class="status-card">
+
+            <div class="status-icon orange">
+                <i class="bi bi-cart"></i>
+            </div>
+
+            <div>
+                <span>Sales Orders</span>
+
+                <strong class="warning-number">
+                    @Model.PendingSalesOrders
+                </strong>
+
+                <small>Pending / processing</small>
+            </div>
+
+        </div>
+
+
+        <!-- DELIVERIES -->
+        <div class="status-card">
+
+            <div class="status-icon blue">
+                <i class="bi bi-truck"></i>
+            </div>
+
+            <div>
+                <span>Deliveries</span>
+
+                <strong class="blue-number">
+                    @Model.PendingDeliveries
+                </strong>
+
+                <small>Pending deliveries</small>
+            </div>
+
+        </div>
+
+
+        <!-- INVOICES -->
+        <div class="status-card">
+
+            <div class="status-icon red">
+                <i class="bi bi-receipt"></i>
+            </div>
+
+            <div>
+                <span>Invoices</span>
+
+                <strong class="danger-number">
+                    @Model.UnpaidInvoices
+                </strong>
+
+                <small>Unpaid invoices</small>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= RECENT ACTIVITY ================= -->
+    <div class="section-heading activity-heading">
+        <div>
+            <span class="section-label">RECENT ACTIVITY</span>
+            <h4>Latest Transactions</h4>
+        </div>
+    </div>
+
+
+    <div class="activity-grid">
+
+        <!-- RECENT SALES ORDERS -->
+        <div class="activity-card">
+
+            <div class="activity-header">
+
+                <div class="activity-title">
+                    <div class="activity-icon blue">
+                        <i class="bi bi-cart-check"></i>
                     </div>
 
-                    <div class="dashboard-icon bg-primary-subtle text-primary">
-                        <i class="bi bi-box-seam"></i>
+                    <div>
+                        <h5>Recent Sales Orders</h5>
+                        <span>Latest customer orders</span>
                     </div>
                 </div>
 
-                <a asp-controller="Products"
+                <a asp-controller="SalesOrders"
                    asp-action="Index"
-                   class="small text-decoration-none">
-                    View Products
-                    <i class="bi bi-arrow-right"></i>
+                   class="view-button">
+                    View All
                 </a>
 
             </div>
-        </div>
-    </div>
 
 
-    <!-- Customers -->
-    <div class="col-xl col-md-6">
-        <div class="card dashboard-card shadow-sm border-0 h-100">
-            <div class="card-body">
+            <div class="table-wrapper">
 
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-muted mb-1">
-                            Customers
-                        </p>
+                @if (Model.RecentSalesOrders.Any())
+                {
+                    <table class="dashboard-table">
 
-                        <h2 class="fw-bold mb-0">
-                            @Model.TotalCustomers
-                        </h2>
+                        <thead>
+                            <tr>
+                                <th>ORDER</th>
+                                <th>CUSTOMER</th>
+                                <th>DATE</th>
+                                <th>STATUS</th>
+                                <th class="text-end">TOTAL</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var order in Model.RecentSalesOrders)
+                            {
+                                <tr>
+
+                                    <td>
+                                        <strong>#@order.Id</strong>
+                                    </td>
+
+                                    <td>
+                                        @(order.Customer?.CustomerName ?? "N/A")
+                                    </td>
+
+                                    <td>
+                                        @order.OrderDate.ToString("MMM dd, yyyy")
+                                    </td>
+
+                                    <td>
+
+                                        @if (order.Status == "Delivered")
+                                        {
+                                            <span class="status-badge success">
+                                                Delivered
+                                            </span>
+                                        }
+                                        else if (order.Status == "Processing")
+                                        {
+                                            <span class="status-badge warning">
+                                                Processing
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge neutral">
+                                                @order.Status
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    <td class="text-end">
+                                        <strong>
+                                            ₱@order.TotalAmount.ToString("N2")
+                                        </strong>
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-cart-x"></i>
+                        <p>No sales orders yet.</p>
                     </div>
-
-                    <div class="dashboard-icon bg-success-subtle text-success">
-                        <i class="bi bi-people"></i>
-                    </div>
-                </div>
-
-                <a asp-controller="Customers"
-                   asp-action="Index"
-                   class="small text-decoration-none">
-                    View Customers
-                    <i class="bi bi-arrow-right"></i>
-                </a>
+                }
 
             </div>
+
         </div>
-    </div>
 
 
-    <!-- Suppliers -->
-    <div class="col-xl col-md-6">
-        <div class="card dashboard-card shadow-sm border-0 h-100">
-            <div class="card-body">
+        <!-- RECENT INVOICES -->
+        <div class="activity-card">
 
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-muted mb-1">
-                            Suppliers
-                        </p>
+            <div class="activity-header">
 
-                        <h2 class="fw-bold mb-0">
-                            @Model.TotalSuppliers
-                        </h2>
-                    </div>
-
-                    <div class="dashboard-icon bg-warning-subtle text-warning">
-                        <i class="bi bi-truck"></i>
-                    </div>
-                </div>
-
-                <a asp-controller="Suppliers"
-                   asp-action="Index"
-                   class="small text-decoration-none">
-                    View Suppliers
-                    <i class="bi bi-arrow-right"></i>
-                </a>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Categories -->
-    <div class="col-xl col-md-6">
-        <div class="card dashboard-card shadow-sm border-0 h-100">
-            <div class="card-body">
-
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-muted mb-1">
-                            Categories
-                        </p>
-
-                        <h2 class="fw-bold mb-0">
-                            @Model.TotalCategories
-                        </h2>
-                    </div>
-
-                    <div class="dashboard-icon bg-info-subtle text-info">
-                        <i class="bi bi-tags"></i>
-                    </div>
-                </div>
-
-                <a asp-controller="Categories"
-                   asp-action="Index"
-                   class="small text-decoration-none">
-                    View Categories
-                    <i class="bi bi-arrow-right"></i>
-                </a>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Users -->
-    <div class="col-xl col-md-6">
-        <div class="card dashboard-card shadow-sm border-0 h-100">
-            <div class="card-body">
-
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-muted mb-1">
-                            System Users
-                        </p>
-
-                        <h2 class="fw-bold mb-0">
-                            @Model.TotalUsers
-                        </h2>
-                    </div>
-
-                    <div class="dashboard-icon bg-danger-subtle text-danger">
-                        <i class="bi bi-person-gear"></i>
-                    </div>
-                </div>
-
-                <a asp-controller="Users"
-                   asp-action="Index"
-                   class="small text-decoration-none">
-                    Manage Users
-                    <i class="bi bi-arrow-right"></i>
-                </a>
-
-            </div>
-        </div>
-    </div>
-
-</div>
-
-
-<!-- SALES / BILLING -->
-<div class="row g-4 mb-4">
-
-    <!-- Total Sales -->
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-
-                <div class="d-flex align-items-center mb-3">
-
-                    <div class="dashboard-icon bg-primary-subtle text-primary me-3">
-                        <i class="bi bi-cash-stack"></i>
+                <div class="activity-title">
+                    <div class="activity-icon green">
+                        <i class="bi bi-receipt"></i>
                     </div>
 
                     <div>
-                        <h6 class="text-muted mb-0">
-                            Total Sales
-                        </h6>
-
-                        <h3 class="fw-bold mb-0">
-                            ₱@Model.TotalSales.ToString("N2")
-                        </h3>
+                        <h5>Recent Invoices</h5>
+                        <span>Latest billing activity</span>
                     </div>
-
-                </div>
-
-                <div class="progress" style="height: 7px;">
-                    <div class="progress-bar"
-                         role="progressbar"
-                         style="width: 100%;">
-                    </div>
-                </div>
-
-                <div class="mt-3">
-                    <span class="text-muted">
-                        All active sales orders
-                    </span>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Total Paid -->
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-
-                <div class="d-flex align-items-center mb-3">
-
-                    <div class="dashboard-icon bg-success-subtle text-success me-3">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-
-                    <div>
-                        <h6 class="text-muted mb-0">
-                            Total Paid
-                        </h6>
-
-                        <h3 class="fw-bold mb-0">
-                            ₱@Model.TotalPaid.ToString("N2")
-                        </h3>
-                    </div>
-
-                </div>
-
-                <p class="text-success mb-0">
-                    <i class="bi bi-arrow-up"></i>
-                    Payments received
-                </p>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Outstanding -->
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
-
-                <div class="d-flex align-items-center mb-3">
-
-                    <div class="dashboard-icon bg-danger-subtle text-danger me-3">
-                        <i class="bi bi-exclamation-circle"></i>
-                    </div>
-
-                    <div>
-                        <h6 class="text-muted mb-0">
-                            Outstanding Balance
-                        </h6>
-
-                        <h3 class="fw-bold mb-0">
-                            ₱@Model.OutstandingBalance.ToString("N2")
-                        </h3>
-                    </div>
-
                 </div>
 
                 <a asp-controller="Billings"
                    asp-action="Index"
-                   class="text-danger text-decoration-none">
-                    View Invoices
-                    <i class="bi bi-arrow-right"></i>
+                   class="view-button green-button">
+                    View All
                 </a>
 
             </div>
-        </div>
-    </div>
 
-</div>
 
-
-<!-- OPERATIONS -->
-<div class="row g-4 mb-4">
-
-    <!-- Inventory -->
-    <div class="col-lg-3 col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-
-                <h6 class="text-muted">
-                    <i class="bi bi-boxes me-2"></i>
-                    Inventory
-                </h6>
-
-                <h2 class="fw-bold text-danger">
-                    @Model.LowStockProducts
-                </h2>
-
-                <p class="mb-0">
-                    Low-stock products
-                </p>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Sales Orders -->
-    <div class="col-lg-3 col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-
-                <h6 class="text-muted">
-                    <i class="bi bi-cart me-2"></i>
-                    Sales Orders
-                </h6>
-
-                <h2 class="fw-bold text-warning">
-                    @Model.PendingSalesOrders
-                </h2>
-
-                <p class="mb-0">
-                    Pending / processing
-                </p>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Deliveries -->
-    <div class="col-lg-3 col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-
-                <h6 class="text-muted">
-                    <i class="bi bi-truck me-2"></i>
-                    Deliveries
-                </h6>
-
-                <h2 class="fw-bold text-info">
-                    @Model.PendingDeliveries
-                </h2>
-
-                <p class="mb-0">
-                    Pending deliveries
-                </p>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Invoices -->
-    <div class="col-lg-3 col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-
-                <h6 class="text-muted">
-                    <i class="bi bi-receipt me-2"></i>
-                    Invoices
-                </h6>
-
-                <h2 class="fw-bold text-danger">
-                    @Model.UnpaidInvoices
-                </h2>
-
-                <p class="mb-0">
-                    Unpaid invoices
-                </p>
-
-            </div>
-        </div>
-    </div>
-
-</div>
-
-
-<!-- RECENT SALES ORDERS -->
-<div class="row g-4">
-
-    <div class="col-lg-7">
-
-        <div class="card shadow-sm border-0">
-
-            <div class="card-header bg-white border-0 py-3">
-
-                <div class="d-flex justify-content-between align-items-center">
-
-                    <h5 class="fw-bold mb-0">
-                        <i class="bi bi-cart-check text-primary me-2"></i>
-                        Recent Sales Orders
-                    </h5>
-
-                    <a asp-controller="SalesOrders"
-                       asp-action="Index"
-                       class="btn btn-sm btn-outline-primary">
-                        View All
-                    </a>
-
-                </div>
-
-            </div>
-
-            <div class="card-body p-0">
-
-                @if (Model.RecentSalesOrders.Any())
-                {
-                    <div class="table-responsive">
-
-                        <table class="table table-hover align-middle mb-0">
-
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Order #</th>
-                                    <th>Customer</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th class="text-end">Total</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-
-                                @foreach (var order in Model.RecentSalesOrders)
-                                {
-                                    <tr>
-
-                                        <td>
-                                            <strong>
-                                                #@order.Id
-                                            </strong>
-                                        </td>
-
-                                        <td>
-                                            @(order.Customer?.CustomerName ?? "N/A")
-                                        </td>
-
-                                        <td>
-                                            @order.OrderDate.ToString("MMM dd, yyyy")
-                                        </td>
-
-                                        <td>
-
-                                            @if (order.Status == "Delivered")
-                                            {
-                                                <span class="badge bg-success">
-                                                    Delivered
-                                                </span>
-                                            }
-                                            else if (order.Status == "Processing")
-                                            {
-                                                <span class="badge bg-warning text-dark">
-                                                    Processing
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">
-                                                    @order.Status
-                                                </span>
-                                            }
-
-                                        </td>
-
-                                        <td class="text-end fw-semibold">
-                                            ₱@order.TotalAmount.ToString("N2")
-                                        </td>
-
-                                    </tr>
-                                }
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center p-4 text-muted">
-
-                        <i class="bi bi-cart-x fs-2"></i>
-
-                        <p class="mt-2 mb-0">
-                            No sales orders yet.
-                        </p>
-
-                    </div>
-                }
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- RECENT INVOICES -->
-    <div class="col-lg-5">
-
-        <div class="card shadow-sm border-0">
-
-            <div class="card-header bg-white border-0 py-3">
-
-                <div class="d-flex justify-content-between align-items-center">
-
-                    <h5 class="fw-bold mb-0">
-                        <i class="bi bi-receipt text-success me-2"></i>
-                        Recent Invoices
-                    </h5>
-
-                    <a asp-controller="Billings"
-                       asp-action="Index"
-                       class="btn btn-sm btn-outline-success">
-                        View All
-                    </a>
-
-                </div>
-
-            </div>
-
-            <div class="card-body">
+            <div class="invoice-list">
 
                 @if (Model.RecentBillings.Any())
                 {
                     foreach (var billing in Model.RecentBillings)
                     {
-                        <div class="d-flex justify-content-between align-items-center border-bottom py-3">
+                        <div class="invoice-item">
 
-                            <div>
+                            <div class="invoice-info">
 
-                                <div class="fw-semibold">
+                                <strong>
                                     @billing.InvoiceNumber
-                                </div>
+                                </strong>
 
-                                <small class="text-muted">
+                                <span>
                                     @billing.InvoiceDate.ToString("MMM dd, yyyy")
-                                </small>
+                                </span>
 
                             </div>
 
-                            <div class="text-end">
 
-                                <div class="fw-semibold">
+                            <div class="invoice-right">
+
+                                <strong>
                                     ₱@billing.TotalAmount.ToString("N2")
-                                </div>
+                                </strong>
 
                                 @if (billing.PaymentStatus == "Paid")
                                 {
-                                    <span class="badge bg-success">
+                                    <span class="status-badge success">
                                         Paid
                                     </span>
                                 }
                                 else if (billing.PaymentStatus == "Partially Paid")
                                 {
-                                    <span class="badge bg-warning text-dark">
+                                    <span class="status-badge warning">
                                         Partially Paid
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-danger">
+                                    <span class="status-badge danger">
                                         Unpaid
                                     </span>
                                 }
@@ -605,14 +541,9 @@ ViewData["Title"] = "Dashboard";
                 }
                 else
                 {
-                    <div class="text-center p-4 text-muted">
-
-                        <i class="bi bi-receipt fs-2"></i>
-
-                        <p class="mt-2 mb-0">
-                            No invoices yet.
-                        </p>
-
+                    <div class="empty-state">
+                        <i class="bi bi-receipt"></i>
+                        <p>No invoices yet.</p>
                     </div>
                 }
 
@@ -624,39 +555,921 @@ ViewData["Title"] = "Dashboard";
 
 </div>
 
-</div>
+
+<!-- ========================================================= -->
+<!-- DASHBOARD CSS -->
+<!-- ========================================================= -->
 
 <style>
 
-    .dashboard-card {
-        transition: all 0.2s ease-in-out;
+    /* ---------- PAGE ---------- */
+
+    .dashboard-page {
+        padding: 8px 4px 30px;
+        color: #1f2937;
     }
 
-    .dashboard-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.12) !important;
+
+    /* ---------- HEADER ---------- */
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
     }
 
-    .dashboard-icon {
-        width: 50px;
-        height: 50px;
+    .dashboard-title {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .title-icon {
+        width: 48px;
+        height: 48px;
         border-radius: 12px;
-
+        background: #eff6ff;
+        color: #2563eb;
         display: flex;
         align-items: center;
         justify-content: center;
-
         font-size: 22px;
     }
 
-    .card {
-        border-radius: 12px;
+    .dashboard-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.5px;
     }
 
-    .table th {
+    .dashboard-header p {
+        margin: 3px 0 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .dashboard-date {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #6b7280;
         font-size: 13px;
+    }
+
+
+    /* ---------- WEATHER ---------- */
+
+    .weather-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 28px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .weather-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .weather-header h5 {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .weather-header h5 i {
+        color: #2563eb;
+        margin-right: 7px;
+    }
+
+    .weather-header span {
+        color: #9ca3af;
+        font-size: 12px;
+    }
+
+    .weather-refresh {
+        width: 34px;
+        height: 34px;
+        border: 1px solid #dbeafe;
+        background: #f8fbff;
+        color: #2563eb;
+        border-radius: 8px;
+    }
+
+    .weather-refresh:hover {
+        background: #eff6ff;
+    }
+
+    .weather-content {
+        display: flex;
+        align-items: center;
+        margin-top: 14px;
+    }
+
+    .weather-temperature {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .weather-day {
+        padding: 0 18px;
+        text-align: center;
+    }
+
+    .weather-day + .weather-day {
+        border-left: 1px solid #e5e7eb;
+    }
+
+
+    /* ---------- SECTION HEADINGS ---------- */
+
+    .section-heading {
+        margin: 0 0 13px;
+    }
+
+    .section-label {
+        display: block;
+        color: #2563eb;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+    }
+
+    .section-heading h4 {
+        font-size: 17px;
+        font-weight: 700;
+        margin: 0;
+        color: #111827;
+    }
+
+    .financial-heading,
+    .activity-heading {
+        margin-top: 28px;
+    }
+
+
+    /* ---------- OVERVIEW ---------- */
+
+    .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+    }
+
+    .overview-card {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 17px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        text-decoration: none;
+        color: inherit;
+        transition: .2s ease;
+    }
+
+    .overview-card:hover {
+        transform: translateY(-2px);
+        border-color: #bfdbfe;
+        box-shadow: 0 5px 15px rgba(0,0,0,.06);
+    }
+
+    .overview-icon,
+    .financial-icon,
+    .status-icon,
+    .activity-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .overview-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        font-size: 19px;
+    }
+
+    .overview-info {
+        min-width: 0;
+    }
+
+    .overview-info span {
+        display: block;
+        color: #6b7280;
+        font-size: 12px;
+        margin-bottom: 2px;
+    }
+
+    .overview-info strong {
+        display: block;
+        font-size: 22px;
+        color: #111827;
+        line-height: 1.1;
+    }
+
+    .overview-info small {
+        display: block;
+        color: #2563eb;
+        margin-top: 4px;
+        font-size: 11px;
+    }
+
+
+    /* ---------- COLORS ---------- */
+
+    .blue {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .green {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .orange {
+        background: #fff7ed;
+        color: #ea580c;
+    }
+
+    .cyan {
+        background: #ecfeff;
+        color: #0891b2;
+    }
+
+    .purple {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+
+    .red {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+
+    /* ---------- FINANCIAL ---------- */
+
+    .financial-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+
+    .financial-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 19px;
+        text-decoration: none;
+        color: inherit;
+        transition: .2s ease;
+    }
+
+    .financial-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,.06);
+    }
+
+    .financial-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .financial-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        font-size: 17px;
+    }
+
+    .financial-value {
+        font-size: 25px;
+        font-weight: 700;
+        margin: 12px 0 8px;
+        color: #111827;
+    }
+
+    .financial-footer {
+        color: #6b7280;
+        font-size: 12px;
+    }
+
+    .financial-footer.success {
+        color: #059669;
+    }
+
+    .financial-footer.danger {
+        color: #dc2626;
+    }
+
+
+    /* ---------- OPERATIONS ---------- */
+
+    .operations-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+    }
+
+    .status-card {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+    }
+
+    .status-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        font-size: 17px;
+    }
+
+    .status-card span {
+        display: block;
+        color: #6b7280;
+        font-size: 12px;
+    }
+
+    .status-card strong {
+        display: block;
+        font-size: 22px;
+        line-height: 1.2;
+    }
+
+    .status-card small {
+        display: block;
+        color: #9ca3af;
+        font-size: 11px;
+    }
+
+    .danger-number {
+        color: #dc2626;
+    }
+
+    .warning-number {
+        color: #d97706;
+    }
+
+    .blue-number {
+        color: #2563eb;
+    }
+
+
+    /* ---------- ACTIVITY ---------- */
+
+    .activity-grid {
+        display: grid;
+        grid-template-columns: 1.45fr 1fr;
+        gap: 14px;
+    }
+
+    .activity-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .activity-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 18px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .activity-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .activity-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        font-size: 16px;
+    }
+
+    .activity-title h5 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .activity-title span {
+        color: #9ca3af;
+        font-size: 11px;
+    }
+
+    .view-button {
+        border: 1px solid #bfdbfe;
+        color: #2563eb;
+        background: #f8fbff;
+        padding: 6px 11px;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .view-button:hover {
+        background: #eff6ff;
+    }
+
+    .green-button {
+        border-color: #bbf7d0;
+        color: #059669;
+        background: #f0fdf4;
+    }
+
+
+    /* ---------- TABLE ---------- */
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .dashboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+
+    .dashboard-table th {
+        padding: 11px 15px;
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .4px;
         text-transform: uppercase;
-        letter-spacing: .3px;
+        white-space: nowrap;
+    }
+
+    .dashboard-table td {
+        padding: 12px 15px;
+        border-top: 1px solid #f1f5f9;
+        color: #475569;
+        white-space: nowrap;
+    }
+
+    .dashboard-table tr:hover td {
+        background: #fafcff;
+    }
+
+
+    /* ---------- BADGES ---------- */
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-badge.success {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .status-badge.warning {
+        background: #fef3c7;
+        color: #a16207;
+    }
+
+    .status-badge.danger {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .status-badge.neutral {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+
+    /* ---------- INVOICES ---------- */
+
+    .invoice-list {
+        padding: 0 18px;
+    }
+
+    .invoice-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px solid #f1f5f9;
+        gap: 15px;
+    }
+
+    .invoice-item:last-child {
+        border-bottom: none;
+    }
+
+    .invoice-info strong {
+        display: block;
+        color: #334155;
+        font-size: 12px;
+    }
+
+    .invoice-info span {
+        display: block;
+        color: #94a3b8;
+        font-size: 11px;
+        margin-top: 3px;
+    }
+
+    .invoice-right {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .invoice-right strong {
+        display: block;
+        color: #334155;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+
+    /* ---------- EMPTY STATE ---------- */
+
+    .empty-state {
+        text-align: center;
+        padding: 35px 20px;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 30px;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 12px;
+    }
+
+
+    /* ---------- RESPONSIVE ---------- */
+
+    @@media (max-width: 1200px) {
+
+        .overview-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .operations-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+    }
+
+
+    @@media (max-width: 992px) {
+
+        .financial-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .activity-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .weather-content {
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+    }
+
+
+    @@media (max-width: 768px) {
+
+        .dashboard-header {
+            align-items: flex-start;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .dashboard-date {
+            margin-left: 62px;
+        }
+
+        .overview-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .operations-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @@media (max-width: 500px) {
+
+        .overview-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-header h1 {
+            font-size: 24px;
+        }
+
+        .activity-header {
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .dashboard-table {
+            min-width: 650px;
+        }
+
     }
 
 </style>
+
+
+@section Scripts {
+
+<script>
+
+    (() => {
+
+        const card = document.getElementById('weather-card');
+        const content = document.getElementById('weather-content');
+        const updated = document.getElementById('weather-updated');
+        const refreshButton = document.getElementById('refresh-weather');
+
+        const weatherDescriptions = {
+
+            0: ['Clear sky', 'bi-sun'],
+            1: ['Mainly clear', 'bi-sun'],
+            2: ['Partly cloudy', 'bi-cloud-sun'],
+            3: ['Overcast', 'bi-cloud'],
+            45: ['Foggy', 'bi-cloud-fog2'],
+            48: ['Rime fog', 'bi-cloud-fog2'],
+            51: ['Light drizzle', 'bi-cloud-drizzle'],
+            53: ['Drizzle', 'bi-cloud-drizzle'],
+            55: ['Heavy drizzle', 'bi-cloud-drizzle'],
+            61: ['Light rain', 'bi-cloud-rain'],
+            63: ['Rain', 'bi-cloud-rain'],
+            65: ['Heavy rain', 'bi-cloud-rain-heavy'],
+            71: ['Light snow', 'bi-snow'],
+            73: ['Snow', 'bi-snow'],
+            75: ['Heavy snow', 'bi-snow'],
+            80: ['Rain showers', 'bi-cloud-rain'],
+            81: ['Rain showers', 'bi-cloud-rain'],
+            82: ['Heavy showers', 'bi-cloud-rain-heavy'],
+            95: ['Thunderstorm', 'bi-cloud-lightning-rain'],
+            96: ['Thunderstorm with hail', 'bi-cloud-lightning-rain'],
+            99: ['Thunderstorm with hail', 'bi-cloud-lightning-rain']
+
+        };
+
+
+        function getWeather(code) {
+
+            return weatherDescriptions[code]
+                ?? ['Unknown conditions', 'bi-cloud'];
+
+        }
+
+
+        async function loadWeather() {
+
+            refreshButton.disabled = true;
+
+            content.innerHTML = `
+                <div class="text-muted small">
+                    Retrieving forecast...
+                </div>
+            `;
+
+
+            const parameters = new URLSearchParams({
+
+                latitude: card.dataset.latitude,
+
+                longitude: card.dataset.longitude,
+
+                timezone: card.dataset.timezone,
+
+                forecast_days: '3',
+
+                current:
+                    'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m',
+
+                daily:
+                    'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+
+            });
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `https://api.open-meteo.com/v1/forecast?${parameters}`
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        'Weather service unavailable'
+                    );
+
+                }
+
+
+                const data = await response.json();
+
+                const current = data.current;
+
+                const daily = data.daily;
+
+
+                const [description, icon] =
+                    getWeather(current.weather_code);
+
+
+                const currentTime =
+                    new Date(current.time)
+                        .toLocaleString([], {
+                            dateStyle: 'medium',
+                            timeStyle: 'short'
+                        });
+
+
+                const forecast =
+                    daily.time.map((date, index) => {
+
+                        const [dayDescription, dayIcon] =
+                            getWeather(
+                                daily.weather_code[index]
+                            );
+
+
+                        const dayName =
+                            new Date(`${date}T12:00:00`)
+                                .toLocaleDateString([], {
+                                    weekday: 'short'
+                                });
+
+
+                        return `
+                            <div class="weather-day">
+
+                                <div class="fw-semibold small">
+                                    ${dayName}
+                                </div>
+
+                                <i
+                                    class="bi ${dayIcon} fs-5 text-primary"
+                                    aria-hidden="true">
+                                </i>
+
+                                <div class="small">
+                                    ${Math.round(
+                                        daily.temperature_2m_max[index]
+                                    )}°
+                                    /
+                                    ${Math.round(
+                                        daily.temperature_2m_min[index]
+                                    )}°
+                                </div>
+
+                                <div class="small text-muted">
+                                    <i class="bi bi-droplet"></i>
+                                    ${daily.precipitation_probability_max[index]}%
+                                </div>
+
+                                <span class="visually-hidden">
+                                    ${dayDescription}
+                                </span>
+
+                            </div>
+                        `;
+
+                    }).join('');
+
+
+                content.innerHTML = `
+
+                    <div class="d-flex align-items-center me-auto">
+
+                        <i
+                            class="bi ${icon} display-6 text-primary me-3"
+                            aria-hidden="true">
+                        </i>
+
+                        <div>
+
+                            <div class="weather-temperature">
+                                ${Math.round(current.temperature_2m)}°C
+                            </div>
+
+                            <div class="text-muted small">
+                                ${description}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="d-flex align-items-center gap-3 small">
+
+                        <span>
+                            <i class="bi bi-thermometer-half text-danger"></i>
+                            Feels ${Math.round(current.apparent_temperature)}°C
+                        </span>
+
+                        <span>
+                            <i class="bi bi-droplet text-primary"></i>
+                            ${current.relative_humidity_2m}%
+                        </span>
+
+                        <span>
+                            <i class="bi bi-wind text-secondary"></i>
+                            ${Math.round(current.wind_speed_10m)} km/h
+                        </span>
+
+                    </div>
+
+
+                    <div class="d-flex ms-auto">
+
+                        ${forecast}
+
+                    </div>
+
+                `;
+
+
+                updated.textContent =
+                    `Updated: ${currentTime}`;
+
+            }
+
+            catch (error) {
+
+                content.innerHTML = `
+                    <div class="text-danger small">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Weather is unavailable.
+                    </div>
+                `;
+
+                updated.textContent =
+                    'Unable to refresh weather';
+
+            }
+
+            finally {
+
+                refreshButton.disabled = false;
+
+            }
+
+        }
+
+
+        refreshButton.addEventListener(
+            'click',
+            loadWeather
+        );
+
+
+        loadWeather();
+
+    })();
+
+</script>
+
+}

@@ -35,10 +35,14 @@ namespace FoodSupply.Controllers
                     (c.PhoneNumber != null && c.PhoneNumber.Contains(search)));
             }
 
+            var totalItems = await query.CountAsync();
+            var pageCount = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Clamp(page, 1, pageCount);
+
             ViewBag.Search = search;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
-            ViewBag.TotalItems = await query.CountAsync();
+            ViewBag.TotalItems = totalItems;
 
             var customers = await query
                 .OrderBy(c => c.CustomerName)

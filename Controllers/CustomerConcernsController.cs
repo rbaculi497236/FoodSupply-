@@ -17,10 +17,41 @@ namespace FoodSupply.Controllers
         }
 
         // GET: CustomerConcerns
-	public IActionResult Index()
- 	{
-    	   return Content("Customer Concerns Controller is working!");
-	}
+        public async Task<IActionResult> Index(string? search, int page = 1)
+        {
+            const int pageSize = 10;
+
+            var query = _context.CustomerConcerns
+                .Include(c => c.Customer)
+                .Where(c => !c.IsArchived)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(c =>
+                    c.ConcernType.Contains(search) ||
+                    c.Subject.Contains(search) ||
+                    c.Status.Contains(search) ||
+                    c.Customer != null && c.Customer.CustomerName.Contains(search));
+            }
+
+            var totalItems = await query.CountAsync();
+            var pageCount = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Clamp(page, 1, pageCount);
+
+            ViewBag.Search = search;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = totalItems;
+
+            var concerns = await query
+                .OrderByDescending(c => c.DateReported)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return View(concerns);
+        }
 
         // GET: CustomerConcerns/Archived
         public async Task<IActionResult> Archived()

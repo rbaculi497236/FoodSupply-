@@ -1,44 +1,864 @@
+/* =========================================================
+   FOODSUPPLY ERP - GLOBAL STYLES
+   ========================================================= */
+
 html {
-  font-size: 14px;
-  --food-navy: #123d68;
-  --food-green: #4b9b28;
-  --food-border: #d8e4dc;
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
+    --food-navy: #123d68;
+    --food-blue: #2563eb;
+    --food-green: #4b9b28;
+    --food-border: #e5e7eb;
+    --food-bg: #f6f8fb;
+    --food-text: #1f2937;
+    --food-muted: #6b7280;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
 
-html {
-  position: relative;
-  min-height: 100%;
-}
+/* =========================================================
+   BODY
+   ========================================================= */
 
 body {
-  margin-bottom: 60px;
-  background: #f4f8f5;
-  color: #18324b;
+    margin: 0;
+    margin-bottom: 60px;
+    background: var(--food-bg);
+    color: var(--food-text);
 }
+
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow:
+        0 0 0 0.1rem white,
+        0 0 0 0.25rem #258cfb;
+}
+
+
+/* =========================================================
+   TABLES
+   ========================================================= */
 
 .table thead {
-  color: var(--food-navy);
+    color: var(--food-navy);
 }
+
+
+/* =========================================================
+   CARDS
+   ========================================================= */
 
 .card {
-  border-color: var(--food-border);
+    border-color: var(--food-border);
+    border-radius: 12px;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+
+/* =========================================================
+   FOODSUPPLY DASHBOARD
+   ========================================================= */
+
+.dashboard-page {
+    padding: 8px 4px 30px;
+    color: var(--food-text);
+}
+
+
+/* =========================================================
+   DASHBOARD HEADER
+   ========================================================= */
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.dashboard-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.title-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: var(--food-blue);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 22px;
+}
+
+.dashboard-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.dashboard-header p {
+    margin: 3px 0 0;
+    color: var(--food-muted);
+    font-size: 14px;
+}
+
+.dashboard-date {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--food-muted);
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   WEATHER
+   ========================================================= */
+
+.weather-card {
+    background: #ffffff;
+    border: 1px solid var(--food-border);
+    border-radius: 14px;
+
+    padding: 18px 20px;
+    margin-bottom: 28px;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+}
+
+.weather-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.weather-header h5 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.weather-header h5 i {
+    color: var(--food-blue);
+    margin-right: 7px;
+}
+
+.weather-header span {
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+.weather-refresh {
+    width: 34px;
+    height: 34px;
+
+    border: 1px solid #dbeafe;
+    background: #f8fbff;
+    color: var(--food-blue);
+
+    border-radius: 8px;
+}
+
+.weather-refresh:hover {
+    background: #eff6ff;
+}
+
+.weather-content {
+    display: flex;
+    align-items: center;
+    margin-top: 14px;
+}
+
+.weather-temperature {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.weather-day {
+    padding: 0 18px;
+    text-align: center;
+}
+
+.weather-day + .weather-day {
+    border-left: 1px solid var(--food-border);
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+   ========================================================= */
+
+.section-heading {
+    margin: 0 0 13px;
+}
+
+.section-label {
+    display: block;
+
+    color: var(--food-blue);
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.section-heading h4 {
+    font-size: 17px;
+    font-weight: 700;
+
+    margin: 0;
+    color: #111827;
+}
+
+.financial-heading,
+.activity-heading {
+    margin-top: 28px;
+}
+
+
+/* =========================================================
+   OVERVIEW CARDS
+   ========================================================= */
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+}
+
+.overview-card {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+    padding: 17px;
+
+    background: #ffffff;
+    border: 1px solid var(--food-border);
+    border-radius: 12px;
+
+    text-decoration: none;
+    color: inherit;
+
+    transition: .2s ease;
+}
+
+.overview-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #bfdbfe;
+
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .06);
+}
+
+.overview-icon {
+    width: 44px;
+    height: 44px;
+
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    font-size: 19px;
+}
+
+.overview-info {
+    min-width: 0;
+}
+
+.overview-info span {
+    display: block;
+
+    color: var(--food-muted);
+    font-size: 12px;
+
+    margin-bottom: 2px;
+}
+
+.overview-info strong {
+    display: block;
+
+    font-size: 22px;
+    color: #111827;
+
+    line-height: 1.1;
+}
+
+.overview-info small {
+    display: block;
+
+    color: var(--food-blue);
+
+    margin-top: 4px;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   COLOR SYSTEM
+   ========================================================= */
+
+.blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.green {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.orange {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.cyan {
+    background: #ecfeff;
+    color: #0891b2;
+}
+
+.purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.red {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   FINANCIAL CARDS
+   ========================================================= */
+
+.financial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.financial-card {
+    background: #ffffff;
+
+    border: 1px solid var(--food-border);
+    border-radius: 12px;
+
+    padding: 19px;
+
+    text-decoration: none;
+    color: inherit;
+
+    transition: .2s ease;
+}
+
+.financial-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .06);
+}
+
+.financial-top {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    color: var(--food-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.financial-icon {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 17px;
+}
+
+.financial-value {
+    font-size: 25px;
+    font-weight: 700;
+
+    margin: 12px 0 8px;
+
+    color: #111827;
+}
+
+.financial-footer {
+    color: var(--food-muted);
+    font-size: 12px;
+}
+
+.financial-footer.success {
+    color: #059669;
+}
+
+.financial-footer.danger {
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   OPERATION STATUS
+   ========================================================= */
+
+.operations-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+    padding: 16px;
+
+    background: #ffffff;
+
+    border: 1px solid var(--food-border);
+    border-radius: 12px;
+}
+
+.status-icon {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    font-size: 17px;
+}
+
+.status-card span {
+    display: block;
+
+    color: var(--food-muted);
+    font-size: 12px;
+}
+
+.status-card strong {
+    display: block;
+
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+.status-card small {
+    display: block;
+
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+.danger-number {
+    color: #dc2626;
+}
+
+.warning-number {
+    color: #d97706;
+}
+
+.blue-number {
+    color: #2563eb;
+}
+
+
+/* =========================================================
+   RECENT ACTIVITY
+   ========================================================= */
+
+.activity-grid {
+    display: grid;
+
+    grid-template-columns: 1.45fr 1fr;
+
+    gap: 14px;
+}
+
+.activity-card {
+    background: #ffffff;
+
+    border: 1px solid var(--food-border);
+    border-radius: 12px;
+
+    overflow: hidden;
+}
+
+.activity-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 16px 18px;
+
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.activity-title {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+}
+
+.activity-icon {
+    width: 38px;
+    height: 38px;
+
+    border-radius: 9px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 16px;
+}
+
+.activity-title h5 {
+    margin: 0;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.activity-title span {
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+.view-button {
+    border: 1px solid #bfdbfe;
+
+    color: var(--food-blue);
+    background: #f8fbff;
+
+    padding: 6px 11px;
+
+    border-radius: 7px;
+
+    text-decoration: none;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.view-button:hover {
+    background: #eff6ff;
+}
+
+.green-button {
+    border-color: #bbf7d0;
+
+    color: #059669;
+    background: #f0fdf4;
+}
+
+
+/* =========================================================
+   DASHBOARD TABLE
+   ========================================================= */
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.dashboard-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    font-size: 12px;
+}
+
+.dashboard-table th {
+    padding: 11px 15px;
+
+    background: #f8fafc;
+
+    color: #64748b;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: .4px;
+
+    text-transform: uppercase;
+
+    white-space: nowrap;
+}
+
+.dashboard-table td {
+    padding: 12px 15px;
+
+    border-top: 1px solid #f1f5f9;
+
+    color: #475569;
+
+    white-space: nowrap;
+}
+
+.dashboard-table tr:hover td {
+    background: #fafcff;
+}
+
+
+/* =========================================================
+   STATUS BADGES
+   ========================================================= */
+
+.status-badge {
+    display: inline-block;
+
+    padding: 4px 8px;
+
+    border-radius: 20px;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+.status-badge.success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status-badge.warning {
+    background: #fef3c7;
+    color: #a16207;
+}
+
+.status-badge.danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.status-badge.neutral {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+
+/* =========================================================
+   INVOICES
+   ========================================================= */
+
+.invoice-list {
+    padding: 0 18px;
+}
+
+.invoice-item {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 14px 0;
+
+    border-bottom: 1px solid #f1f5f9;
+
+    gap: 15px;
+}
+
+.invoice-item:last-child {
+    border-bottom: none;
+}
+
+.invoice-info strong {
+    display: block;
+
+    color: #334155;
+
+    font-size: 12px;
+}
+
+.invoice-info span {
+    display: block;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    margin-top: 3px;
+}
+
+.invoice-right {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.invoice-right strong {
+    display: block;
+
+    color: #334155;
+
+    font-size: 12px;
+
+    margin-bottom: 4px;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state {
+    text-align: center;
+
+    padding: 35px 20px;
+
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 30px;
+
+    display: block;
+
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    margin: 0;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+
+    .overview-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .operations-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 992px) {
+
+    .financial-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .weather-content {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+}
+
+
+@media (max-width: 768px) {
+
+    .dashboard-header {
+        align-items: flex-start;
+
+        gap: 10px;
+
+        flex-direction: column;
+    }
+
+    .dashboard-date {
+        margin-left: 62px;
+    }
+
+    .overview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .operations-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+@media (max-width: 500px) {
+
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-header h1 {
+        font-size: 24px;
+    }
+
+    .activity-header {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .dashboard-table {
+        min-width: 650px;
+    }
+
 }

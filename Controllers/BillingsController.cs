@@ -26,10 +26,14 @@ namespace FoodSupply.Controllers
                 .AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(b => b.InvoiceNumber.Contains(search) || b.PaymentStatus.Contains(search));
+            var totalItems = await query.CountAsync();
+            var pageCount = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Clamp(page, 1, pageCount);
+
             ViewBag.Search = search;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
-            ViewBag.TotalItems = await query.CountAsync();
+            ViewBag.TotalItems = totalItems;
             var billings = await query.OrderByDescending(b => b.InvoiceDate)
                 .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 

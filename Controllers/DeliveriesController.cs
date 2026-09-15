@@ -28,8 +28,14 @@ namespace FoodSupply.Controllers
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(d => d.Status.Contains(search) ||
                     (d.Driver != null && d.Driver.Contains(search)) || d.SalesOrderId.ToString().Contains(search));
-            ViewBag.Search = search; ViewBag.Page = page; ViewBag.PageSize = pageSize;
-            ViewBag.TotalItems = await query.CountAsync();
+            var totalItems = await query.CountAsync();
+            var pageCount = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Clamp(page, 1, pageCount);
+
+            ViewBag.Search = search;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = totalItems;
             var deliveries = await query.OrderByDescending(d => d.DeliveryDate)
                 .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 

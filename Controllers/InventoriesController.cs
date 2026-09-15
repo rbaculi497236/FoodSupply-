@@ -38,10 +38,14 @@ namespace FoodSupply.Controllers
                     ));
             }
 
+            var totalItems = await query.CountAsync();
+            var pageCount = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Clamp(page, 1, pageCount);
+
             ViewBag.Search = search;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
-            ViewBag.TotalItems = await query.CountAsync();
+            ViewBag.TotalItems = totalItems;
 
             var inventories = await query
                 .OrderBy(i => i.Product!.ProductName)

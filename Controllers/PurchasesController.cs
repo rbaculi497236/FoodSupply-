@@ -28,8 +28,14 @@ namespace FoodSupply.Controllers
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(p => p.PurchaseOrderNumber.Contains(search) ||
                     (p.Supplier != null && p.Supplier.SupplierName.Contains(search)) || p.Status.Contains(search));
-            ViewBag.Search = search; ViewBag.Page = page; ViewBag.PageSize = pageSize;
-            ViewBag.TotalItems = await query.CountAsync();
+            var totalItems = await query.CountAsync();
+            var pageCount = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Clamp(page, 1, pageCount);
+
+            ViewBag.Search = search;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = totalItems;
             var purchases = await query.OrderByDescending(p => p.PurchaseDate)
                 .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
