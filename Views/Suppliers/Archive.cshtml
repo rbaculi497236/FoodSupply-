@@ -1,0 +1,167 @@
+@model FoodSupply.Models.Supplier
+
+@{
+    ViewData["Title"] = "Archive Supplier";
+}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h1 class="fw-bold mb-1" style="color: #123D68;">
+            <i class="bi bi-archive-fill me-2"></i>
+            Archive Supplier
+        </h1>
+
+        <p class="text-muted mb-0">
+            Please confirm that you want to archive this supplier.
+        </p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header text-white"
+             style="background-color: #123D68;">
+            <h5 class="mb-0">
+                <i class="bi bi-building me-2"></i>
+                Supplier Information
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+
+            <!-- Archive Warning -->
+            <div class="alert alert-warning border-0">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+
+                <strong>Are you sure?</strong>
+
+                You are about to archive this supplier.
+                The supplier will not be permanently deleted and can be
+                restored from the Archived Suppliers section.
+            </div>
+
+            <!-- Supplier Information -->
+            <div class="row g-4">
+
+                <!-- Supplier Code -->
+                <div class="col-md-6">
+                    <div class="text-muted small fw-semibold">
+                        Supplier Code
+                    </div>
+
+                    <div class="fw-semibold">
+                        @Model.SupplierCode
+                    </div>
+                </div>
+
+                <!-- Supplier Name -->
+                <div class="col-md-6">
+                    <div class="text-muted small fw-semibold">
+                        Supplier Name
+                    </div>
+
+                    <div class="fw-semibold">
+                        @Model.SupplierName
+                    </div>
+                </div>
+
+                <!-- Contact Person -->
+                <div class="col-md-6">
+                    <div class="text-muted small fw-semibold">
+                        Contact Person
+                    </div>
+
+                    <div class="fw-semibold">
+                        @(string.IsNullOrWhiteSpace(Model.ContactPerson)
+                            ? "—"
+                            : Model.ContactPerson)
+                    </div>
+                </div>
+
+                <!-- Phone Number -->
+                <div class="col-md-6">
+                    <div class="text-muted small fw-semibold">
+                        Phone Number
+                    </div>
+
+                    <div class="fw-semibold">
+                        @(string.IsNullOrWhiteSpace(Model.PhoneNumber)
+                            ? "—"
+                            : Model.PhoneNumber)
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="col-md-6">
+                    <div class="text-muted small fw-semibold">
+                        Email
+                    </div>
+
+                    <div class="fw-semibold">
+                        @(string.IsNullOrWhiteSpace(Model.Email)
+                            ? "—"
+                            : Model.Email)
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="col-md-6">
+                    <div class="text-muted small fw-semibold">
+                        Status
+                    </div>
+
+                    <div class="fw-semibold">
+                        @Model.Status
+                    </div>
+                </div>
+
+                <!-- Address -->
+                <div class="col-12">
+                    <div class="text-muted small fw-semibold">
+                        Address
+                    </div>
+
+                    <div class="fw-semibold">
+                        @(string.IsNullOrWhiteSpace(Model.Address)
+                            ? "—"
+                            : Model.Address)
+                    </div>
+                </div>
+
+            </div>
+
+            <hr class="my-4" />
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-between align-items-center">
+
+                <a asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Cancel
+                </a>
+
+                <form asp-action="ArchiveConfirmed"
+                      asp-route-id="@Model.Id"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn"
+                            style="background-color: #4B9B28; border-color: #4B9B28; color: white;"
+                            onclick="return confirm('Are you sure you want to archive this supplier?');">
+
+                        <i class="bi bi-archive-fill me-1"></i>
+                        Confirm Archive
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>

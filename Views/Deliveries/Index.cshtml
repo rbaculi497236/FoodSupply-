@@ -2,29 +2,50 @@
 
 @{
     ViewData["Title"] = "Deliveries";
-    var canManageDeliveryRecords = User.IsInRole("Admin") || User.IsInRole("Manager") || User.IsInRole("Main Admin");
+    var canManageDeliveryRecords =
+        User.IsInRole("Admin") ||
+        User.IsInRole("Manager") ||
+        User.IsInRole("Main Admin");
 }
 
 <div class="container-fluid">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
+
         <div>
-            <h1 class="fw-bold mb-1">
-                <i class="bi bi-truck text-primary me-2"></i>
+            <h1 class="fw-bold mb-1" style="color: #123D68;">
+                <i class="bi bi-truck me-2"></i>
                 Deliveries
             </h1>
+
             <p class="text-muted mb-0">
                 Manage and track customer deliveries
             </p>
         </div>
 
         <div class="d-flex gap-2">
+
             @if (canManageDeliveryRecords)
             {
-                <a asp-action="Archived" class="btn btn-outline-warning"><i class="bi bi-archive me-1"></i>Archived</a>
-                <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Create Delivery</a>
+                <a asp-action="Archived"
+                   class="btn btn-outline-warning">
+
+                    <i class="bi bi-archive me-1"></i>
+                    Archived
+
+                </a>
+
+                <a asp-action="Create"
+                   class="btn btn-primary">
+
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Create Delivery
+
+                </a>
             }
+
         </div>
+
     </div>
 
     @await Html.PartialAsync("_TableTools")
@@ -32,18 +53,48 @@
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show">
+
             <i class="bi bi-check-circle me-2"></i>
+
             @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+
+            <i class="bi bi-exclamation-triangle me-2"></i>
+
+            @TempData["ErrorMessage"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
         </div>
     }
 
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white">
+
+        <div class="card-header text-white"
+             style="background-color: #123D68;">
+
             <h5 class="mb-0">
+
                 <i class="bi bi-truck me-2"></i>
+
                 Active Deliveries
+
             </h5>
+
         </div>
 
         <div class="card-body p-0">
@@ -51,10 +102,13 @@
             @if (Model != null && Model.Any())
             {
                 <div class="table-responsive">
+
                     <table class="table table-hover align-middle mb-0">
 
                         <thead class="table-light">
+
                             <tr>
+
                                 <th>Delivery #</th>
                                 <th>Sales Order</th>
                                 <th>Customer</th>
@@ -62,14 +116,19 @@
                                 <th>Status</th>
                                 <th>Driver</th>
                                 <th>Vehicle</th>
+                                <th>Location</th>
                                 <th class="text-center">Actions</th>
+
                             </tr>
+
                         </thead>
 
                         <tbody>
+
                             @foreach (var delivery in Model)
                             {
                                 <tr>
+
                                     <td>
                                         <strong>#@delivery.Id</strong>
                                     </td>
@@ -79,38 +138,55 @@
                                     </td>
 
                                     <td>
-                                        @(delivery.SalesOrder?.Customer?.CustomerName ?? "Unknown Customer")
+                                        @(delivery.SalesOrder?.Customer?.CustomerName
+                                            ?? "Unknown Customer")
                                     </td>
 
                                     <td>
+
                                         @delivery.DeliveryDate.ToString("MMM dd, yyyy")
+
                                         <br />
+
                                         <small class="text-muted">
                                             @delivery.DeliveryDate.ToString("hh:mm tt")
                                         </small>
+
                                     </td>
 
                                     <td>
+
                                         @if (delivery.Status == "Pending")
                                         {
-                                            <span class="badge bg-warning text-dark">Pending</span>
+                                            <span class="badge bg-warning text-dark">
+                                                Pending
+                                            </span>
                                         }
                                         else if (delivery.Status == "Out for Delivery")
                                         {
-                                            <span class="badge bg-info text-dark">Out for Delivery</span>
+                                            <span class="badge bg-info text-dark">
+                                                Out for Delivery
+                                            </span>
                                         }
                                         else if (delivery.Status == "Delivered")
                                         {
-                                            <span class="badge bg-success">Delivered</span>
+                                            <span class="badge bg-success">
+                                                Delivered
+                                            </span>
                                         }
                                         else if (delivery.Status == "Cancelled")
                                         {
-                                            <span class="badge bg-danger">Cancelled</span>
+                                            <span class="badge bg-danger">
+                                                Cancelled
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary">@delivery.Status</span>
+                                            <span class="badge bg-secondary">
+                                                @delivery.Status
+                                            </span>
                                         }
+
                                     </td>
 
                                     <td>
@@ -121,40 +197,83 @@
                                         @(delivery.Vehicle ?? "Not Assigned")
                                     </td>
 
+                                    <!-- Google Maps -->
+                                    <td>
+
+                                        @if (!string.IsNullOrWhiteSpace(delivery.DeliveryAddress))
+                                        {
+                                            <a href="https://www.google.com/maps/dir/?api=1&destination=@Uri.EscapeDataString(delivery.DeliveryAddress)"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               class="btn btn-sm"
+                                               style="background-color: #4B9B28; border-color: #4B9B28; color: white;"
+                                               title="Open delivery route">
+
+                                                <i class="bi bi-geo-alt-fill me-1"></i>
+                                                Map
+
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                No Address
+                                            </span>
+                                        }
+
+                                    </td>
+
                                     <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-2">
+
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
 
                                             <a asp-action="Details"
                                                asp-route-id="@delivery.Id"
                                                class="btn btn-sm btn-outline-primary">
+
                                                 <i class="bi bi-eye"></i>
                                                 Details
+
                                             </a>
 
                                             <a asp-action="Edit"
                                                asp-route-id="@delivery.Id"
                                                class="btn btn-sm btn-outline-secondary">
+
                                                 <i class="bi bi-pencil"></i>
                                                 Edit
+
                                             </a>
 
                                             @if (canManageDeliveryRecords)
                                             {
-                                                <a asp-action="Archive" asp-route-id="@delivery.Id" class="btn btn-sm btn-outline-warning"><i class="bi bi-archive"></i>Archive</a>
+                                                <a asp-action="Archive"
+                                                   asp-route-id="@delivery.Id"
+                                                   class="btn btn-sm btn-outline-warning">
+
+                                                    <i class="bi bi-archive"></i>
+                                                    Archive
+
+                                                </a>
                                             }
 
                                         </div>
+
                                     </td>
+
                                 </tr>
                             }
+
                         </tbody>
 
                     </table>
+
                 </div>
             }
             else
             {
                 <div class="text-center py-5">
+
                     <i class="bi bi-truck display-4 text-muted"></i>
 
                     <h4 class="mt-3">
@@ -167,12 +286,20 @@
 
                     @if (canManageDeliveryRecords)
                     {
-                        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Create Delivery</a>
+                        <a asp-action="Create"
+                           class="btn btn-primary">
+
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Create Delivery
+
+                        </a>
                     }
+
                 </div>
             }
 
         </div>
+
     </div>
 
 </div>

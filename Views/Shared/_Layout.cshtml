@@ -18,11 +18,19 @@
     // ROLE CHECKS
     // =========================================================
 
+    // "Main Admin" is authorized alongside "Admin" throughout the
+    // controllers, so it must receive the same sidebar permissions.
+    var isMainAdmin = string.Equals(
+        currentRole,
+        "Main Admin",
+        StringComparison.OrdinalIgnoreCase
+    );
+
     var isAdmin = string.Equals(
         currentRole,
         "Admin",
         StringComparison.OrdinalIgnoreCase
-    );
+    ) || isMainAdmin;
 
     var isManager = string.Equals(
         currentRole,
@@ -164,7 +172,11 @@
 
     var displayRole = "User";
 
-    if (isAdmin)
+    if (isMainAdmin)
+    {
+        displayRole = "Main Admin";
+    }
+    else if (isAdmin)
     {
         displayRole = "Admin";
     }
