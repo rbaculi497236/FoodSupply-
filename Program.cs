@@ -46,6 +46,14 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Populate a useful starter catalogue the first time the application runs.
+// The seeder only inserts records whose codes do not already exist.
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await DatabaseSeeder.SeedSampleProductsAsync(context);
+}
+
 // ==========================================
 // ERROR HANDLING
 // ==========================================
