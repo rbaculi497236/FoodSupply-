@@ -60,11 +60,12 @@ namespace FoodSupply.Controllers
         // =========================================================
         // GET: Inventories/Alerts
         // =========================================================
-        public async Task<IActionResult> Alerts()
+        public async Task<IActionResult> Alerts(int page = 1)
         {
+            const int pageSize = 10;
             var today = DateTime.Today;
 
-            var alerts = await _context.Inventories
+            var query = _context.Inventories
                 .Include(i => i.Product)
                 .Where(i =>
                     !i.IsArchived &&
@@ -76,8 +77,12 @@ namespace FoodSupply.Controllers
                         ) ||
                         i.SpoiledQuantity > 0 ||
                         i.DamagedQuantity > 0
-                    ))
-                .OrderBy(i => i.ExpirationDate)
+                ));
+            var totalItems = await query.CountAsync();
+            page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+            ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+            var alerts = await query.OrderBy(i => i.ExpirationDate)
+                .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
 
             return View(alerts);
@@ -87,12 +92,17 @@ namespace FoodSupply.Controllers
         // =========================================================
         // GET: Inventories/Archived
         // =========================================================
-        public async Task<IActionResult> Archived()
+        public async Task<IActionResult> Archived(int page = 1)
         {
-            var inventories = await _context.Inventories
+            const int pageSize = 10;
+            var query = _context.Inventories
                 .Where(i => i.IsArchived)
-                .Include(i => i.Product)
-                .OrderByDescending(i => i.LastUpdated)
+                .Include(i => i.Product);
+            var totalItems = await query.CountAsync();
+            page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+            ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+            var inventories = await query.OrderByDescending(i => i.LastUpdated)
+                .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
 
             return View(inventories);

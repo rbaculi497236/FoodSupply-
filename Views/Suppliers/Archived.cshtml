@@ -5,3 +5,4 @@
 @foreach (var supplier in Model)
 {<tr><td>@supplier.SupplierCode</td><td>@supplier.SupplierName</td><td>@supplier.ContactPerson</td><td>@supplier.Status</td><td><form asp-action="Restore" method="post"><input type="hidden" name="id" value="@supplier.Id" /><button class="btn btn-sm btn-success" type="submit">Restore</button></form></td></tr>}
 </tbody></table>
+@await Html.PartialAsync("_Pagination")

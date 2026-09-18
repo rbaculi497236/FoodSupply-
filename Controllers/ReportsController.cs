@@ -73,7 +73,8 @@ private readonly ApplicationDbContext _context;
     // =========================
     public async Task<IActionResult> Sales(
         DateTime? fromDate,
-        DateTime? toDate)
+        DateTime? toDate,
+        int page = 1)
     {
         var query = _context.SalesOrders
             .Include(s => s.Customer)
@@ -95,6 +96,12 @@ private readonly ApplicationDbContext _context;
                 s.OrderDate < endDate);
         }
 
+        const int pageSize = 10;
+        var totalItems = await query.CountAsync();
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+        ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+        ViewBag.TotalSales = await query.SumAsync(s => (decimal?)s.TotalAmount) ?? 0;
+        ViewBag.TotalOrders = totalItems;
         var orders = await query
             .OrderByDescending(s => s.OrderDate)
             .Select(s => new SalesReportViewModel
@@ -113,13 +120,17 @@ private readonly ApplicationDbContext _context;
                     ? s.SalesOrderItems.Count
                     : 0
             })
+            .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();
 
         ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
         ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
 
-        ViewBag.TotalSales = orders.Sum(x => x.TotalAmount);
-        ViewBag.TotalOrders = orders.Count;
+        ViewBag.PaginationRouteValues = new Dictionary<string, string>
+        {
+            ["fromDate"] = fromDate?.ToString("yyyy-MM-dd") ?? "",
+            ["toDate"] = toDate?.ToString("yyyy-MM-dd") ?? ""
+        };
 
         return View(orders);
     }
@@ -129,7 +140,8 @@ private readonly ApplicationDbContext _context;
     // INVENTORY REPORT
     // =========================
     public async Task<IActionResult> Inventory(
-        string? status)
+        string? status,
+        int page = 1)
     {
         var query = _context.Inventories
             .Include(i => i.Product)
@@ -151,6 +163,10 @@ private readonly ApplicationDbContext _context;
             }
         }
 
+        const int pageSize = 10;
+        var totalItems = await query.CountAsync();
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+        ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
         var inventory = await query
             .OrderBy(i => i.Product != null
                 ? i.Product.ProductName
@@ -184,9 +200,11 @@ private readonly ApplicationDbContext _context;
 
                 LastUpdated = i.LastUpdated
             })
+            .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();
 
         ViewBag.Status = status;
+        ViewBag.PaginationRouteValues = new Dictionary<string, string> { ["status"] = status ?? "" };
 
         return View(inventory);
     }
@@ -197,7 +215,8 @@ private readonly ApplicationDbContext _context;
     // =========================
     public async Task<IActionResult> Purchases(
         DateTime? fromDate,
-        DateTime? toDate)
+        DateTime? toDate,
+        int page = 1)
     {
         var query = _context.Purchases
             .Include(p => p.Supplier)
@@ -218,6 +237,12 @@ private readonly ApplicationDbContext _context;
                 p.PurchaseDate < endDate);
         }
 
+        const int pageSize = 10;
+        var totalItems = await query.CountAsync();
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+        ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+        ViewBag.TotalPurchases = await query.SumAsync(p => (decimal?)p.TotalAmount) ?? 0;
+        ViewBag.TotalPurchaseOrders = totalItems;
         var purchases = await query
             .OrderByDescending(p => p.PurchaseDate)
             .Select(p => new PurchaseReportViewModel
@@ -236,16 +261,17 @@ private readonly ApplicationDbContext _context;
 
                 TotalAmount = p.TotalAmount
             })
+            .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();
 
         ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
         ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
 
-        ViewBag.TotalPurchases =
-            purchases.Sum(x => x.TotalAmount);
-
-        ViewBag.TotalPurchaseOrders =
-            purchases.Count;
+        ViewBag.PaginationRouteValues = new Dictionary<string, string>
+        {
+            ["fromDate"] = fromDate?.ToString("yyyy-MM-dd") ?? "",
+            ["toDate"] = toDate?.ToString("yyyy-MM-dd") ?? ""
+        };
 
         return View(purchases);
     }
@@ -255,7 +281,8 @@ private readonly ApplicationDbContext _context;
     // BILLING REPORT
     // =========================
     public async Task<IActionResult> Billing(
-        string? paymentStatus)
+        string? paymentStatus,
+        int page = 1)
     {
         var query = _context.Billings
             .Include(b => b.SalesOrder)
@@ -269,6 +296,13 @@ private readonly ApplicationDbContext _context;
                 b.PaymentStatus == paymentStatus);
         }
 
+        const int pageSize = 10;
+        var totalItems = await query.CountAsync();
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+        ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+        ViewBag.TotalBilled = await query.SumAsync(b => (decimal?)b.TotalAmount) ?? 0;
+        ViewBag.TotalPaid = await query.SumAsync(b => (decimal?)b.AmountPaid) ?? 0;
+        ViewBag.TotalBalance = await query.SumAsync(b => (decimal?)b.Balance) ?? 0;
         var billings = await query
             .OrderByDescending(b => b.InvoiceDate)
             .Select(b => new BillingReportViewModel
@@ -299,18 +333,12 @@ private readonly ApplicationDbContext _context;
 
                 PaymentMethod = b.PaymentMethod
             })
+            .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();
 
         ViewBag.PaymentStatus = paymentStatus;
 
-        ViewBag.TotalBilled =
-            billings.Sum(x => x.TotalAmount);
-
-        ViewBag.TotalPaid =
-            billings.Sum(x => x.AmountPaid);
-
-        ViewBag.TotalBalance =
-            billings.Sum(x => x.Balance);
+        ViewBag.PaginationRouteValues = new Dictionary<string, string> { ["paymentStatus"] = paymentStatus ?? "" };
 
         return View(billings);
     }
@@ -320,7 +348,8 @@ private readonly ApplicationDbContext _context;
     // DELIVERY REPORT
     // =========================
     public async Task<IActionResult> Deliveries(
-        string? status)
+        string? status,
+        int page = 1)
     {
         var query = _context.Deliveries
             .Include(d => d.SalesOrder)
@@ -334,6 +363,10 @@ private readonly ApplicationDbContext _context;
                 d.Status == status);
         }
 
+        const int pageSize = 10;
+        var totalItems = await query.CountAsync();
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+        ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
         var deliveries = await query
             .OrderByDescending(d => d.DeliveryDate)
             .Select(d => new DeliveryReportViewModel
@@ -356,9 +389,11 @@ private readonly ApplicationDbContext _context;
 
                 Vehicle = d.Vehicle
             })
+            .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();
 
         ViewBag.Status = status;
+        ViewBag.PaginationRouteValues = new Dictionary<string, string> { ["status"] = status ?? "" };
 
         return View(deliveries);
     }

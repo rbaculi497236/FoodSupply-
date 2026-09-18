@@ -5,3 +5,4 @@
 @foreach (var customer in Model)
 {<tr><td>@customer.CustomerCode</td><td>@customer.CustomerName</td><td>@customer.Email</td><td>@customer.Status</td><td><form asp-action="Restore" method="post"><input type="hidden" name="id" value="@customer.Id" /><button class="btn btn-sm btn-success" type="submit">Restore</button></form></td></tr>}
 </tbody></table>
+@await Html.PartialAsync("_Pagination")

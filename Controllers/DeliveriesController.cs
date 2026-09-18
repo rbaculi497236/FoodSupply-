@@ -411,12 +411,17 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Deliveries/Archived
-        public async Task<IActionResult> Archived()
+        public async Task<IActionResult> Archived(int page = 1)
         {
-            var deliveries = await _context.Deliveries
+            const int pageSize = 10;
+            var query = _context.Deliveries
                 .Where(d => d.IsArchived)
-                .Include(d => d.SalesOrder)
-                .OrderByDescending(d => d.DeliveryDate)
+                .Include(d => d.SalesOrder);
+            var totalItems = await query.CountAsync();
+            page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+            ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+            var deliveries = await query.OrderByDescending(d => d.DeliveryDate)
+                .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
 
             return View(deliveries);

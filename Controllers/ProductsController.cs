@@ -54,12 +54,19 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Products/Archived
-        public async Task<IActionResult> Archived()
+        public async Task<IActionResult> Archived(int page = 1)
         {
-            var products = await _context.Products
+            const int pageSize = 10;
+            var query = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Supplier)
-                .Where(p => p.IsArchived)
+                .Where(p => p.IsArchived);
+            var totalItems = await query.CountAsync();
+            page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+            ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+            var products = await query
+                .OrderBy(p => p.ProductName)
+                .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
 
             return View(products);

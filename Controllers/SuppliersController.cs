@@ -57,11 +57,15 @@ namespace FoodSupply.Controllers
         // =========================================================
         // GET: Suppliers/Archived
         // =========================================================
-        public async Task<IActionResult> Archived()
+        public async Task<IActionResult> Archived(int page = 1)
         {
-            var suppliers = await _context.Suppliers
-                .Where(s => s.IsArchived)
-                .OrderBy(s => s.SupplierName)
+            const int pageSize = 10;
+            var query = _context.Suppliers.Where(s => s.IsArchived);
+            var totalItems = await query.CountAsync();
+            page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+            ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+            var suppliers = await query.OrderBy(s => s.SupplierName)
+                .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
 
             return View(suppliers);

@@ -576,14 +576,19 @@ namespace FoodSupply.Controllers
         }
 
         // GET: SalesOrders/Archived
-        public async Task<IActionResult> Archived()
+        public async Task<IActionResult> Archived(int page = 1)
         {
-            var archivedOrders = await _context.SalesOrders
+            const int pageSize = 10;
+            var query = _context.SalesOrders
                 .Where(s => s.IsArchived)
                 .Include(s => s.Customer)
                 .Include(s => s.SalesOrderItems)
-                    .ThenInclude(i => i.Product)
-                .OrderByDescending(s => s.OrderDate)
+                    .ThenInclude(i => i.Product);
+            var totalItems = await query.CountAsync();
+            page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+            ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+            var archivedOrders = await query.OrderByDescending(s => s.OrderDate)
+                .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
 
             return View(archivedOrders);

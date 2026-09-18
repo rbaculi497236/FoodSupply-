@@ -1,0 +1,38 @@
+@{
+    var action = (string?)ViewContext.RouteData.Values["action"] ?? "Index";
+    var controller = (string?)ViewContext.RouteData.Values["controller"];
+    var page = (int?)ViewBag.Page ?? 1;
+    var pageSize = (int?)ViewBag.PageSize ?? 10;
+    var totalItems = (int?)ViewBag.TotalItems ?? 0;
+    var pageCount = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+    var baseRouteValues = ViewBag.PaginationRouteValues as Dictionary<string, string>
+        ?? new Dictionary<string, string>();
+}
+@if (pageCount > 1)
+{
+    var previousRouteValues = new Dictionary<string, string>(baseRouteValues) { ["page"] = (page - 1).ToString() };
+    var nextRouteValues = new Dictionary<string, string>(baseRouteValues) { ["page"] = (page + 1).ToString() };
+
+    <nav aria-label="Pagination" class="mt-3">
+        <ul class="pagination mb-0 flex-wrap">
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link" asp-controller="@controller" asp-action="@action" asp-all-route-data="previousRouteValues" aria-label="Previous page">
+                    <span aria-hidden="true">&laquo;</span> Previous
+                </a>
+            </li>
+            @for (var number = 1; number <= pageCount; number++)
+            {
+                var isCurrentPage = number == page;
+                var pageRouteValues = new Dictionary<string, string>(baseRouteValues) { ["page"] = number.ToString() };
+                <li class="page-item @(isCurrentPage ? "active" : "")">
+                    <a class="page-link" asp-controller="@controller" asp-action="@action" asp-all-route-data="pageRouteValues" aria-current="@(isCurrentPage ? "page" : null)">@number</a>
+                </li>
+            }
+            <li class="page-item @(page == pageCount ? "disabled" : "")">
+                <a class="page-link" asp-controller="@controller" asp-action="@action" asp-all-route-data="nextRouteValues" aria-label="Next page">
+                    Next <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+}

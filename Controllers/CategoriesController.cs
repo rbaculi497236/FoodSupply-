@@ -50,11 +50,15 @@ namespace FoodSupply.Controllers
         }
 
         // GET: Categories/Archived
-        public async Task<IActionResult> Archived()
+        public async Task<IActionResult> Archived(int page = 1)
         {
-            var categories = await _context.Categories
-                .Where(c => c.IsArchived)
-                .OrderBy(c => c.CategoryName)
+            const int pageSize = 10;
+            var query = _context.Categories.Where(c => c.IsArchived);
+            var totalItems = await query.CountAsync();
+            page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
+            ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+            var categories = await query.OrderBy(c => c.CategoryName)
+                .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync();
 
             return View(categories);
