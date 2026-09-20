@@ -82,7 +82,7 @@ namespace FoodSupply.Controllers
         // POST: Purchases/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Purchase purchase)
+        public async Task<IActionResult> Create([Bind("SupplierId,PurchaseDate,Notes,PurchaseItems")] Purchase purchase)
         {
             ModelState.Remove(nameof(Purchase.PurchaseOrderNumber));
 
@@ -96,7 +96,7 @@ namespace FoodSupply.Controllers
 
                 foreach (var item in purchase.PurchaseItems)
                 {
-                    item.Id = 0;
+                    item.Id = 0; item.Product = null; item.Purchase = null;
                     item.Subtotal = item.Quantity * item.UnitPrice;
                 }
 
@@ -144,7 +144,7 @@ namespace FoodSupply.Controllers
             }
 
             // Do not allow editing a received purchase.
-            if (purchase.Status == "Received")
+            if (purchase.Status != "Pending")
             {
                 TempData["Error"] =
                     "A received purchase cannot be edited.";
@@ -181,7 +181,7 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
-            if (existingPurchase.Status == "Received")
+            if (existingPurchase.Status != "Pending")
             {
                 TempData["Error"] =
                     "A received purchase cannot be edited.";
@@ -199,7 +199,11 @@ namespace FoodSupply.Controllers
                     purchase.Status = existingPurchase.Status;
                     purchase.IsArchived = existingPurchase.IsArchived;
 
-                    _context.Update(purchase);
+                                        var tracked = await _context.Purchases.FindAsync(id);
+                    if (tracked == null) return NotFound();
+                    tracked.SupplierId = purchase.SupplierId;
+                    tracked.PurchaseDate = purchase.PurchaseDate;
+                    tracked.Notes = purchase.Notes;
 
                     await _context.SaveChangesAsync();
                 }
@@ -241,7 +245,7 @@ namespace FoodSupply.Controllers
             }
 
             // Do not allow items to be added after receiving.
-            if (purchase.Status == "Received")
+            if (purchase.Status != "Pending")
             {
                 TempData["Error"] =
                     "Items cannot be added to a received purchase.";
@@ -272,7 +276,7 @@ namespace FoodSupply.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddItem(PurchaseItem item)
         {
-            item.Id = 0;
+            item.Id = 0; item.Product = null; item.Purchase = null;
 
             // Make sure the purchase exists.
             var purchase = await _context.Purchases
@@ -284,7 +288,7 @@ namespace FoodSupply.Controllers
             }
 
             // Do not allow items after receiving.
-            if (purchase.Status == "Received")
+            if (purchase.Status != "Pending")
             {
                 TempData["Error"] =
                     "Items cannot be added to a received purchase.";
@@ -330,88 +334,8 @@ namespace FoodSupply.Controllers
         // RECEIVE PURCHASE
         // =========================================================
 
-        // POST: Purchases/Receive/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Receive(int id)
-        {
-            // Load purchase and its items.
-            var purchase = await _context.Purchases
-                .Include(p => p.PurchaseItems)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (purchase == null)
-            {
-                return NotFound();
-            }
-
-            // Prevent receiving an already received purchase.
-            if (purchase.Status == "Received")
-            {
-                TempData["Error"] =
-                    "This purchase has already been received.";
-
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id });
-            }
-
-            // A purchase without items cannot be received.
-            if (!purchase.PurchaseItems.Any())
-            {
-                TempData["Error"] =
-                    "This purchase cannot be received because it has no items.";
-
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id });
-            }
-
-            // Process every purchased item.
-            foreach (var purchaseItem in purchase.PurchaseItems)
-            {
-                var inventory = await _context.Inventories
-                    .FirstOrDefaultAsync(i =>
-                        i.ProductId == purchaseItem.ProductId);
-
-                if (inventory == null)
-                {
-                    // Create inventory record if one doesn't exist.
-                    inventory = new Inventory
-                    {
-                        ProductId = purchaseItem.ProductId,
-                        StockQuantity = purchaseItem.Quantity,
-                        ReorderLevel = 0,
-                        LastUpdated = DateTime.Now
-                    };
-
-                    UpdateStockStatus(inventory);
-
-                    _context.Inventories.Add(inventory);
-                }
-                else
-                {
-                    // Increase existing stock.
-                    inventory.StockQuantity += purchaseItem.Quantity;
-                    inventory.LastUpdated = DateTime.Now;
-
-                    UpdateStockStatus(inventory);
-                }
-            }
-
-            // Mark purchase as received.
-            purchase.Status = "Received";
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] =
-                "Purchase received successfully. Inventory has been updated.";
-
-            return RedirectToAction(
-                nameof(Details),
-                new { id });
-        }
-
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult Receive(int id) => RedirectToAction("Receive", "Operations", new { id });
         // Updates Inventory.StockStatus based on quantity.
         private void UpdateStockStatus(Inventory inventory)
         {

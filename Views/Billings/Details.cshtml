@@ -1,4 +1,4 @@
-﻿@model FoodSupply.Models.Billing
+@model FoodSupply.Models.Billing
 
 @{
     ViewData["Title"] = "Invoice Details";
@@ -141,3 +141,5 @@
     }
 
 </div>
+
+<partial name="_PaymentHistory" model="(List<FoodSupply.Models.Payment>)ViewBag.Payments" />

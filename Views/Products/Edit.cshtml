@@ -93,7 +93,7 @@ ViewData["Title"] = "Edit Product";
 
                 <div class="col-md-4">
                     <label asp-for="StockQuantity" class="form-label fw-semibold"></label>
-                    <input asp-for="StockQuantity"
+                    <input readonly asp-for="StockQuantity"
                            class="form-control"
                            type="number"
                            min="0" />
@@ -111,7 +111,7 @@ ViewData["Title"] = "Edit Product";
 
                 <div class="col-md-6">
                     <label asp-for="ExpirationDate" class="form-label fw-semibold"></label>
-                    <input asp-for="ExpirationDate"
+                    <input readonly asp-for="ExpirationDate"
                            class="form-control"
                            type="date" />
                     <span asp-validation-for="ExpirationDate" class="text-danger"></span>
@@ -154,3 +154,5 @@ ViewData["Title"] = "Edit Product";
 await Html.RenderPartialAsync("_ValidationScriptsPartial");
 }
 }
+
+<p class="text-muted">Receive stock and maintain expiry dates through Batches and stock history on the product or inventory details page.</p>

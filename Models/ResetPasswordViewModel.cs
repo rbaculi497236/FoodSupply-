@@ -6,11 +6,12 @@ public class ResetPasswordViewModel
 {
 [Required]
 public int UserId { get; set; }
+    [Required] public string Token { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "New password is required.")]
     [DataType(DataType.Password)]
     [Display(Name = "New Password")]
-    [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+    [MinLength(12, ErrorMessage = "Password must be at least 12 characters.")]
     public string NewPassword { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Please confirm your password.")]

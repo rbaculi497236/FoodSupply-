@@ -1,40 +1,27 @@
 using FoodSupply.Data;
+using FoodSupply.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using System.ComponentModel.DataAnnotations;
 namespace FoodSupply.Controllers;
-
-[ApiController]
-[Route("api/payments")]
+[ApiController, Route("api/payments")]
 [Authorize(Roles = "Admin,Manager,Main Admin,Sales Staff / Billing Staff,Sales/Customer Staff,Billing Staff")]
-public class PaymentsApiController : ControllerBase
+public class PaymentsApiController(ApplicationDbContext db, PaymentService payments) : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
-
-    public PaymentsApiController(ApplicationDbContext context) => _context = context;
-
-    [HttpPost("{billingId:int}")]
+    [HttpPost("{billingId:int}"), ValidateAntiForgeryToken]
     public async Task<IActionResult> RecordPayment(int billingId, PaymentRequest request)
     {
-        var billing = await _context.Billings.FirstOrDefaultAsync(b => b.Id == billingId && !b.IsArchived);
-        if (billing == null) return NotFound(new { message = "Billing record not found." });
-        if (request.Amount <= 0 || billing.AmountPaid + request.Amount > billing.TotalAmount)
-            return BadRequest(new { message = "Payment must be positive and cannot exceed the remaining balance." });
-
-        billing.AmountPaid += request.Amount;
-        billing.Balance = billing.TotalAmount - billing.AmountPaid;
-        billing.PaymentMethod = request.PaymentMethod;
-        billing.PaymentDate = DateTime.Now;
-        billing.PaymentStatus = billing.Balance == 0 ? "Paid" : "Partially Paid";
-        await _context.SaveChangesAsync();
-
-        return Ok(new { billing.Id, billing.InvoiceNumber, billing.AmountPaid, billing.Balance, billing.PaymentStatus });
+        if (!await db.Billings.AnyAsync(b => b.Id == billingId)) return NotFound();
+        var payment = await payments.RecordAsync(billingId, request.Amount, request.PaymentMethod, request.Reference, request.RequestId);
+        await db.SaveChangesAsync();
+        return Ok(new { payment.Id, payment.BillingId, payment.Amount, payment.PaidAt });
     }
-
     public sealed class PaymentRequest
     {
         public decimal Amount { get; set; }
-        public string? PaymentMethod { get; set; }
+        [Required, StringLength(100)] public string PaymentMethod { get; set; } = "";
+        [StringLength(200)] public string Reference { get; set; } = "";
+        [Required, StringLength(100)] public string RequestId { get; set; } = "";
     }
 }

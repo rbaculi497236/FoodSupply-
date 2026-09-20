@@ -5,6 +5,9 @@ namespace FoodSupply.Models
     public class User
     {
         public int Id { get; set; }
+        public string? ResetTokenHash { get; set; }
+        public DateTime? ResetTokenExpiresAt { get; set; }
+        public string SecurityStamp { get; set; } = Guid.NewGuid().ToString();
 
         [Required]
         [Display(Name = "Full Name")]

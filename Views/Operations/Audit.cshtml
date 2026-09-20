@@ -1,0 +1,8 @@
+@model List<FoodSupply.Models.AuditEntry>
+@{ ViewData["Title"] = "Audit history"; int page = ViewBag.Page; }
+<h1>Audit history</h1><p>Times are UTC. Staff are identified by account ID. Passwords and recovery tokens are excluded.</p>
+<div class="table-responsive"><table class="table"><thead><tr><th>Time</th><th>Staff ID</th><th>Record</th><th>Action</th><th>Reason</th><th>Changes</th></tr></thead><tbody>
+@foreach(var entry in Model) { <tr><td>@entry.CreatedAt</td><td>@entry.Actor</td><td>@entry.Entity #@entry.RecordId</td><td>@entry.Action</td><td>@entry.Reason</td><td><details><summary>View changes</summary><pre style="white-space:pre-wrap">@entry.Changes</pre></details></td></tr> }
+</tbody></table></div>
+@if(page > 1) { <a asp-action="Audit" asp-route-page="@(page - 1)" class="btn btn-outline-secondary">Previous</a> }
+@if(Model.Count == 50) { <a asp-action="Audit" asp-route-page="@(page + 1)" class="btn btn-outline-secondary">Next</a> }

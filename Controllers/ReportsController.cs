@@ -33,30 +33,30 @@ private readonly ApplicationDbContext _context;
                 .CountAsync(s => !s.IsArchived),
 
             TotalSales = await _context.SalesOrders
-                .Where(s => !s.IsArchived)
+                .Where(s => s.Status == "Delivered")
                 .SumAsync(s => (decimal?)s.TotalAmount) ?? 0,
 
             TotalPurchases = await _context.Purchases
-                .Where(p => !p.IsArchived)
+                .Where(p => p.Status != "Cancelled")
                 .SumAsync(p => (decimal?)p.TotalAmount) ?? 0,
 
             TotalBilled = await _context.Billings
-                .Where(b => !b.IsArchived)
+                .Where(b => true)
                 .SumAsync(b => (decimal?)b.TotalAmount) ?? 0,
 
             TotalPaid = await _context.Billings
-                .Where(b => !b.IsArchived)
+                .Where(b => true)
                 .SumAsync(b => (decimal?)b.AmountPaid) ?? 0,
 
             TotalBalance = await _context.Billings
-                .Where(b => !b.IsArchived)
+                .Where(b => true)
                 .SumAsync(b => (decimal?)b.Balance) ?? 0,
 
             TotalOrders = await _context.SalesOrders
-                .CountAsync(s => !s.IsArchived),
+                .CountAsync(),
 
             TotalDeliveries = await _context.Deliveries
-                .CountAsync(d => !d.IsArchived),
+                .CountAsync(),
 
             LowStockProducts = await _context.Inventories
                 .CountAsync(i =>
@@ -79,7 +79,7 @@ private readonly ApplicationDbContext _context;
         var query = _context.SalesOrders
             .Include(s => s.Customer)
             .Include(s => s.SalesOrderItems)
-            .Where(s => !s.IsArchived)
+            .Where(s => true)
             .AsQueryable();
 
         if (fromDate.HasValue)
@@ -100,7 +100,7 @@ private readonly ApplicationDbContext _context;
         var totalItems = await query.CountAsync();
         page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
         ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
-        ViewBag.TotalSales = await query.SumAsync(s => (decimal?)s.TotalAmount) ?? 0;
+        ViewBag.TotalSales = await query.Where(s => s.Status == "Delivered").SumAsync(s => (decimal?)s.TotalAmount) ?? 0;
         ViewBag.TotalOrders = totalItems;
         var orders = await query
             .OrderByDescending(s => s.OrderDate)
@@ -220,7 +220,7 @@ private readonly ApplicationDbContext _context;
     {
         var query = _context.Purchases
             .Include(p => p.Supplier)
-            .Where(p => !p.IsArchived)
+            .Where(p => p.Status != "Cancelled")
             .AsQueryable();
 
         if (fromDate.HasValue)
@@ -287,7 +287,7 @@ private readonly ApplicationDbContext _context;
         var query = _context.Billings
             .Include(b => b.SalesOrder)
                 .ThenInclude(s => s!.Customer)
-            .Where(b => !b.IsArchived)
+            .Where(b => true)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(paymentStatus))
@@ -354,7 +354,7 @@ private readonly ApplicationDbContext _context;
         var query = _context.Deliveries
             .Include(d => d.SalesOrder)
                 .ThenInclude(s => s!.Customer)
-            .Where(d => !d.IsArchived)
+            .Where(d => true)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(status))

@@ -1,0 +1,26 @@
+@model FoodSupply.Models.Purchase
+@{ ViewData["Title"] = "Record purchase receipt"; var receipts = (List<FoodSupply.Models.PurchaseReceipt>)ViewBag.Receipts; }
+<h1>Receive @Model.PurchaseOrderNumber</h1>
+<p>Status: @Model.Status. Rejected and damaged units close the corresponding ordered quantity but do not enter stock. Order replacements separately.</p>
+@foreach (var item in Model.PurchaseItems)
+{
+    var remaining = item.Quantity - receipts.Where(r => r.PurchaseItemId == item.Id).Sum(r => r.AcceptedQuantity + r.RejectedQuantity + r.DamagedQuantity);
+    <div class="card card-body mb-3"><h2 class="h5">@item.Product?.ProductName — @remaining outstanding</h2>
+    @if (remaining > 0 && !Model.IsArchived && Model.Status != "Cancelled") {
+    <form asp-action="ReceiveItem" method="post" class="row g-2">
+        <input type="hidden" name="itemId" value="@item.Id" /><input type="hidden" name="requestId" value="@Guid.NewGuid()" />
+        <div class="col"><label>Accepted<input name="accepted" type="number" min="0" max="@remaining" value="0" required class="form-control" /></label></div>
+        <div class="col"><label>Rejected<input name="rejected" type="number" min="0" max="@remaining" value="0" required class="form-control" /></label></div>
+        <div class="col"><label>Damaged<input name="damaged" type="number" min="0" max="@remaining" value="0" required class="form-control" /></label></div>
+        <div class="col"><label>Batch number<input name="batchNumber" maxlength="100" class="form-control" /></label></div>
+        <div class="col"><label>Expiry<input name="expiry" type="date" class="form-control" /></label></div>
+        <div class="col"><label>Notes / rejection reason<input name="reason" maxlength="500" class="form-control" /></label></div>
+        <div><button class="btn btn-primary">Record receipt</button></div>
+    </form> }
+    </div>
+}
+<h2 class="h4">Receipt history</h2>
+<table class="table"><thead><tr><th>UTC time</th><th>Item</th><th>Accepted</th><th>Rejected</th><th>Damaged</th><th>Staff ID</th><th>Reason</th></tr></thead><tbody>
+@foreach (var r in receipts) { <tr><td>@r.ReceivedAt</td><td>@r.PurchaseItemId</td><td>@r.AcceptedQuantity</td><td>@r.RejectedQuantity</td><td>@r.DamagedQuantity</td><td>@r.Actor</td><td>@r.Reason</td></tr> }
+</tbody></table>
+<a asp-controller="Purchases" asp-action="Details" asp-route-id="@Model.Id">Back to purchase</a>

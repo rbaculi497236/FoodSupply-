@@ -12,7 +12,7 @@
         @if (item.ExpirationDate.HasValue && item.ExpirationDate.Value.Date <= DateTime.Today.AddDays(30)) { <span class="badge bg-warning text-dark">Expiration</span> }
         @if (item.SpoiledQuantity > 0) { <span class="badge bg-danger">Spoilage</span> }
         @if (item.DamagedQuantity > 0) { <span class="badge bg-danger">Damage</span> }
-    </td></tr>
+    <a asp-controller="Operations" asp-action="Batches" asp-route-productId="@item.ProductId" class="btn btn-sm btn-outline-primary">Inspect batches / expiry / quarantine</a></td></tr>
 }
 </tbody></table></div>
 @await Html.PartialAsync("_Pagination")

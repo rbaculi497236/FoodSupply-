@@ -1,0 +1,19 @@
+@model FoodSupply.Models.Delivery
+@{ ViewData["Title"] = "Record delivery"; var receipts = (List<FoodSupply.Models.DeliveryReceipt>)ViewBag.Receipts; }
+<h1>Delivery #@Model.Id</h1><p>Status: @Model.Status. Record the quantities received and a signed delivery note or other proof reference.</p>
+@foreach (var item in Model.SalesOrder!.SalesOrderItems)
+{
+    var remaining = item.Quantity - receipts.Where(r => r.SalesOrderItemId == item.Id).Sum(r => r.Quantity);
+    <div class="card card-body mb-3"><h2 class="h5">@item.Product?.ProductName — @remaining outstanding</h2>
+    @if(remaining > 0 && !Model.IsArchived) {
+    <form asp-action="Deliver" method="post" class="row g-2">
+        <input type="hidden" name="deliveryId" value="@Model.Id" /><input type="hidden" name="itemId" value="@item.Id" /><input type="hidden" name="requestId" value="@Guid.NewGuid()" />
+        <div class="col"><label>Quantity received<input name="quantity" type="number" min="1" max="@remaining" required class="form-control" /></label></div>
+        <div class="col"><label>Recipient<input name="receivedBy" maxlength="200" required class="form-control" /></label></div>
+        <div class="col"><label>Proof reference<input name="proof" maxlength="500" required class="form-control" /></label></div>
+        <div class="col-auto align-self-end"><button class="btn btn-primary">Record delivery</button></div>
+    </form> }</div>
+}
+<table class="table"><thead><tr><th>UTC time</th><th>Item</th><th>Quantity</th><th>Recipient</th><th>Proof</th><th>Staff ID</th></tr></thead><tbody>
+@foreach(var r in receipts) { <tr><td>@r.DeliveredAt</td><td>@r.SalesOrderItemId</td><td>@r.Quantity</td><td>@r.ReceivedBy</td><td>@r.ProofReference</td><td>@r.Actor</td></tr> }
+</tbody></table>

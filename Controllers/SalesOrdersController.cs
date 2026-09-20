@@ -1,3 +1,4 @@
+using FoodSupply.Services;
 using FoodSupply.Data;
 using FoodSupply.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +12,11 @@ namespace FoodSupply.Controllers
     public class SalesOrdersController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly SalesOrderService _orders;
 
-        public SalesOrdersController(ApplicationDbContext context)
+        public SalesOrdersController(ApplicationDbContext context, SalesOrderService orders)
         {
-            _context = context;
+            _context = context; _orders = orders;
         }
 
         // GET: SalesOrders
@@ -75,138 +77,17 @@ namespace FoodSupply.Controllers
             return View();
         }
 
-        // POST: SalesOrders/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(SalesOrder salesOrder)
         {
-            var orderItems = salesOrder.SalesOrderItems
-                ?? new List<SalesOrderItem>();
-
-            ModelState.Remove("Customer");
-            ModelState.Remove("SalesOrderItems");
-
-            if (!orderItems.Any())
+            if (ModelState.IsValid)
             {
-                ModelState.AddModelError(
-                    "",
-                    "Please add at least one product to the sales order."
-                );
+                try { await _orders.SaveAsync(salesOrder); return RedirectToAction(nameof(Index)); }
+                catch (InvalidOperationException ex) when (ex.Source == "FoodSupply.Business") { ModelState.AddModelError("", ex.Message); }
             }
-
-            if (!ModelState.IsValid)
-            {
-                await LoadCustomers(salesOrder.CustomerId);
-                await LoadProducts();
-
-                return View(salesOrder);
-            }
-
-            var productIds = orderItems
-                .Select(i => i.ProductId)
-                .Distinct()
-                .ToList();
-
-            var products = await _context.Products
-                .Where(p =>
-                    productIds.Contains(p.Id) &&
-                    p.Status == "Active")
-                .ToDictionaryAsync(p => p.Id);
-
-            decimal totalAmount = 0;
-
-            // Validate products and inventory
-            foreach (var item in orderItems)
-            {
-                if (!products.TryGetValue(
-                        item.ProductId,
-                        out var product))
-                {
-                    ModelState.AddModelError(
-                        "",
-                        $"Product ID {item.ProductId} was not found or is inactive."
-                    );
-
-                    continue;
-                }
-
-                var inventory = await _context.Inventories
-                    .FirstOrDefaultAsync(
-                        i => i.ProductId == item.ProductId);
-
-                if (inventory == null)
-                {
-                    ModelState.AddModelError(
-                        "",
-                        $"No inventory record exists for {product.ProductName}."
-                    );
-
-                    continue;
-                }
-
-                if (item.Quantity > inventory.StockQuantity)
-                {
-                    ModelState.AddModelError(
-                        "",
-                        $"Insufficient stock for {product.ProductName}. " +
-                        $"Available: {inventory.StockQuantity}, " +
-                        $"Requested: {item.Quantity}."
-                    );
-
-                    continue;
-                }
-
-                item.UnitPrice = product.Price;
-
-                item.Subtotal =
-                    item.Quantity * item.UnitPrice;
-
-                totalAmount += item.Subtotal;
-            }
-
-            if (!ModelState.IsValid)
-            {
-                await LoadCustomers(salesOrder.CustomerId);
-                await LoadProducts();
-
-                return View(salesOrder);
-            }
-
-            // New Sales Order always starts as Pending
-            salesOrder.OrderDate = DateTime.Now;
-            salesOrder.Status = "Pending";
-            salesOrder.TotalAmount = totalAmount;
-            salesOrder.IsArchived = false;
-
-            _context.SalesOrders.Add(salesOrder);
-
-            // Deduct inventory for new order
-            foreach (var item in orderItems)
-            {
-                var inventory = await _context.Inventories
-                    .FirstAsync(
-                        i => i.ProductId == item.ProductId);
-
-                var product =
-                    products[item.ProductId];
-
-                inventory.StockQuantity -= item.Quantity;
-                inventory.LastUpdated = DateTime.Now;
-
-                UpdateInventoryStatus(inventory);
-
-                product.StockQuantity =
-                    inventory.StockQuantity;
-            }
-
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] =
-                $"Sales Order #{salesOrder.Id} created successfully.";
-
-            return RedirectToAction(nameof(Index));
+            await LoadCustomers(salesOrder.CustomerId); await LoadProducts();
+            return View(salesOrder);
         }
-
         // GET: SalesOrders/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -231,301 +112,18 @@ namespace FoodSupply.Controllers
             return View(salesOrder);
         }
 
-        // POST: SalesOrders/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int id,
-            SalesOrder salesOrder)
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, SalesOrder salesOrder)
         {
-            if (id != salesOrder.Id)
+            if (id != salesOrder.Id) return NotFound();
+            if (ModelState.IsValid)
             {
-                return NotFound();
+                try { await _orders.SaveAsync(salesOrder, id); return RedirectToAction(nameof(Index)); }
+                catch (InvalidOperationException ex) when (ex.Source == "FoodSupply.Business") { ModelState.AddModelError("", ex.Message); }
             }
-
-            var newItems = salesOrder.SalesOrderItems
-                ?? new List<SalesOrderItem>();
-
-            ModelState.Remove("Customer");
-            ModelState.Remove("SalesOrderItems");
-
-            if (!newItems.Any() &&
-                salesOrder.Status != "Cancelled")
-            {
-                ModelState.AddModelError(
-                    "",
-                    "Please add at least one product to the sales order."
-                );
-            }
-
-            if (!ModelState.IsValid)
-            {
-                await LoadCustomers(salesOrder.CustomerId);
-                await LoadProducts();
-
-                return View(salesOrder);
-            }
-
-            // Get existing order
-            var existingOrder = await _context.SalesOrders
-                .Include(s => s.SalesOrderItems)
-                .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (existingOrder == null)
-            {
-                return NotFound();
-            }
-
-            // Prevent manually skipping the workflow
-            //
-            // Only Pending / Processing orders can be changed
-            // through the Sales Order screen.
-            //
-            // Billed, Out for Delivery, and Delivered are controlled
-            // by Billing and Delivery modules.
-
-            if (existingOrder.Status == "Billed" ||
-                existingOrder.Status == "Out for Delivery" ||
-                existingOrder.Status == "Delivered")
-            {
-                ModelState.AddModelError(
-                    "",
-                    "This Sales Order has already progressed to Billing or Delivery and cannot be edited from the Sales Order module."
-                );
-
-                await LoadCustomers(existingOrder.CustomerId);
-                await LoadProducts();
-
-                return View(existingOrder);
-            }
-
-            // Only allow Pending, Processing, or Cancelled
-            var allowedStatuses = new[]
-            {
-                "Pending",
-                "Processing",
-                "Cancelled"
-            };
-
-            if (!allowedStatuses.Contains(salesOrder.Status))
-            {
-                ModelState.AddModelError(
-                    "Status",
-                    "Invalid Sales Order status."
-                );
-
-                await LoadCustomers(existingOrder.CustomerId);
-                await LoadProducts();
-
-                return View(existingOrder);
-            }
-
-            // Get new product IDs
-            var productIds = newItems
-                .Select(i => i.ProductId)
-                .Distinct()
-                .ToList();
-
-            var products = await _context.Products
-                .Where(p =>
-                    productIds.Contains(p.Id) &&
-                    p.Status == "Active")
-                .ToDictionaryAsync(p => p.Id);
-
-            // Get old product IDs
-            var oldProductIds = existingOrder.SalesOrderItems
-                .Select(i => i.ProductId)
-                .Distinct()
-                .ToList();
-
-            // Get all affected products
-            var allProductIds = oldProductIds
-                .Union(productIds)
-                .Distinct()
-                .ToList();
-
-            var inventories = await _context.Inventories
-                .Where(i =>
-                    allProductIds.Contains(i.ProductId))
-                .ToDictionaryAsync(i => i.ProductId);
-
-            // Restore old inventory
-            // Only restore if the old order was not cancelled.
-            if (existingOrder.Status != "Cancelled")
-            {
-                foreach (var oldItem in existingOrder.SalesOrderItems)
-                {
-                    if (inventories.TryGetValue(
-                            oldItem.ProductId,
-                            out var inventory))
-                    {
-                        inventory.StockQuantity +=
-                            oldItem.Quantity;
-
-                        inventory.LastUpdated =
-                            DateTime.Now;
-
-                        UpdateInventoryStatus(
-                            inventory);
-
-                        var oldProduct =
-                            await _context.Products
-                                .FirstOrDefaultAsync(
-                                    p => p.Id ==
-                                         oldItem.ProductId);
-
-                        if (oldProduct != null)
-                        {
-                            oldProduct.StockQuantity =
-                                inventory.StockQuantity;
-                        }
-                    }
-                }
-            }
-
-            decimal totalAmount = 0;
-
-            // Validate and calculate new order
-            if (salesOrder.Status != "Cancelled")
-            {
-                foreach (var item in newItems)
-                {
-                    if (!products.TryGetValue(
-                            item.ProductId,
-                            out var product))
-                    {
-                        ModelState.AddModelError(
-                            "",
-                            $"Product ID {item.ProductId} was not found or is inactive."
-                        );
-
-                        continue;
-                    }
-
-                    if (!inventories.TryGetValue(
-                            item.ProductId,
-                            out var inventory))
-                    {
-                        ModelState.AddModelError(
-                            "",
-                            $"No inventory record exists for {product.ProductName}."
-                        );
-
-                        continue;
-                    }
-
-                    if (item.Quantity >
-                        inventory.StockQuantity)
-                    {
-                        ModelState.AddModelError(
-                            "",
-                            $"Insufficient stock for {product.ProductName}. " +
-                            $"Available: {inventory.StockQuantity}, " +
-                            $"Requested: {item.Quantity}."
-                        );
-
-                        continue;
-                    }
-
-                    item.UnitPrice =
-                        product.Price;
-
-                    item.Subtotal =
-                        item.Quantity *
-                        item.UnitPrice;
-
-                    totalAmount +=
-                        item.Subtotal;
-                }
-
-                if (!ModelState.IsValid)
-                {
-                    await LoadCustomers(
-                        salesOrder.CustomerId);
-
-                    await LoadProducts();
-
-                    return View(salesOrder);
-                }
-
-                // Deduct new inventory
-                foreach (var item in newItems)
-                {
-                    var inventory =
-                        inventories[item.ProductId];
-
-                    var product =
-                        products[item.ProductId];
-
-                    inventory.StockQuantity -=
-                        item.Quantity;
-
-                    inventory.LastUpdated =
-                        DateTime.Now;
-
-                    UpdateInventoryStatus(
-                        inventory);
-
-                    product.StockQuantity =
-                        inventory.StockQuantity;
-                }
-            }
-
-            // Update order
-            existingOrder.CustomerId =
-                salesOrder.CustomerId;
-
-            existingOrder.Status =
-                salesOrder.Status;
-
-            existingOrder.Remarks =
-                salesOrder.Remarks;
-
-            existingOrder.TotalAmount =
-                salesOrder.Status == "Cancelled"
-                    ? 0
-                    : totalAmount;
-
-            // Replace old items
-            _context.SalesOrderItems.RemoveRange(
-                existingOrder.SalesOrderItems);
-
-            foreach (var item in newItems)
-            {
-                item.Id = 0;
-
-                item.SalesOrderId =
-                    existingOrder.Id;
-
-                if (salesOrder.Status == "Cancelled")
-                {
-                    item.UnitPrice = 0;
-                    item.Subtotal = 0;
-                }
-
-                _context.SalesOrderItems.Add(item);
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!SalesOrderExists(id))
-                {
-                    return NotFound();
-                }
-
-                throw;
-            }
-
-            TempData["SuccessMessage"] =
-                $"Sales Order #{existingOrder.Id} updated successfully.";
-
-            return RedirectToAction(nameof(Index));
+            await LoadCustomers(salesOrder.CustomerId); await LoadProducts();
+            return View(salesOrder);
         }
-
         // GET: SalesOrders/Archive/5
         public async Task<IActionResult> Archive(int? id)
         {
@@ -565,6 +163,7 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
+            BusinessRule.Require(salesOrder.Status is "Cancelled" or "Delivered", "Complete or cancel an order before archiving it.");
             salesOrder.IsArchived = true;
 
             await _context.SaveChangesAsync();
@@ -640,10 +239,18 @@ namespace FoodSupply.Controllers
         // Load active products
         private async Task LoadProducts()
         {
-            var products = await _context.Products
-                .Where(p => p.Status == "Active")
+            var products = await _context.Products.AsNoTracking()
+                .Where(p => p.Status == "Active" && !p.IsArchived)
                 .OrderBy(p => p.ProductName)
                 .ToListAsync();
+
+            var today = DateTime.Today;
+            var usableStock = await _context.InventoryBatches
+                .Where(b => !b.IsQuarantined && (!b.ExpirationDate.HasValue || b.ExpirationDate > today) &&
+                    _context.Inventories.Any(i => i.ProductId == b.ProductId && !i.IsArchived))
+                .GroupBy(b => b.ProductId).Select(g => new { ProductId = g.Key, Quantity = g.Sum(b => b.Quantity) })
+                .ToDictionaryAsync(b => b.ProductId, b => b.Quantity);
+            foreach (var product in products) product.StockQuantity = usableStock.GetValueOrDefault(product.Id);
 
             ViewBag.Products = products;
         }

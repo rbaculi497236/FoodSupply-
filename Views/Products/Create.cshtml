@@ -108,7 +108,7 @@
             <!-- Stock Quantity -->
             <div class="form-group mb-3">
                 <label asp-for="StockQuantity" class="control-label"></label>
-                <input asp-for="StockQuantity"
+                <input readonly asp-for="StockQuantity"
                        type="number"
                        min="0"
                        class="form-control" />
@@ -130,7 +130,7 @@
             <!-- Expiration Date -->
             <div class="form-group mb-3">
                 <label asp-for="ExpirationDate" class="control-label"></label>
-                <input asp-for="ExpirationDate"
+                <input readonly asp-for="ExpirationDate"
                        type="date"
                        class="form-control" />
                 <span asp-validation-for="ExpirationDate"
@@ -175,3 +175,5 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
+
+<p class="text-muted">Receive stock and maintain expiry dates through Batches and stock history on the product or inventory details page.</p>

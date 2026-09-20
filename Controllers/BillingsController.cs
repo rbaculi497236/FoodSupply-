@@ -1,4 +1,5 @@
-﻿using FoodSupply.Data;
+using FoodSupply.Services;
+using FoodSupply.Data;
 using FoodSupply.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +11,11 @@ namespace FoodSupply.Controllers
     public class BillingsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly PaymentService _payments;
 
-        public BillingsController(ApplicationDbContext context)
+        public BillingsController(ApplicationDbContext context, PaymentService payments)
         {
-            _context = context;
+            _context = context; _payments = payments;
         }
 
         // GET: Billings
@@ -21,7 +23,7 @@ namespace FoodSupply.Controllers
         {
             const int pageSize = 10;
             var query = _context.Billings
-                .Where(b => !b.IsArchived)
+                .Where(b => true)
                 .Include(b => b.SalesOrder)
                 .AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
@@ -59,7 +61,7 @@ namespace FoodSupply.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Manager,Main Admin,Sales Staff / Billing Staff,Sales/Customer Staff,Billing Staff")]
-        public async Task<IActionResult> Create(Billing billing)
+        public async Task<IActionResult> Create([Bind("SalesOrderId,DueDate,Remarks")] Billing billing)
         {
             // System-generated fields
             ModelState.Remove("SalesOrder");
@@ -100,8 +102,7 @@ namespace FoodSupply.Controllers
             // Prevent duplicate active invoice
             var existingBilling = await _context.Billings
                 .AnyAsync(b =>
-                    b.SalesOrderId == billing.SalesOrderId &&
-                    !b.IsArchived);
+                    b.SalesOrderId == billing.SalesOrderId);
 
             if (existingBilling)
             {
@@ -170,6 +171,7 @@ namespace FoodSupply.Controllers
             if (billing == null)
                 return NotFound();
 
+            ViewBag.Payments = await _context.Payments.Where(p => p.BillingId == id).OrderByDescending(p => p.Id).ToListAsync();
             return View(billing);
         }
 
@@ -189,110 +191,32 @@ namespace FoodSupply.Controllers
             return View(billing);
         }
 
-        // POST: Billings/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Manager,Main Admin,Sales Staff / Billing Staff,Sales/Customer Staff,Billing Staff")]
-        public async Task<IActionResult> Edit(
-            int id,
-            Billing billing)
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, decimal amount, string paymentMethod, string? reference, string requestId)
         {
-            if (id != billing.Id)
-                return NotFound();
-
-            ModelState.Remove("SalesOrder");
-            ModelState.Remove("InvoiceNumber");
-            ModelState.Remove("PaymentStatus");
-            ModelState.Remove("TotalAmount");
-            ModelState.Remove("Balance");
-
-            if (!ModelState.IsValid)
-                return View(billing);
-
-            var existingBilling = await _context.Billings
-                .FirstOrDefaultAsync(b => b.Id == id);
-
-            if (existingBilling == null)
-                return NotFound();
-
-            // Validate payment
-            if (billing.AmountPaid < 0)
+            var billing = await _context.Billings.FindAsync(id);
+            if (billing == null) return NotFound();
+            if (ModelState.IsValid)
             {
-                ModelState.AddModelError(
-                    "AmountPaid",
-                    "Amount paid cannot be negative."
-                );
-
-                return View(billing);
+                try
+                {
+                    await _payments.RecordAsync(id, amount, paymentMethod, reference ?? "", requestId);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+                catch (InvalidOperationException ex) when (ex.Source == "FoodSupply.Business") { ModelState.AddModelError("", ex.Message); }
             }
-
-            if (billing.AmountPaid >
-                existingBilling.TotalAmount)
-            {
-                ModelState.AddModelError(
-                    "AmountPaid",
-                    "Amount paid cannot exceed the total amount."
-                );
-
-                return View(billing);
-            }
-
-            // Update amount paid
-            existingBilling.AmountPaid =
-                billing.AmountPaid;
-
-            // Update balance
-            existingBilling.Balance =
-                existingBilling.TotalAmount -
-                existingBilling.AmountPaid;
-
-            // Update payment status
-            if (existingBilling.AmountPaid == 0)
-            {
-                existingBilling.PaymentStatus =
-                    "Unpaid";
-
-                existingBilling.PaymentDate =
-                    null;
-            }
-            else if (
-                existingBilling.AmountPaid <
-                existingBilling.TotalAmount)
-            {
-                existingBilling.PaymentStatus =
-                    "Partially Paid";
-
-                existingBilling.PaymentDate =
-                    billing.PaymentDate;
-            }
-            else
-            {
-                existingBilling.PaymentStatus =
-                    "Paid";
-
-                existingBilling.PaymentDate =
-                    billing.PaymentDate ??
-                    DateTime.Now;
-            }
-
-            // Update other payment information
-            existingBilling.DueDate =
-                billing.DueDate;
-
-            existingBilling.PaymentMethod =
-                billing.PaymentMethod;
-
-            existingBilling.Remarks =
-                billing.Remarks;
-
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] =
-                $"Invoice {existingBilling.InvoiceNumber} updated successfully.";
-
-            return RedirectToAction(nameof(Index));
+            return View(billing);
         }
 
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin,Main Admin,Manager")]
+        public async Task<IActionResult> ReversePayment(int paymentId, string reason, string requestId)
+        {
+            await _payments.ReverseAsync(paymentId, reason, requestId);
+            await _context.SaveChangesAsync();
+            var payment = await _context.Payments.FindAsync(paymentId);
+            return RedirectToAction(nameof(Details), new { id = payment!.BillingId });
+        }
         // GET: Billings/Archive/5
         [Authorize(Roles = "Admin,Manager,Main Admin,Sales Staff / Billing Staff,Sales/Customer Staff,Billing Staff")]
         public async Task<IActionResult> Archive(int? id)
@@ -386,7 +310,6 @@ namespace FoodSupply.Controllers
             var duplicateInvoice = await _context.Billings
                 .AnyAsync(b =>
                     b.SalesOrderId == billing.SalesOrderId &&
-                    !b.IsArchived &&
                     b.Id != billing.Id);
 
             if (duplicateInvoice)
@@ -417,7 +340,7 @@ namespace FoodSupply.Controllers
             // Find Sales Orders that already have
             // an active invoice.
             var billedOrderIds = await _context.Billings
-                .Where(b => !b.IsArchived)
+                .Where(b => true)
                 .Select(b => b.SalesOrderId)
                 .Distinct()
                 .ToListAsync();

@@ -1,3 +1,4 @@
+using FoodSupply.Services;
 using FoodSupply.Data;
 using FoodSupply.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -133,6 +134,7 @@ namespace FoodSupply.Controllers
                 return View(delivery);
             }
 
+            delivery.Status = "Pending";
             delivery.DeliveryDate = DateTime.Now;
             delivery.IsArchived = false;
 
@@ -216,9 +218,8 @@ namespace FoodSupply.Controllers
                 !User.IsInRole("Main Admin"))
             {
                 var status = delivery.Status;
-                if (status != "Pending" && status != "Out for Delivery" &&
-                    status != "Delivered" && status != "Cancelled")
-                    return BadRequest("Invalid delivery status.");
+                if (status != existingDelivery.Status && !(existingDelivery.Status == "Pending" && status == "Out for Delivery"))
+                    return BadRequest("Use Record delivery to record quantities, recipient and proof.");
 
                 existingDelivery.Status = status;
                 var currentSalesOrder = await _context.SalesOrders
@@ -267,54 +268,17 @@ namespace FoodSupply.Controllers
                 return View(delivery);
             }
 
-            // If changing Sales Order
             if (existingDelivery.SalesOrderId != delivery.SalesOrderId)
-            {
-                // Check if new Sales Order already has a delivery
-                var anotherDelivery = await _context.Deliveries
-                    .AnyAsync(d =>
-                        d.Id != existingDelivery.Id &&
-                        d.SalesOrderId == delivery.SalesOrderId &&
-                        !d.IsArchived);
-
-                if (anotherDelivery)
-                {
-                    ModelState.AddModelError(
-                        "SalesOrderId",
-                        "The selected Sales Order already has an active delivery."
-                    );
-
-                    await LoadSalesOrders(delivery.SalesOrderId);
-
-                    return View(delivery);
-                }
-
-                // Restore old Sales Order to Billed
-                var oldSalesOrder = await _context.SalesOrders
-                    .FirstOrDefaultAsync(s =>
-                        s.Id == existingDelivery.SalesOrderId &&
-                        !s.IsArchived);
-
-                if (oldSalesOrder != null)
-                {
-                    var oldBilling = await _context.Billings
-                        .AnyAsync(b =>
-                            b.SalesOrderId == oldSalesOrder.Id &&
-                            !b.IsArchived);
-
-                    if (oldBilling)
-                    {
-                        oldSalesOrder.Status = "Billed";
-                    }
-                }
-            }
+                return BadRequest("A delivery cannot be reassigned to a different order.");
 
             // Update delivery
             existingDelivery.SalesOrderId =
                 delivery.SalesOrderId;
 
-            existingDelivery.Status =
-                delivery.Status;
+            BusinessRule.Require(delivery.Status == existingDelivery.Status ||
+                (existingDelivery.Status == "Pending" && delivery.Status == "Out for Delivery"),
+                "Use Record delivery to record quantities, recipient and proof. Completed deliveries cannot be moved backwards.");
+            existingDelivery.Status = delivery.Status;
 
             existingDelivery.DeliveryAddress =
                 delivery.DeliveryAddress;
@@ -377,6 +341,7 @@ namespace FoodSupply.Controllers
             if (delivery == null)
                 return NotFound();
 
+            BusinessRule.Require(delivery.Status == "Delivered", "Complete the delivery before archiving it.");
             delivery.IsArchived = true;
 
             // If the delivery was not completed,

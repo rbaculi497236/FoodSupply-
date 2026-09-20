@@ -1,0 +1,17 @@
+@model List<FoodSupply.Models.Payment>
+<h2 class="h4 mt-4">Payment history</h2>
+<table class="table"><thead><tr><th>UTC time</th><th>Amount</th><th>Method</th><th>Reference</th><th>Staff ID</th><th>Reason / reversal</th></tr></thead><tbody>
+@foreach (var payment in Model)
+{
+    <tr><td>@payment.PaidAt</td><td>@payment.Amount.ToString("N2")</td><td>@payment.Method</td><td>@payment.Reference</td><td>@payment.Actor</td><td>
+    @payment.Reason
+    @if (payment.Amount > 0 && !Model.Any(p => p.ReversesPaymentId == payment.Id) && (User.IsInRole("Admin") || User.IsInRole("Main Admin") || User.IsInRole("Manager"))) {
+        <form asp-action="ReversePayment" method="post" class="d-flex gap-2">
+            <input type="hidden" name="paymentId" value="@payment.Id" /><input type="hidden" name="requestId" value="@Guid.NewGuid()" />
+            <input name="reason" required maxlength="500" aria-label="Reversal reason" placeholder="Reversal reason" class="form-control" />
+            <button class="btn btn-outline-danger">Reverse</button>
+        </form>
+    }
+    </td></tr>
+}
+</tbody></table>

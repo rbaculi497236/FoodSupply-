@@ -1,3 +1,4 @@
+using FoodSupply.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -70,7 +71,7 @@ namespace FoodSupply.Controllers
                 .Where(i =>
                     !i.IsArchived &&
                     (
-                        i.StockQuantity <= i.ReorderLevel ||
+                        i.StockQuantity <= i.ReorderLevel || _context.InventoryBatches.Any(b => b.ProductId == i.ProductId && b.Quantity > 0 && (b.IsQuarantined || (b.ExpirationDate.HasValue && b.ExpirationDate.Value <= today.AddDays(30)))) ||
                         (
                             i.ExpirationDate.HasValue &&
                             i.ExpirationDate.Value.Date <= today.AddDays(30)
@@ -180,6 +181,10 @@ namespace FoodSupply.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Inventory inventory)
         {
+            if (await _context.Inventories.AnyAsync(i => i.ProductId == inventory.ProductId))
+                ModelState.AddModelError("ProductId", "This product already has inventory. Open its batches to receive or adjust stock.");
+            if (inventory.StockQuantity != 0)
+                ModelState.AddModelError("StockQuantity", "Create the inventory with zero stock, then receive a batch from its details page.");
             if (ModelState.IsValid)
             {
                 inventory.LastUpdated = DateTime.Now;
@@ -257,45 +262,17 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
+            var existing = await _context.Inventories.SingleOrDefaultAsync(i => i.Id == id && !i.IsArchived);
+            if (existing == null) return NotFound();
+            if (inventory.StockQuantity != existing.StockQuantity || inventory.ProductId != existing.ProductId)
+                ModelState.AddModelError("", "Use batch adjustments to change stock. The product cannot be changed.");
             if (ModelState.IsValid)
             {
-                try
-                {
-                    inventory.LastUpdated = DateTime.Now;
-
-                    inventory.ExpirationDate =
-                        inventory.ExpirationDate?.Date;
-
-                    if (inventory.StockQuantity <= 0)
-                    {
-                        inventory.StockStatus = "Out of Stock";
-                    }
-                    else if (inventory.StockQuantity <= inventory.ReorderLevel)
-                    {
-                        inventory.StockStatus = "Low Stock";
-                    }
-                    else
-                    {
-                        inventory.StockStatus = "In Stock";
-                    }
-
-                    _context.Update(inventory);
-
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InventoryExists(inventory.Id))
-                    {
-                        return NotFound();
-                    }
-
-                    throw;
-                }
-
+                existing.ReorderLevel = inventory.ReorderLevel;
+                existing.StockStatus = existing.StockQuantity == 0 ? "Out of Stock" : existing.StockQuantity <= existing.ReorderLevel ? "Low Stock" : "In Stock";
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-
             ViewBag.Products = _context.Products
                 .Where(p => p.Status == "Active")
                 .ToList();

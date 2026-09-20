@@ -1,0 +1,14 @@
+@model FoodSupply.Models.SalesOrder
+@{ ViewData["Title"] = "Customer returns"; }
+<h1>Returns for order #@Model.Id</h1>
+<p>Returned goods enter quarantine for inspection. Recording a physical return does not refund a payment or change an invoice.</p>
+<form asp-action="ReturnItem" method="post" class="row g-2 mb-4">
+    <input type="hidden" name="requestId" value="@Guid.NewGuid()" />
+    <div class="col"><label>Product<select name="itemId" class="form-select">@foreach(var item in Model.SalesOrderItems) { <option value="@item.Id">@item.Product?.ProductName</option> }</select></label></div>
+    <div class="col"><label>Quantity<input name="quantity" type="number" min="1" required class="form-control" /></label></div>
+    <div class="col"><label>Reason<input name="reason" required maxlength="500" class="form-control" /></label></div>
+    <div class="col-auto align-self-end"><button class="btn btn-primary">Record return</button></div>
+</form>
+<table class="table"><thead><tr><th>UTC time</th><th>Item</th><th>Quantity</th><th>Reason</th><th>Staff ID</th></tr></thead><tbody>
+@foreach(var r in (List<FoodSupply.Models.CustomerReturn>)ViewBag.Returns) { <tr><td>@r.ReturnedAt</td><td>@r.SalesOrderItemId</td><td>@r.Quantity</td><td>@r.Reason</td><td>@r.Actor</td></tr> }
+</tbody></table>

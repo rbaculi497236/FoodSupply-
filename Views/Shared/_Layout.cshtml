@@ -1,4 +1,4 @@
-﻿@using Microsoft.EntityFrameworkCore
+@using Microsoft.EntityFrameworkCore
 @using System.Security.Claims
 @inject FoodSupply.Data.ApplicationDbContext DbContext
 
@@ -141,7 +141,7 @@
             .CountAsync(i =>
                 !i.IsArchived &&
                 (
-                    i.StockQuantity <= i.ReorderLevel ||
+                    i.StockQuantity <= i.ReorderLevel || DbContext.InventoryBatches.Any(b => b.ProductId == i.ProductId && b.Quantity > 0 && (b.IsQuarantined || (b.ExpirationDate.HasValue && b.ExpirationDate.Value <= DateTime.Today.AddDays(30)))) ||
 
                     (
                         i.ExpirationDate.HasValue &&

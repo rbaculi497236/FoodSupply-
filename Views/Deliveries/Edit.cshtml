@@ -77,13 +77,7 @@
                             Delivery Status
                         </label>
 
-                        <select asp-for="Status"
-                                class="form-select">
-                            <option value="Pending">Pending</option>
-                            <option value="Out for Delivery">Out for Delivery</option>
-                            <option value="Delivered">Delivered</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
+                        <select asp-for="Status" class="form-select"><option value="@Model.Status">@Model.Status</option>@if (Model.Status == "Pending") { <option value="Out for Delivery">Out for Delivery</option> }</select><p class="text-muted">Use Record delivery on the details page for partial or completed deliveries.</p>
 
                         <span asp-validation-for="Status"
                               class="text-danger"></span>

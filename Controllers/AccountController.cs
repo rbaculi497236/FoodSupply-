@@ -1,3 +1,5 @@
+using FoodSupply.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using FoodSupply.Data;
 using FoodSupply.Models;
@@ -9,14 +11,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FoodSupply.Controllers
 {
+[EnableRateLimiting("account")]
 public class AccountController : Controller
 {
 private readonly ApplicationDbContext _context;
+private readonly PasswordRecoveryService _recovery;
 private readonly PasswordHasher<User> _passwordHasher;
 
-    public AccountController(ApplicationDbContext context)
+    public AccountController(ApplicationDbContext context, PasswordRecoveryService recovery)
     {
         _context = context;
+        _recovery = recovery;
         _passwordHasher = new PasswordHasher<User>();
     }
 
@@ -112,24 +117,6 @@ private readonly PasswordHasher<User> _passwordHasher;
         }
 
         // ==========================================
-        // SUPPORT OLD PLAIN-TEXT PASSWORD
-        // ==========================================
-
-        if (!passwordValid &&
-            user.PasswordHash == model.Password)
-        {
-            passwordValid = true;
-
-            user.PasswordHash =
-                _passwordHasher.HashPassword(
-                    user,
-                    model.Password
-                );
-
-            await _context.SaveChangesAsync();
-        }
-
-        // ==========================================
         // PASSWORD FAILED
         // ==========================================
 
@@ -149,6 +136,7 @@ private readonly PasswordHasher<User> _passwordHasher;
 
         var claims = new List<Claim>
         {
+            new Claim("SecurityStamp", user.SecurityStamp),
             new Claim(
                 ClaimTypes.NameIdentifier,
                 user.Id.ToString()
@@ -243,90 +231,35 @@ private readonly PasswordHasher<User> _passwordHasher;
             return View(model);
         }
 
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u =>
-                u.Email == model.Email &&
-                u.IsActive &&
-                !u.IsArchived
-            );
-
-        if (user == null)
-        {
-            ModelState.AddModelError(
-                "",
-                "No active account was found with that email."
-            );
-
-            return View(model);
-        }
-
-        return RedirectToAction(
-            nameof(ResetPassword),
-            new { userId = user.Id }
-        );
+        await _recovery.RequestAsync(model.Email);
+        ViewBag.Message = "If an active account matches that email, a password reset link will be sent. Check your inbox or contact your administrator.";
+        return View(model);
     }
-
     // ==============================
     // RESET PASSWORD - GET
     // ==============================
 
     [HttpGet]
-    public async Task<IActionResult> ResetPassword(int userId)
+    public async Task<IActionResult> ResetPassword(int userId, string token)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (user == null || user.IsArchived)
-        {
-            return NotFound();
-        }
-
-        var model = new ResetPasswordViewModel
-        {
-            UserId = user.Id
-        };
-
-        ViewBag.Username = user.Username;
-
-        return View(model);
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Id == userId && u.IsActive && !u.IsArchived);
+        if (user == null || !PasswordRecoveryService.Valid(user, token))
+            return BadRequest("This password reset link is invalid or expired. Request a new link.");
+        return View(new ResetPasswordViewModel { UserId = userId, Token = token });
     }
 
-    // ==============================
-    // RESET PASSWORD - POST
-    // ==============================
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ResetPassword(
-        ResetPasswordViewModel model)
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
     {
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid) return View(model);
+        if (!await _recovery.ResetAsync(model.UserId, model.Token, model.NewPassword))
         {
+            ModelState.AddModelError("", "This password reset link is invalid or expired. Request a new link.");
             return View(model);
         }
-
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == model.UserId);
-
-        if (user == null || user.IsArchived)
-        {
-            return NotFound();
-        }
-
-        user.PasswordHash =
-            _passwordHasher.HashPassword(
-                user,
-                model.NewPassword
-            );
-
-        await _context.SaveChangesAsync();
-
-        TempData["Success"] =
-            "Password reset successfully. You can now log in.";
-
+        TempData["Success"] = "Password reset successfully. You can now log in.";
         return RedirectToAction(nameof(Login));
     }
-
     // ==============================
     // ACCESS DENIED
     // ==============================

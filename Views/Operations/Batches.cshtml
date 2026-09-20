@@ -1,0 +1,32 @@
+@model List<FoodSupply.Models.InventoryBatch>
+@{ ViewData["Title"] = "Inventory batches"; var product = (FoodSupply.Models.Product)ViewBag.Product; }
+<h1>Inventory batches: @product.ProductName</h1>
+<p>Stock on hand includes quarantined and expired units. Sales use only usable batches, earliest expiry first. Dates shown for movements are UTC.</p>
+<h2 class="h4">Receive opening stock or an adjustment receipt</h2>
+<p>For supplier orders, record the receipt from the purchase details page.</p>
+<form asp-action="ReceiveStock" method="post" class="row g-2 mb-4">
+    <input type="hidden" name="productId" value="@product.Id" />
+    <div class="col"><label>Batch number<input name="batchNumber" maxlength="100" required class="form-control" /></label></div>
+    <div class="col"><label>Quantity<input name="quantity" type="number" min="1" required class="form-control" /></label></div>
+    <div class="col"><label>Expiry date<input name="expiry" type="date" class="form-control" /></label></div>
+    <div class="col"><label>Reason<input name="reason" required maxlength="500" class="form-control" /></label></div>
+    <div class="col-auto align-self-end"><button class="btn btn-primary">Receive stock</button></div>
+</form>
+<div class="table-responsive"><table class="table"><thead><tr><th>Batch</th><th>Expiry</th><th>On hand</th><th>Adjustment</th></tr></thead><tbody>
+@foreach (var batch in Model)
+{
+    <tr><td>@batch.BatchNumber @if(batch.IsQuarantined) { <span class="badge bg-warning text-dark">Quarantined</span> }</td><td>@batch.ExpirationDate?.ToString("yyyy-MM-dd")</td><td>@batch.Quantity</td>
+    <td><form asp-action="Adjust" method="post" class="d-flex flex-wrap gap-2">
+        <input type="hidden" name="batchId" value="@batch.Id" /><input type="hidden" name="version" value="@batch.Version" />
+        <label>Count<input name="quantity" type="number" min="0" value="@batch.Quantity" required class="form-control" /></label>
+        <label>Quarantine<input name="quarantined" type="checkbox" value="true" checked="@batch.IsQuarantined" /></label>
+        <label>Reason<input name="reason" required maxlength="500" class="form-control" /></label>
+        <button class="btn btn-outline-primary">Save adjustment</button>
+    </form></td></tr>
+}
+</tbody></table></div>
+<h2 class="h4">Latest 100 stock movements</h2>
+<table class="table"><thead><tr><th>UTC time</th><th>Batch</th><th>Change</th><th>Order</th><th>Staff ID</th><th>Reason</th></tr></thead><tbody>
+@foreach (var movement in (List<FoodSupply.Models.StockMovement>)ViewBag.Movements)
+{ <tr><td>@movement.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td><td>@movement.InventoryBatch?.BatchNumber</td><td>@movement.Quantity</td><td>@movement.SalesOrderId</td><td>@movement.Actor</td><td>@movement.Reason</td></tr> }
+</tbody></table>

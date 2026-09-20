@@ -119,6 +119,7 @@ namespace FoodSupply.Controllers
 
             if (ModelState.IsValid)
             {
+                product.StockQuantity = 0;
                 product.IsArchived = false;
                 product.Status = "Active";
 
@@ -193,8 +194,10 @@ namespace FoodSupply.Controllers
                     existingProduct.Boxes = product.Boxes;
                     existingProduct.PiecesPerBox = product.PiecesPerBox;
                     existingProduct.Price = product.Price;
-                    existingProduct.StockQuantity = product.StockQuantity;
+                    // Stock changes are recorded through batch receipts and adjustments.
                     existingProduct.ReorderLevel = product.ReorderLevel;
+                    var inventory = await _context.Inventories.SingleOrDefaultAsync(i => i.ProductId == id);
+                    if (inventory != null) inventory.ReorderLevel = product.ReorderLevel;
                     existingProduct.ExpirationDate = product.ExpirationDate;
                     existingProduct.Status = product.Status;
 

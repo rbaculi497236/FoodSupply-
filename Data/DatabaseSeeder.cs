@@ -79,25 +79,14 @@ public static class DatabaseSeeder
         context.Products.AddRange(newProducts);
         await context.SaveChangesAsync();
 
-        var newProductIds = newProducts.Select(product => product.Id).ToList();
-        var inventoriedProductIds = await context.Inventories
-            .Where(inventory => newProductIds.Contains(inventory.ProductId))
-            .Select(inventory => inventory.ProductId)
-            .ToListAsync();
-        context.Inventories.AddRange(newProducts
-            .Where(product => !inventoriedProductIds.Contains(product.Id))
-            .Select(product => new Inventory
-            {
-                ProductId = product.Id,
-                StockQuantity = product.StockQuantity,
-                ReorderLevel = product.ReorderLevel,
-                StockStatus = "In Stock",
-                LastUpdated = DateTime.Now,
-                ExpirationDate = product.ExpirationDate
-            }));
+        var stock = new FoodSupply.Services.StockService(context);
+        foreach (var product in newProducts)
+        {
+            await stock.ReceiveAsync(product.Id, product.StockQuantity, $"SAMPLE-{product.ProductCode}",
+                product.ExpirationDate, false, "Development sample opening stock");
+        }
         await context.SaveChangesAsync();
     }
-
     private static Product Product(string code, string name, string categoryCode, string supplierCode, string unit,
         int boxes, int piecesPerBox, decimal price, int stock, int reorderLevel) => new()
     {

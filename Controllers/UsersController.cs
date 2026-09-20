@@ -56,11 +56,11 @@ namespace FoodSupply.Controllers
             );
 
             // Password is required
-            if (string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 12)
             {
                 ModelState.AddModelError(
                     "password",
-                    "Password is required."
+                    "Password must be at least 12 characters."
                 );
             }
 
@@ -97,9 +97,11 @@ namespace FoodSupply.Controllers
                 return View(user);
             }
 
-            // Temporary password storage.
-            // Replace with secure password hashing when login is implemented.
-            user.PasswordHash = password;
+            // New accounts always use a salted password hash.
+            user.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<User>().HashPassword(user, password);
+            user.SecurityStamp = Guid.NewGuid().ToString();
+            user.ResetTokenHash = null;
+            user.ResetTokenExpiresAt = null;
 
             user.IsActive = true;
             user.IsArchived = false;
@@ -162,6 +164,9 @@ namespace FoodSupply.Controllers
                     return NotFound();
                 }
 
+                existingUser.SecurityStamp = Guid.NewGuid().ToString();
+                existingUser.ResetTokenHash = null;
+                existingUser.ResetTokenExpiresAt = null;
                 existingUser.FullName = user.FullName;
                 existingUser.Email = user.Email;
                 existingUser.Username = user.Username;

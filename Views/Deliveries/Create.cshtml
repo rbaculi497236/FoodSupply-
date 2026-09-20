@@ -58,13 +58,7 @@
                             Delivery Status
                         </label>
 
-                        <select asp-for="Status"
-                                class="form-select">
-                            <option value="Pending">Pending</option>
-                            <option value="Out for Delivery">Out for Delivery</option>
-                            <option value="Delivered">Delivered</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
+                        <select asp-for="Status" class="form-select"><option value="Pending">Pending</option></select>
 
                         <span asp-validation-for="Status"
                               class="text-danger"></span>

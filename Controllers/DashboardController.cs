@@ -53,7 +53,7 @@ private readonly ApplicationDbContext _context;
         model.PendingPurchases = await _context.Purchases
             .CountAsync(p =>
                 !p.IsArchived &&
-                p.Status == "Pending");
+                (p.Status == "Pending" || p.Status == "Partially Received"));
 
 
         // =========================
@@ -68,7 +68,7 @@ private readonly ApplicationDbContext _context;
 
 
         model.TotalSales = await _context.SalesOrders
-            .Where(s => !s.IsArchived)
+            .Where(s => s.Status == "Delivered")
             .SumAsync(s => (decimal?)s.TotalAmount) ?? 0;
 
 
@@ -78,19 +78,19 @@ private readonly ApplicationDbContext _context;
 
         model.PendingDeliveries = await _context.Deliveries
             .CountAsync(d =>
-                !d.IsArchived &&
+
                 d.Status == "Pending");
 
 
         model.OutForDelivery = await _context.Deliveries
             .CountAsync(d =>
-                !d.IsArchived &&
-                d.Status == "Out for Delivery");
+
+                (d.Status == "Out for Delivery" || d.Status == "Partially Delivered"));
 
 
         model.CompletedDeliveries = await _context.Deliveries
             .CountAsync(d =>
-                !d.IsArchived &&
+
                 d.Status == "Delivered");
 
 
@@ -100,23 +100,23 @@ private readonly ApplicationDbContext _context;
 
         model.UnpaidInvoices = await _context.Billings
             .CountAsync(b =>
-                !b.IsArchived &&
+
                 b.PaymentStatus == "Unpaid");
 
 
         model.PartiallyPaidInvoices = await _context.Billings
             .CountAsync(b =>
-                !b.IsArchived &&
+
                 b.PaymentStatus == "Partially Paid");
 
 
         model.OutstandingBalance = await _context.Billings
-            .Where(b => !b.IsArchived)
+            .Where(b => true)
             .SumAsync(b => (decimal?)b.Balance) ?? 0;
 
 
         model.TotalPaid = await _context.Billings
-            .Where(b => !b.IsArchived)
+            .Where(b => true)
             .SumAsync(b => (decimal?)b.AmountPaid) ?? 0;
 
 
@@ -125,7 +125,7 @@ private readonly ApplicationDbContext _context;
         // =========================
 
         model.RecentSalesOrders = await _context.SalesOrders
-            .Where(s => !s.IsArchived)
+            .Where(s => s.Status == "Delivered")
             .Include(s => s.Customer)
             .OrderByDescending(s => s.OrderDate)
             .Take(5)
@@ -137,7 +137,7 @@ private readonly ApplicationDbContext _context;
         // =========================
 
         model.RecentBillings = await _context.Billings
-            .Where(b => !b.IsArchived)
+            .Where(b => true)
             .Include(b => b.SalesOrder)
             .OrderByDescending(b => b.InvoiceDate)
             .Take(5)
