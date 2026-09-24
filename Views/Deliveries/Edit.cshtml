@@ -77,7 +77,16 @@
                             Delivery Status
                         </label>
 
-                        <select asp-for="Status" class="form-select"><option value="@Model.Status">@Model.Status</option>@if (Model.Status == "Pending") { <option value="Out for Delivery">Out for Delivery</option> }</select><p class="text-muted">Use Record delivery on the details page for partial or completed deliveries.</p>
+                        <select asp-for="Status" class="form-select">
+                            <option value="@Model.Status">@Model.Status</option>
+                            @if (Model.Status == "Pending") { <option value="Out for Delivery">Out for Delivery</option> }
+                            @if (!Model.IsArchived && Model.Status != "Delivered") { <option value="Delivered">Delivered — confirm quantities and proof</option> }
+                        </select>
+                        <p class="text-muted">Selecting Delivered opens confirmation of quantities, recipient, and proof. Save any other edits first.</p>
+                        @if (!Model.IsArchived && Model.Status != "Delivered")
+                        {
+                            <a asp-controller="Operations" asp-action="Fulfill" asp-route-id="@Model.Id" class="btn btn-success">Mark as delivered</a>
+                        }
 
                         <span asp-validation-for="Status"
                               class="text-danger"></span>

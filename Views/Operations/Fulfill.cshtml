@@ -1,11 +1,20 @@
 @model FoodSupply.Models.Delivery
 @{ ViewData["Title"] = "Record delivery"; var receipts = (List<FoodSupply.Models.DeliveryReceipt>)ViewBag.Receipts; }
 <h1>Delivery #@Model.Id</h1><p>Status: @Model.Status. Record the quantities received and a signed delivery note or other proof reference.</p>
+<a asp-controller="Deliveries" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary mb-3">Back to delivery</a>
+@if (Model.Status == "Delivered")
+{
+    <div class="alert alert-success" role="status">Delivery completed. This delivery and its sales order are marked Delivered.</div>
+}
+else
+{
+    <div class="alert alert-info">Confirm the received quantity for each item below. Once all ordered quantities are recorded, the delivery and sales order will automatically be marked Delivered.</div>
+}
 @foreach (var item in Model.SalesOrder!.SalesOrderItems)
 {
     var remaining = item.Quantity - receipts.Where(r => r.SalesOrderItemId == item.Id).Sum(r => r.Quantity);
     <div class="card card-body mb-3"><h2 class="h5">@item.Product?.ProductName — @remaining outstanding</h2>
-    @if(remaining > 0 && !Model.IsArchived) {
+    @if(remaining > 0 && !Model.IsArchived && Model.Status != "Delivered" && Model.SalesOrder.Status != "Cancelled") {
     <form asp-action="Deliver" method="post" class="row g-2">
         <input type="hidden" name="deliveryId" value="@Model.Id" /><input type="hidden" name="itemId" value="@item.Id" /><input type="hidden" name="requestId" value="@Guid.NewGuid()" />
         <div class="col"><label>Quantity received<input name="quantity" type="number" min="1" max="@remaining" required class="form-control" /></label></div>

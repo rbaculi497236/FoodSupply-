@@ -1,0 +1,48 @@
+@model IReadOnlyList<FoodSupply.Models.InventoryNotification>
+@{
+    ViewData["Title"] = "Notifications";
+    var canInspect = User.IsInRole("Admin") || User.IsInRole("Main Admin") || User.IsInRole("Manager");
+}
+<div class="mb-4">
+    <h1 class="fw-bold"><i class="bi bi-bell me-2"></i>Notifications</h1>
+    <p class="text-muted">@ViewBag.TotalItems product(s) need attention. Expiry alerts include expired stock and stock expiring within 30 days.</p>
+</div>
+@if (Model.Count == 0)
+{
+    <div class="alert alert-success" role="status">
+        <i class="bi bi-check-circle me-2"></i>No inventory alerts at the moment.
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th scope="col">Product</th><th scope="col">Stock / Reorder level</th><th scope="col">Alerts</th>@if (canInspect) { <th scope="col">Action</th> }</tr></thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ProductName</td>
+                        <td>@item.StockQuantity / @item.ReorderLevel</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (item.LowStock) { <span class="badge bg-warning text-dark">Low stock</span> }
+                                @if (item.Expiring) { <span class="badge bg-warning text-dark">Expired / Expiring soon</span> }
+                                @if (item.Quarantined) { <span class="badge bg-danger">Quarantined stock</span> }
+                                @if (item.SpoiledQuantity > 0) { <span class="badge bg-danger">Spoiled: @item.SpoiledQuantity</span> }
+                                @if (item.DamagedQuantity > 0) { <span class="badge bg-danger">Damaged: @item.DamagedQuantity</span> }
+                            </div>
+                        </td>
+                        @if (canInspect)
+                        {
+                            <td><a asp-controller="Operations" asp-action="Batches" asp-route-productId="@item.ProductId" class="btn btn-sm btn-outline-primary">Inspect batches</a></td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @await Html.PartialAsync("_Pagination")
+}

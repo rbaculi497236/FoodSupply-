@@ -46,6 +46,9 @@
     </div>
 
     <div class="d-flex gap-2">
+        <a asp-action="Receipt" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+            <i class="bi bi-printer me-1"></i> Print Receipt
+        </a>
 
         <!-- Edit button only for Pending purchases -->
         @if (Model.Status == "Pending")

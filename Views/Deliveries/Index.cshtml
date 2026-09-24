@@ -245,6 +245,11 @@
 
                                             </a>
 
+                                            @if (!delivery.IsArchived && delivery.Status != "Delivered")
+                                            {
+                                                <a asp-controller="Operations" asp-action="Fulfill" asp-route-id="@delivery.Id" class="btn btn-sm btn-success">Mark as delivered</a>
+                                            }
+
                                             @if (canManageDeliveryRecords)
                                             {
                                                 <a asp-action="Archive"

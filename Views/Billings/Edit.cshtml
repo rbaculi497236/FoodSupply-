@@ -1,12 +1,27 @@
 @model FoodSupply.Models.Billing
-@{ ViewData["Title"] = "Record payment"; }
+@{
+    ViewData["Title"] = "Record payment";
+    var remainingBalance = Model.TotalAmount - Model.AmountPaid;
+}
 <h1>Record payment: @Model.InvoiceNumber</h1>
-<p>Total: @Model.TotalAmount.ToString("N2") · Paid: @Model.AmountPaid.ToString("N2") · Balance: @Model.Balance.ToString("N2")</p>
-<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card card-body">
-    <div asp-validation-summary="All" class="text-danger"></div>
-    <input type="hidden" name="requestId" value="@(Context.Request.HasFormContentType && Context.Request.Form.ContainsKey("requestId") ? Context.Request.Form["requestId"].ToString() : Guid.NewGuid().ToString())" />
-    <label class="mb-3">New payment amount<input name="amount" type="number" min="0.01" max="@Model.Balance" step="0.01" required class="form-control" /></label>
-    <label class="mb-3">Method<select name="paymentMethod" required class="form-select"><option value="">Select method</option><option>Cash</option><option>Bank Transfer</option><option>GCash</option><option>Credit Card</option><option>Check</option></select></label>
-    <label class="mb-3">Receipt / transaction reference<input name="reference" maxlength="200" class="form-control" /></label>
-    <button class="btn btn-primary">Record payment</button>
-</form>
+<p>Total: @Model.TotalAmount.ToString("N2") &middot; Paid: @Model.AmountPaid.ToString("N2") &middot; Balance: @remainingBalance.ToString("N2")</p>
+<a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary mb-3">Back to billing details</a>
+<div asp-validation-summary="All" class="text-danger"></div>
+@if (remainingBalance <= 0)
+{
+    <div class="alert alert-success" role="status"><strong>Fully paid.</strong> There is no outstanding balance. No additional payment is needed.</div>
+}
+else if (Model.IsArchived)
+{
+    <div class="alert alert-warning" role="status">Restore this invoice before recording a payment.</div>
+}
+else
+{
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card card-body">
+        <input type="hidden" name="requestId" value="@(Context.Request.HasFormContentType && Context.Request.Form.ContainsKey("requestId") ? Context.Request.Form["requestId"].ToString() : Guid.NewGuid().ToString())" />
+        <label class="mb-3">New payment amount<input name="amount" type="number" min="0.01" max="@remainingBalance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" step="0.01" required class="form-control" /></label>
+        <label class="mb-3">Method<select name="paymentMethod" required class="form-select"><option value="">Select method</option><option>Cash</option><option>Bank Transfer</option><option>GCash</option><option>Credit Card</option><option>Check</option></select></label>
+        <label class="mb-3">Receipt / transaction reference<input name="reference" maxlength="200" class="form-control" /></label>
+        <button class="btn btn-primary">Record payment</button>
+    </form>
+}

@@ -68,6 +68,27 @@ namespace FoodSupply.Controllers
             return View(salesOrder);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Receipt(int? id)
+        {
+            if (id == null) return NotFound();
+            var order = await _context.SalesOrders.AsNoTracking()
+                .Include(s => s.Customer)
+                .Include(s => s.SalesOrderItems).ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(s => s.Id == id);
+            if (order == null) return NotFound();
+
+            return View("~/Views/Shared/Receipt.cshtml", new ReceiptViewModel
+            {
+                OrderId = order.Id, Controller = "SalesOrders", OrderType = "Sales Order",
+                Number = $"SO-{order.Id:D6}", Date = order.OrderDate, Status = order.Status,
+                PartyName = order.Customer?.CustomerName ?? "Unknown Customer",
+                PartyAddress = order.Customer?.Address, Notes = order.Remarks, Total = order.TotalAmount,
+                Items = order.SalesOrderItems.OrderBy(i => i.Id).Select(i => new ReceiptLine(
+                    i.Quantity, i.Product?.ProductName ?? "Product unavailable", i.UnitPrice, i.Subtotal)).ToList()
+            });
+        }
+
         // GET: SalesOrders/Create
         public async Task<IActionResult> Create()
         {

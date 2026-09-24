@@ -212,6 +212,13 @@ namespace FoodSupply.Controllers
             if (existingDelivery == null)
                 return NotFound();
 
+            if (existingDelivery.IsArchived)
+                return BadRequest("Archived deliveries cannot be edited.");
+
+            // Completion is recorded with quantities and proof, not a status-only change.
+            if (delivery.Status == "Delivered" && existingDelivery.Status != "Delivered")
+                return RedirectToAction("Fulfill", "Operations", new { id = existingDelivery.Id });
+
             if (User.IsInRole("Delivery Staff") &&
                 !User.IsInRole("Admin") &&
                 !User.IsInRole("Manager") &&

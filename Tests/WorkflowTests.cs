@@ -42,6 +42,88 @@ public sealed class WorkflowTests : IAsyncLifetime
     private async Task<SalesOrder> Order(params int[] quantities) => await new SalesOrderService(db, stock).SaveAsync(Input(quantities));
 
     [Fact]
+    public async Task NotificationsIncludeBatchAlertsAndExcludeHealthyOrArchivedStock()
+    {
+        await Receive(10);
+        var inventory = await db.Inventories.SingleAsync();
+        inventory.ReorderLevel = 0;
+        inventory.ExpirationDate = null;
+        await db.SaveChangesAsync();
+        var controller = new NotificationsController(db);
+        async Task<List<InventoryNotification>> Read(int page = 1)
+        {
+            var result = Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Index(page));
+            return Assert.IsType<List<InventoryNotification>>(result.Model);
+        }
+        // Receive defaults to the inclusive 30-day expiry boundary.
+        var notification = Assert.Single(await Read(-1));
+        Assert.True(notification.Expiring);
+        Assert.False(notification.LowStock);
+        Assert.Equal("Rice", notification.ProductName);
+
+        var batch = await db.InventoryBatches.SingleAsync();
+        batch.ExpirationDate = DateTime.Today.AddDays(31);
+        await db.SaveChangesAsync();
+        Assert.Empty(await Read());
+        batch.IsQuarantined = true;
+        await db.SaveChangesAsync();
+        Assert.True(Assert.Single(await Read(999)).Quarantined);
+        batch.Quantity = 0;
+        await db.SaveChangesAsync();
+        Assert.Empty(await Read());
+
+        inventory.StockQuantity = 0;
+        inventory.SpoiledQuantity = 2;
+        inventory.DamagedQuantity = 1;
+        await db.SaveChangesAsync();
+        notification = Assert.Single(await Read());
+        Assert.True(notification.LowStock);
+        Assert.Equal(2, notification.SpoiledQuantity);
+        Assert.Equal(1, notification.DamagedQuantity);
+        inventory.IsArchived = true;
+        await db.SaveChangesAsync();
+        Assert.Empty(await Read());
+    }
+
+    [Fact]
+    public async Task ReceiptsUseSavedOrderValuesAndRejectMissingOrders()
+    {
+        await Receive(10);
+        var order = await Order(3);
+        customer.Address = "Customer address";
+        var purchase = new Purchase
+        {
+            SupplierId = product.SupplierId, PurchaseOrderNumber = "PO-TEST", TotalAmount = 14m,
+            PurchaseItems = [new PurchaseItem { ProductId = product.Id, Quantity = 2, UnitPrice = 7m, Subtotal = 14m }]
+        };
+        db.Purchases.Add(purchase);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+
+        var sales = new SalesOrdersController(db, new SalesOrderService(db, stock));
+        var purchases = new PurchasesController(db);
+        var salesView = Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await sales.Receipt(order.Id));
+        var salesReceipt = Assert.IsType<ReceiptViewModel>(salesView.Model);
+        Assert.Equal("Customer address", salesReceipt.PartyAddress);
+        Assert.Equal(30m, salesReceipt.Total);
+        Assert.Equal(new ReceiptLine(3, "Rice", 10m, 30m), Assert.Single(salesReceipt.Items));
+        Assert.False(salesReceipt.IsPurchase);
+
+        var purchaseView = Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await purchases.Receipt(purchase.Id));
+        var purchaseReceipt = Assert.IsType<ReceiptViewModel>(purchaseView.Model);
+        Assert.Equal("Supplier", purchaseReceipt.PartyName);
+        Assert.Equal("PO-TEST", purchaseReceipt.Number);
+        Assert.Equal(14m, purchaseReceipt.Total);
+        Assert.Equal(new ReceiptLine(2, "Rice", 7m, 14m), Assert.Single(purchaseReceipt.Items));
+        Assert.True(purchaseReceipt.IsPurchase);
+        Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(await sales.Receipt(null));
+        Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(await sales.Receipt(int.MaxValue));
+        Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(await purchases.Receipt(null));
+        Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(await purchases.Receipt(int.MaxValue));
+        Assert.False(db.ChangeTracker.HasChanges());
+    }
+
+    [Fact]
     public async Task DuplicateLinesCannotOversell()
     {
         await Receive(10);
@@ -115,6 +197,37 @@ public sealed class WorkflowTests : IAsyncLifetime
         await Assert.ThrowsAsync<InvalidOperationException>(() => operations.ReceiveAsync(item.Id, 6, 0, 0, "B2", null, "", "receipt2"));
         await operations.ReceiveAsync(item.Id, 5, 0, 0, "B2", null, "", "receipt3");
         Assert.Equal("Received", purchase.Status); Assert.Equal(9, product.StockQuantity);
+    }
+
+    [Fact]
+    public async Task DeliveryStaffCanSelectDeliveredAndContinueToProofConfirmation()
+    {
+        await Receive(10);
+        var order = await Order(3);
+        var delivery = new Delivery { SalesOrder = order, Status = "Out for Delivery" };
+        db.Deliveries.Add(delivery);
+        await db.SaveChangesAsync();
+        var controller = new DeliveriesController(db)
+        {
+            ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+            {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+                {
+                    User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
+                        [new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Delivery Staff")], "Test"))
+                }
+            }
+        };
+        var result = Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(await controller.Edit(
+            delivery.Id, new Delivery { Id = delivery.Id, SalesOrderId = order.Id, Status = "Delivered" }));
+        Assert.Equal("Operations", result.ControllerName);
+        Assert.Equal("Fulfill", result.ActionName);
+        Assert.Equal(delivery.Id, result.RouteValues!["id"]);
+        Assert.Equal("Out for Delivery", delivery.Status);
+        var operations = new OperationsService(db, stock);
+        await operations.DeliverAsync(delivery.Id, order.SalesOrderItems.Single().Id, 3, "Customer", "Signed note", "staff-completion");
+        Assert.Equal("Delivered", delivery.Status);
+        Assert.Equal("Delivered", order.Status);
     }
 
     [Fact]
