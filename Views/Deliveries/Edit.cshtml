@@ -92,31 +92,7 @@
                               class="text-danger"></span>
                     </div>
 
-                    <div class="col-md-6">
-                        <label asp-for="Driver"
-                               class="form-label fw-semibold">
-                            Driver
-                        </label>
-
-                        <input asp-for="Driver"
-                               class="form-control" />
-
-                        <span asp-validation-for="Driver"
-                              class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label asp-for="Vehicle"
-                               class="form-label fw-semibold">
-                            Vehicle
-                        </label>
-
-                        <input asp-for="Vehicle"
-                               class="form-control" />
-
-                        <span asp-validation-for="Vehicle"
-                              class="text-danger"></span>
-                    </div>
+                    @await Html.PartialAsync("_AssignmentFields", Model)
 
                     <div class="col-md-6">
                         <label asp-for="DeliveryAddress"

@@ -57,6 +57,43 @@ body {
     color: var(--food-navy);
 }
 
+.report-chart-bars { max-height: 380px; overflow-y: auto; padding-right: 8px; }
+.report-chart-row { display: grid; grid-template-columns: minmax(95px, 150px) minmax(40px, 1fr) minmax(80px, 150px); gap: 16px; align-items: center; padding: 10px 0; }
+.report-chart-label { font-size: .9rem; overflow-wrap: anywhere; }
+.report-chart-track { height: 22px; background: #eef3f7; border-radius: 6px; overflow: hidden; }
+.report-chart-bar { height: 100%; background: #123d68; border-radius: 6px; }
+.report-chart-row:nth-child(even) .report-chart-bar { background: #4b9b28; }
+.report-chart-value { text-align: right; font-size: .9rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+@media (max-width: 575.98px) {
+    .report-chart-row { grid-template-columns: minmax(70px, 1fr) minmax(40px, 2fr) minmax(75px, 1fr); gap: 8px; }
+}
+@media print {
+    .report-chart-bars { max-height: none; overflow: visible; }
+    .report-chart-bar { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+
+.table thead.table-dark {
+    --bs-table-color: #fff;
+    color: #fff;
+    background: #212529;
+}
+
+.table thead.table-dark th {
+    color: #fff;
+}
+
+.table thead.report-table-header {
+    --bs-table-bg: #fff;
+    --bs-table-color: var(--food-blue);
+    background: #fff;
+    color: var(--food-blue);
+}
+
+.table thead.report-table-header th {
+    background-color: #fff;
+    color: var(--food-blue);
+}
+
 
 /* =========================================================
    CARDS
@@ -862,3 +899,13 @@ body {
     }
 
 }
+
+.report-line-chart { display: block; width: 100%; max-height: 320px; }
+.report-line-scale { display: flex; justify-content: space-between; gap: 12px; color: #526477; font-size: .85rem; }
+.report-doughnut-layout { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 32px; }
+.report-doughnut { width: 260px; max-width: 100%; }
+.report-chart-values { max-height: 300px; overflow-y: auto; }
+.report-chart-values > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+.report-chart-values dd { margin: 0; font-variant-numeric: tabular-nums; }
+.report-chart-key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; }
+@media print { .report-chart-values { max-height: none; overflow: visible; } }

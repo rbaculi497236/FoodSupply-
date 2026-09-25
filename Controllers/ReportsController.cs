@@ -102,6 +102,14 @@ private readonly ApplicationDbContext _context;
         ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
         ViewBag.TotalSales = await query.Where(s => s.Status == "Delivered").SumAsync(s => (decimal?)s.TotalAmount) ?? 0;
         ViewBag.TotalOrders = totalItems;
+        var salesMonths = await query.Where(s => s.Status == "Delivered")
+            .GroupBy(s => new { s.OrderDate.Year, s.OrderDate.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Value = g.Sum(s => s.TotalAmount) })
+            .OrderBy(g => g.Year).ThenBy(g => g.Month).ToListAsync();
+        ViewData["Chart"] = new ReportChartViewModel {
+            Title = "Monthly sales", Description = "Delivered order value by month (PHP).", Currency = true, Type = "Line",
+            Points = salesMonths.Select(g => new ReportChartPoint { Label = $"{g.Year}-{g.Month:00}", Value = g.Value }).ToList()
+        };
         var orders = await query
             .OrderByDescending(s => s.OrderDate)
             .Select(s => new SalesReportViewModel
@@ -204,6 +212,14 @@ private readonly ApplicationDbContext _context;
             .ToListAsync();
 
         ViewBag.Status = status;
+        ViewData["Chart"] = new ReportChartViewModel {
+            Title = "Inventory status", Description = "Product counts by current stock level. Low stock excludes out-of-stock products.",
+            Points = [
+                new() { Label = "In stock", Value = await query.CountAsync(i => i.StockQuantity > 0 && i.StockQuantity > i.ReorderLevel) },
+                new() { Label = "Low stock", Value = await query.CountAsync(i => i.StockQuantity > 0 && i.StockQuantity <= i.ReorderLevel) },
+                new() { Label = "Out of stock", Value = await query.CountAsync(i => i.StockQuantity <= 0) }
+            ]
+        };
         ViewBag.PaginationRouteValues = new Dictionary<string, string> { ["status"] = status ?? "" };
 
         return View(inventory);
@@ -243,6 +259,13 @@ private readonly ApplicationDbContext _context;
         ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
         ViewBag.TotalPurchases = await query.SumAsync(p => (decimal?)p.TotalAmount) ?? 0;
         ViewBag.TotalPurchaseOrders = totalItems;
+        var purchaseMonths = await query.GroupBy(p => new { p.PurchaseDate.Year, p.PurchaseDate.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Value = g.Sum(p => p.TotalAmount) })
+            .OrderBy(g => g.Year).ThenBy(g => g.Month).ToListAsync();
+        ViewData["Chart"] = new ReportChartViewModel {
+            Title = "Monthly purchasing costs", Description = "Purchase value by month (PHP), excluding cancelled orders. Months without purchases are omitted.", Currency = true,
+            Points = purchaseMonths.Select(g => new ReportChartPoint { Label = $"{g.Year}-{g.Month:00}", Value = g.Value }).ToList()
+        };
         var purchases = await query
             .OrderByDescending(p => p.PurchaseDate)
             .Select(p => new PurchaseReportViewModel
@@ -303,6 +326,13 @@ private readonly ApplicationDbContext _context;
         ViewBag.TotalBilled = await query.SumAsync(b => (decimal?)b.TotalAmount) ?? 0;
         ViewBag.TotalPaid = await query.SumAsync(b => (decimal?)b.AmountPaid) ?? 0;
         ViewBag.TotalBalance = await query.SumAsync(b => (decimal?)b.Balance) ?? 0;
+        ViewData["Chart"] = new ReportChartViewModel {
+            Title = "Payments and outstanding balance", Description = "Amounts for invoices matching the selected payment status (PHP).", Currency = true, Type = "Doughnut",
+            Points = [
+                new() { Label = "Paid", Value = (decimal)ViewBag.TotalPaid },
+                new() { Label = "Outstanding", Value = (decimal)ViewBag.TotalBalance }
+            ]
+        };
         var billings = await query
             .OrderByDescending(b => b.InvoiceDate)
             .Select(b => new BillingReportViewModel
@@ -367,6 +397,11 @@ private readonly ApplicationDbContext _context;
         var totalItems = await query.CountAsync();
         page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)));
         ViewBag.Page = page; ViewBag.PageSize = pageSize; ViewBag.TotalItems = totalItems;
+        ViewData["Chart"] = new ReportChartViewModel {
+            Title = "Delivery status", Description = "Delivery counts by status.",
+            Points = await query.GroupBy(d => d.Status).OrderBy(g => g.Key)
+                .Select(g => new ReportChartPoint { Label = g.Key, Value = g.Count() }).ToListAsync()
+        };
         var deliveries = await query
             .OrderByDescending(d => d.DeliveryDate)
             .Select(d => new DeliveryReportViewModel

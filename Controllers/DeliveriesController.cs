@@ -497,6 +497,29 @@ namespace FoodSupply.Controllers
         private async Task LoadSalesOrders(
             int? selectedSalesOrderId = null)
         {
+            var staffNames = await _context.Users.AsNoTracking()
+                .Where(u => u.IsActive && !u.IsArchived && u.Role == "Delivery Staff")
+                .Select(u => u.FullName).ToListAsync();
+            var savedDrivers = await _context.Deliveries.AsNoTracking()
+                .Where(d => !d.IsArchived && d.Driver != null && d.Driver != "")
+                .Select(d => d.Driver!).Distinct().ToListAsync();
+            // Sample driver choices do not require login accounts.
+            var sampleDrivers = new[]
+            {
+                "Juan Dela Cruz", "Carlos Santos", "Miguel Reyes", "Jose Garcia",
+                "Antonio Mendoza", "Rafael Torres", "Luis Ramos", "Marco Flores",
+                "Daniel Rivera", "Paolo Cruz"
+            };
+            ViewBag.Drivers = sampleDrivers.Concat(staffNames).Concat(savedDrivers)
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToList();
+            var savedVehicles = await _context.Deliveries.AsNoTracking()
+                .Where(d => !d.IsArchived && d.Vehicle != null && d.Vehicle != "")
+                .Select(d => d.Vehicle!).Distinct().ToListAsync();
+            ViewBag.Vehicles = new[] { "Motorcycle", "Van", "Pickup Truck", "Box Truck", "Refrigerated Truck" }
+                .Concat(savedVehicles).Where(n => !string.IsNullOrWhiteSpace(n))
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToList();
+
             var billedSalesOrderIds = await _context.Billings
                 .Where(b => !b.IsArchived)
                 .Select(b => b.SalesOrderId)

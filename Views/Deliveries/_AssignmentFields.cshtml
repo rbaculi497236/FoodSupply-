@@ -1,0 +1,27 @@
+@model FoodSupply.Models.Delivery
+@{
+    var drivers = new List<string>((IEnumerable<string>)ViewBag.Drivers);
+    var vehicles = new List<string>((IEnumerable<string>)ViewBag.Vehicles);
+    if (!string.IsNullOrWhiteSpace(Model?.Driver) && !drivers.Contains(Model.Driver))
+        drivers.Add(Model.Driver);
+    if (!string.IsNullOrWhiteSpace(Model?.Vehicle) && !vehicles.Contains(Model.Vehicle))
+        vehicles.Add(Model.Vehicle);
+}
+<div class="col-md-6">
+    <label asp-for="Driver" class="form-label fw-semibold">Driver</label>
+    <select asp-for="Driver" asp-items="@(new SelectList(drivers))" class="form-select">
+        <option value="">Select a driver (optional)</option>
+    </select>
+    <span asp-validation-for="Driver" class="text-danger"></span>
+    @if (drivers.Count == 0)
+    {
+        <div class="form-text">An administrator can add drivers in Users by creating a Delivery Staff account.</div>
+    }
+</div>
+<div class="col-md-6">
+    <label asp-for="Vehicle" class="form-label fw-semibold">Vehicle type</label>
+    <select asp-for="Vehicle" asp-items="@(new SelectList(vehicles))" class="form-select">
+        <option value="">Select a vehicle type (optional)</option>
+    </select>
+    <span asp-validation-for="Vehicle" class="text-danger"></span>
+</div>

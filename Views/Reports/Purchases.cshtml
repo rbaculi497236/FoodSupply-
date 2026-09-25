@@ -132,6 +132,8 @@
     </div>
 
 
+    @await Html.PartialAsync("_ReportChart", (FoodSupply.Models.ReportChartViewModel)ViewData["Chart"]!)
+
     <div class="card shadow-sm border-0">
 
         <div class="card-body">
@@ -140,7 +142,7 @@
 
                 <table class="table table-hover">
 
-                    <thead class="table-dark">
+                    <thead class="report-table-header">
 
                         <tr>
                             <th>PO Number</th>
