@@ -22,16 +22,57 @@
         }
         .login-shell {
             min-height: 100vh;
+            padding: 32px 16px;
         }
         .login-card {
-            width: min(420px, 92vw);
+            width: 100%;
+            max-width: 1040px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            border-radius: 24px;
             border: 1px solid #d8e4dc;
+        }
+        .login-form-panel { padding: 40px 48px; background: #fff; }
+        .login-heading { margin: 48px 0 28px; }
+        .login-heading h1 { color: #123d68; font-size: 1.8rem; font-weight: 700; }
+        .login-options { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: .875rem; margin-bottom: 24px; }
+        .login-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .login-actions .btn { flex: 1; padding: 11px 16px; white-space: nowrap; }
+        .login-card .btn-outline-primary { color: #123d68; border-color: #123d68; }
+        .login-card .btn-outline-primary:hover { color: #fff; background: #123d68; }
+        .login-visual {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 600px;
+            padding: 48px;
+            color: #fff;
+            text-align: center;
+            background: radial-gradient(ellipse at top right, #4b9b28 0%, transparent 65%), linear-gradient(145deg, #194e43, #123d68);
+        }
+        .login-visual::before, .login-visual::after { content: ""; position: absolute; width: 360px; height: 360px; border: 1px solid #ffffff26; border-radius: 50%; pointer-events: none; }
+        .login-visual::before { top: -160px; right: -100px; }
+        .login-visual::after { bottom: -170px; left: -120px; width: 460px; height: 460px; }
+        .visual-brand { position: relative; width: 100%; padding: 28px 24px; margin-bottom: 36px; background: #fff; border-radius: 20px; box-shadow: 0 20px 50px #08274040; }
+        .visual-brand img { width: 100%; height: auto; }
+        .login-visual h2 { font-size: 2rem; font-weight: 700; line-height: 1.25; }
+        .login-visual p { color: #e0eee5; max-width: 300px; margin: 16px 0 0; }
+        @@media (max-width: 767.98px) {
+            .login-card { grid-template-columns: 1fr; max-width: 480px; }
+            .login-form-panel { padding: 28px; }
+            .login-heading { margin-top: 32px; }
+            .login-visual { display: none; }
         }
         .brand-login {
             display: block;
-            width: min(280px, 72vw);
+            width: 190px;
+            max-width: 100%;
             height: auto;
-            margin: 18px auto 8px;
+            margin: 0;
         }
         .login-card .form-control:focus {
             border-color: #4b9b28;
@@ -52,14 +93,15 @@
 <div class="login-shell container d-flex justify-content-center align-items-center">
 
     <div class="card shadow login-card">
-
+        <div class="login-form-panel">
         <img src="~/images/foodsupply-logo.png" alt="FoodSupply ERP and CRM System" class="brand-login" />
 
-        <div class="card-header text-white text-center" style="background-color: #123d68;">
-            <h3 class="mb-0">FoodSupply Login</h3>
+        <div class="login-heading">
+            <h1>Welcome back!</h1>
+            <p class="text-muted mb-0">Sign in to your FoodSupply account.</p>
         </div>
 
-        <div class="card-body p-4">
+        <div>
 
             @if (TempData["Success"] != null)
             {
@@ -86,6 +128,7 @@
                     </label>
 
                     <input asp-for="Username"
+                           autocomplete="username"
                            class="form-control"
                            placeholder="Enter username" />
 
@@ -105,12 +148,16 @@
                     <div class="input-group">
 
                         <input asp-for="Password"
+                               autocomplete="current-password"
                                type="password"
                                class="form-control"
                                id="passwordInput"
                                placeholder="Enter password" />
 
                         <button type="button"
+                                aria-label="Show password"
+                                aria-pressed="false"
+                                id="togglePasswordButton"
                                 class="btn btn-outline-secondary"
                                 onclick="togglePassword()">
 
@@ -129,7 +176,8 @@
                 </div>
 
                 <!-- Remember Me -->
-                <div class="form-check mb-3">
+                <div class="login-options">
+                <div class="form-check">
 
                     <input asp-for="RememberMe"
                            class="form-check-input" />
@@ -140,37 +188,31 @@
                     </label>
 
                 </div>
+                <a asp-controller="Account" asp-action="ForgotPassword">Forgot password?</a>
+                </div>
 
                 <!-- Login Button -->
+                <div class="login-actions">
                 <button type="submit"
-                        class="btn btn-primary w-100">
+                        class="btn btn-primary">
 
                     <i class="bi bi-box-arrow-in-right"></i>
                     Login
 
                 </button>
+                <a asp-controller="Account" asp-action="RegisterAdmin" class="btn btn-outline-primary">Create account</a>
+                </div>
 
             </form>
-
-            <!-- Forgot Password -->
-            <div class="text-center mt-3">
-                <a asp-controller="Account" asp-action="RegisterAdmin">Create an admin or manager account</a>
-                <p class="text-muted small mt-2 mb-0">Staff accounts are created by your administrator.</p>
-            </div>
-
-            <div class="text-center mt-3">
-
-                <a asp-controller="Account"
-                   asp-action="ForgotPassword">
-
-                    Forgot Password?
-
-                </a>
-
-            </div>
+            <p class="text-muted small mt-3 mb-0">Admin and manager registration. Staff accounts are created by your administrator.</p>
 
         </div>
-
+        </div>
+        <aside class="login-visual" aria-label="FoodSupply">
+            <div class="visual-brand"><img src="~/images/foodsupply-logo.png" alt="FoodSupply ERP and CRM System" /></div>
+            <h2>Your daily operations,<br />all in one place.</h2>
+            <p>Manage inventory, orders and deliveries with FoodSupply.</p>
+        </aside>
     </div>
 
 </div>
@@ -187,10 +229,13 @@
 
             const icon =
                 document.getElementById("passwordIcon");
+            const toggle = document.getElementById("togglePasswordButton");
 
             if (password.type === "password") {
 
                 password.type = "text";
+                toggle.setAttribute("aria-label", "Hide password");
+                toggle.setAttribute("aria-pressed", "true");
 
                 icon.classList.remove("bi-eye");
                 icon.classList.add("bi-eye-slash");
@@ -199,6 +244,8 @@
             else {
 
                 password.type = "password";
+                toggle.setAttribute("aria-label", "Show password");
+                toggle.setAttribute("aria-pressed", "false");
 
                 icon.classList.remove("bi-eye-slash");
                 icon.classList.add("bi-eye");

@@ -21,16 +21,14 @@
         <div class="card-body p-4">
             <img src="~/images/foodsupply-logo.png" alt="FoodSupply" class="brand" />
             <h1 class="h3 text-center">Create admin or manager account</h1>
-            <p class="text-muted text-center">Register as an admin or manager. No approval is required. Other staff accounts are created by an administrator.</p>
             <form asp-controller="Account" asp-action="RegisterAdmin" method="post">
                 <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
                 <div class="mb-3">
                     <label asp-for="Role" class="form-label"></label>
-                    <select asp-for="Role" class="form-select" aria-describedby="role-help">
+                    <select asp-for="Role" class="form-select">
                         <option value="Manager">Manager</option>
                         <option value="Admin">Admin</option>
                     </select>
-                    <div id="role-help" class="form-text">Admins can create and manage staff accounts. Managers have access to operational management.</div>
                     <span asp-validation-for="Role" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
