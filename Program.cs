@@ -14,13 +14,18 @@ var builder = WebApplication.CreateBuilder(args);
 // ==========================================
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<AccountActivityFilter>();
 builder.Services.AddScoped<StockService>();
 builder.Services.AddScoped<SalesOrderService>();
 builder.Services.AddScoped<OperationsService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<PasswordRecoveryService>();
 builder.Services.AddScoped<IRecoveryEmailSender, SmtpRecoveryEmailSender>();
-builder.Services.AddControllersWithViews(options => options.Filters.Add<MutationFilter>());
+builder.Services.AddControllersWithViews(options => {
+    options.Filters.Add<MutationFilter>();
+    options.Filters.Add<AccountActivityFilter>(-100);
+});
 builder.Services.AddRateLimiter(options => {
     options.RejectionStatusCode = 429;
     options.AddPolicy("account", context => RateLimitPartition.GetFixedWindowLimiter(

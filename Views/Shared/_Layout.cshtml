@@ -1675,6 +1675,13 @@
         </div>
 
 
+        @if (isAdmin || isManager)
+        {
+            <a class="sidebar-link @(currentController == "Operations" && currentAction == "Audit" ? "active" : "")" asp-controller="Operations" asp-action="Audit">
+                <span class="sidebar-icon"><i class="bi bi-clock-history"></i></span>
+                <span class="sidebar-text">Activity Log</span>
+            </a>
+        }
         @if (canManageUsers)
         {
             <a class="sidebar-link @(currentController == "Users" ? "active" : "")"
@@ -1809,85 +1816,6 @@
 
             </div>
 
-
-            <!-- =================================================
-                 TOPBAR USER
-                 ================================================= -->
-
-            @if (isAuthenticated)
-            {
-                <div class="topbar-user">
-
-
-                    <!-- NOTIFICATIONS -->
-
-                    @if (canViewNotifications)
-                    {
-                        <a class="notification-link"
-                           asp-controller="Notifications"
-                           asp-action="Index"
-                           title="Notifications">
-
-                            <i class="bi bi-bell fs-5"></i>
-
-                            @if (inventoryAlertCount > 0)
-                            {
-                                <span class="notification-badge">
-
-                                    @(inventoryAlertCount > 99
-                                        ? "99+"
-                                        : inventoryAlertCount)
-
-                                </span>
-                            }
-
-                        </a>
-                    }
-
-
-                    <!-- USER AVATAR -->
-
-                    <div class="user-avatar">
-                        @firstLetter
-                    </div>
-
-
-                    <!-- USER INFORMATION -->
-
-                    <div class="user-info">
-
-                        <div class="user-name">
-                            @displayName
-                        </div>
-
-                        <div class="user-role">
-                            @displayRole
-                        </div>
-
-                    </div>
-
-
-                    <!-- LOGOUT -->
-
-                    <form asp-controller="Account"
-                          asp-action="Logout"
-                          method="post"
-                          class="ms-2">
-
-                        @Html.AntiForgeryToken()
-
-                        <button type="submit"
-                                class="btn btn-outline-primary btn-sm logout-button"
-                                title="Logout">
-
-                            <i class="bi bi-box-arrow-right"></i>
-
-                        </button>
-
-                    </form>
-
-                </div>
-            }
 
         </header>
 

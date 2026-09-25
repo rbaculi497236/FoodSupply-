@@ -1,8 +1,55 @@
-@model List<FoodSupply.Models.AuditEntry>
-@{ ViewData["Title"] = "Audit history"; int page = ViewBag.Page; }
-<h1>Audit history</h1><p>Times are UTC. Staff are identified by account ID. Passwords and recovery tokens are excluded.</p>
-<div class="table-responsive"><table class="table"><thead><tr><th>Time</th><th>Staff ID</th><th>Record</th><th>Action</th><th>Reason</th><th>Changes</th></tr></thead><tbody>
-@foreach(var entry in Model) { <tr><td>@entry.CreatedAt</td><td>@entry.Actor</td><td>@entry.Entity #@entry.RecordId</td><td>@entry.Action</td><td>@entry.Reason</td><td><details><summary>View changes</summary><pre style="white-space:pre-wrap">@entry.Changes</pre></details></td></tr> }
-</tbody></table></div>
-@if(page > 1) { <a asp-action="Audit" asp-route-page="@(page - 1)" class="btn btn-outline-secondary">Previous</a> }
-@if(Model.Count == 50) { <a asp-action="Audit" asp-route-page="@(page + 1)" class="btn btn-outline-secondary">Next</a> }
+﻿@model List<FoodSupply.Models.AuditEntry>
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Activity Log";
+    int page = ViewBag.Page;
+    var users = (Dictionary<string, string[]>)ViewBag.AuditUsers;
+}
+<h1 class="fw-bold"><i class="bi bi-clock-history me-2"></i>Activity Log</h1>
+<p class="text-muted">See who changed records and when. Times are UTC; names and roles reflect current account details.</p>
+<div class="card"><div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+<thead><tr><th>User</th><th>Role</th><th>Action</th><th>Module / Record</th><th>Description</th><th>Date &amp; Time (UTC)</th></tr></thead>
+<tbody>
+@if (Model.Count == 0) { <tr><td colspan="6" class="text-center text-muted py-4">No activity recorded.</td></tr> }
+@foreach (var entry in Model)
+{
+    users.TryGetValue(entry.Actor, out var account);
+    var action = entry.Action switch { "Added" => "Created", "Modified" => "Updated", "Deleted" => "Deleted", "Login" => "Logged in", "Logout" => "Logged out", "LoginFailed" => "Login failed", _ => entry.Action };
+    var changes = new List<string>();
+    try
+    {
+        using var json = JsonDocument.Parse(entry.Changes);
+        foreach (var field in json.RootElement.EnumerateObject())
+        {
+            if (field.Value.ValueKind != JsonValueKind.Object) continue;
+            if (field.Value.TryGetProperty("Before", out var before) && field.Value.TryGetProperty("After", out var after))
+            {
+                changes.Add($"{field.Name}: {before} → {after}");
+                if (field.Name == "IsArchived" && after.ValueKind == JsonValueKind.True) action = "Archived";
+                else if (field.Name == "IsArchived" && before.ValueKind == JsonValueKind.True && after.ValueKind == JsonValueKind.False) action = "Restored";
+            }
+        }
+    }
+    catch (JsonException) { }
+    <tr>
+        <td>@(account?[0] ?? (entry.Actor == "system" ? "System" : entry.Actor == "anonymous" ? "Anonymous" : "User #" + entry.Actor))</td>
+        <td>@(account?[1] ?? "—")</td>
+        <td><span class="badge bg-light text-dark">@action</span></td>
+        <td>@entry.Entity #@entry.RecordId</td>
+        <td>
+            <div>@action @entry.Entity @(entry.Entity == "Account" ? "" : "#" + entry.RecordId)</div>
+            @if (!string.IsNullOrWhiteSpace(entry.Reason)) { <small class="text-muted">@entry.Reason</small> }
+            @if (changes.Count > 0)
+            {
+                <details class="mt-1"><summary>View changes</summary><ul class="mb-0">@foreach (var change in changes) { <li>@change</li> }</ul></details>
+            }
+        </td>
+        <td class="text-nowrap">@entry.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</td>
+    </tr>
+}
+</tbody></table></div></div>
+<div class="d-flex gap-2 mt-3">
+@if (page > 1) { <a asp-action="Audit" asp-route-page="@(page - 1)" class="btn btn-outline-secondary">Previous</a> }
+@if (Model.Count == 50) { <a asp-action="Audit" asp-route-page="@(page + 1)" class="btn btn-outline-secondary">Next</a> }
+</div>

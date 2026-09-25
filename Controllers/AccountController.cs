@@ -205,6 +205,7 @@ private readonly PasswordHasher<User> _passwordHasher;
         );
 
         var principal = new ClaimsPrincipal(identity);
+        HttpContext.Items["LoginUserId"] = user.Id;
 
         // ==========================================
         // SIGN IN

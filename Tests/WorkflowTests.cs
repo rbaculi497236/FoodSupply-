@@ -533,4 +533,33 @@ public sealed class WorkflowTests : IAsyncLifetime
         public Task ForbidAsync(Microsoft.AspNetCore.Http.HttpContext context, string? scheme, Microsoft.AspNetCore.Authentication.AuthenticationProperties? properties) => Task.CompletedTask;
         public Task<Microsoft.AspNetCore.Authentication.AuthenticateResult> AuthenticateAsync(Microsoft.AspNetCore.Http.HttpContext context, string? scheme) => Task.FromResult(Microsoft.AspNetCore.Authentication.AuthenticateResult.NoResult());
     }
+
+    [Theory]
+    [InlineData("Login", true)]
+    [InlineData("Login", false)]
+    [InlineData("Logout", true)]
+    public async Task AccountActivityIsPersistedWithoutCredentials(string action, bool success)
+    {
+        var http = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+        http.Request.Method = "POST";
+        if (success) http.Items["LoginUserId"] = 42;
+        var route = new Microsoft.AspNetCore.Routing.RouteData();
+        route.Values["controller"] = "Account"; route.Values["action"] = action;
+        var actionContext = new Microsoft.AspNetCore.Mvc.ActionContext(http, route, new Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor());
+        if (!success) actionContext.ModelState.AddModelError("Password", "Invalid password");
+        var filters = new List<Microsoft.AspNetCore.Mvc.Filters.IFilterMetadata>();
+        var controller = RegistrationController();
+        var executing = new Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext(actionContext, filters,
+            new Dictionary<string, object?> { ["password"] = "SecretNotForLogs" }, controller);
+        var options = mysqlConnection == null ? new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options
+            : new DbContextOptionsBuilder<ApplicationDbContext>().UseMySql(mysqlConnection, ServerVersion.AutoDetect(mysqlConnection)).Options;
+        var filter = new AccountActivityFilter(options, NullLogger<AccountActivityFilter>.Instance);
+        await filter.OnActionExecutionAsync(executing, () => Task.FromResult(new Microsoft.AspNetCore.Mvc.Filters.ActionExecutedContext(actionContext, filters, controller) {
+            Result = success ? new Microsoft.AspNetCore.Mvc.RedirectToActionResult("Index", "Dashboard", null) : new Microsoft.AspNetCore.Mvc.ViewResult()
+        }));
+        var entry = await db.AuditEntries.SingleAsync(a => a.Entity == "Account");
+        Assert.Equal(success ? action : action + "Failed", entry.Action);
+        Assert.Equal(success ? "42" : "anonymous", entry.Actor);
+        Assert.DoesNotContain("SecretNotForLogs", entry.Changes + entry.Reason);
+    }
 }

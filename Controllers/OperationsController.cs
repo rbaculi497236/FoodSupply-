@@ -102,6 +102,10 @@ public class OperationsController(ApplicationDbContext db, StockService stock, O
     {
         page = Math.Max(1, page);
         ViewBag.Page = page;
-        return View(await db.AuditEntries.AsNoTracking().OrderByDescending(a => a.Id).Skip((page - 1) * 50).Take(50).ToListAsync());
+        var entries = await db.AuditEntries.AsNoTracking().OrderByDescending(a => a.Id).Skip((page - 1) * 50).Take(50).ToListAsync();
+        var ids = entries.Select(a => int.TryParse(a.Actor, out var id) ? id : 0).Distinct().ToList();
+        ViewBag.AuditUsers = await db.Users.AsNoTracking().Where(u => ids.Contains(u.Id))
+            .Select(u => new { u.Id, u.FullName, u.Role }).ToDictionaryAsync(u => u.Id.ToString(), u => new[] { u.FullName, u.Role });
+        return View(entries);
     }
 }
