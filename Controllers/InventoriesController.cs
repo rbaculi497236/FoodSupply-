@@ -255,7 +255,7 @@ namespace FoodSupply.Controllers
         // =========================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Inventory inventory)
+        public async Task<IActionResult> Edit(int id, Inventory inventory, string? reason)
         {
             if (id != inventory.Id)
             {
@@ -266,8 +266,20 @@ namespace FoodSupply.Controllers
             if (existing == null) return NotFound();
             if (inventory.StockQuantity != existing.StockQuantity || inventory.ProductId != existing.ProductId)
                 ModelState.AddModelError("", "Use batch adjustments to change stock. The product cannot be changed.");
+            var recordsChanged = inventory.ExpirationDate != existing.ExpirationDate ||
+                inventory.SpoiledQuantity != existing.SpoiledQuantity || inventory.DamagedQuantity != existing.DamagedQuantity;
+            if (recordsChanged && (string.IsNullOrWhiteSpace(reason) || reason.Length > 500))
+                ModelState.AddModelError("", "Enter a correction reason of up to 500 characters.");
             if (ModelState.IsValid)
             {
+                if (recordsChanged)
+                {
+                    existing.ExpirationDate = inventory.ExpirationDate;
+                    existing.SpoiledQuantity = inventory.SpoiledQuantity;
+                    existing.DamagedQuantity = inventory.DamagedQuantity;
+                    existing.LastUpdated = DateTime.UtcNow;
+                    _context.AuditReason = reason!.Trim();
+                }
                 existing.ReorderLevel = inventory.ReorderLevel;
                 existing.StockStatus = existing.StockQuantity == 0 ? "Out of Stock" : existing.StockQuantity <= existing.ReorderLevel ? "Low Stock" : "In Stock";
                 await _context.SaveChangesAsync();

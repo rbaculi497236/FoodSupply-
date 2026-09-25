@@ -2,7 +2,8 @@
 @{ ViewData["Title"] = "Inventory batches"; var product = (FoodSupply.Models.Product)ViewBag.Product; }
 <h1>Inventory batches: @product.ProductName</h1>
 <p>Stock on hand includes quarantined and expired units. Sales use only usable batches, earliest expiry first. Dates shown for movements are UTC.</p>
-<h2 class="h4">Receive opening stock or an adjustment receipt</h2>
+<a asp-controller="Notifications" asp-action="Index" class="btn btn-outline-secondary mb-3">Back to notifications</a>
+<h2 id="receive-stock" class="h4">Receive opening stock or an adjustment receipt</h2>
 <p>For supplier orders, record the receipt from the purchase details page.</p>
 <form asp-action="ReceiveStock" method="post" class="row g-2 mb-4">
     <input type="hidden" name="productId" value="@product.Id" />
@@ -12,6 +13,8 @@
     <div class="col"><label>Reason<input name="reason" required maxlength="500" class="form-control" /></label></div>
     <div class="col-auto align-self-end"><button class="btn btn-primary">Receive stock</button></div>
 </form>
+<h2 id="batch-adjustments" class="h4">Review and adjust batches</h2>
+<p>Count is the quantity remaining after an adjustment. For disposal, enter the remaining count and explain the removal in Reason. Clear Quarantine only after the stock has passed inspection.</p>
 <div class="table-responsive"><table class="table"><thead><tr><th>Batch</th><th>Expiry</th><th>On hand</th><th>Adjustment</th></tr></thead><tbody>
 @foreach (var batch in Model)
 {

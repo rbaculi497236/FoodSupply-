@@ -86,6 +86,34 @@ public sealed class WorkflowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task InventoryAlertCorrectionsRequireReasonAndPreserveStock()
+    {
+        await Receive(10, days: 60);
+        var inventory = await db.Inventories.SingleAsync();
+        inventory.ReorderLevel = 0;
+        inventory.ExpirationDate = DateTime.Today.AddDays(-1);
+        inventory.SpoiledQuantity = 2;
+        inventory.DamagedQuantity = 1;
+        await db.SaveChangesAsync();
+        var input = new Inventory { Id = inventory.Id, ProductId = product.Id,
+            StockQuantity = inventory.StockQuantity, ReorderLevel = 0 };
+        var rejected = new InventoriesController(db);
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await rejected.Edit(inventory.Id, input, null));
+        Assert.False(rejected.ModelState.IsValid);
+        Assert.Equal(2, inventory.SpoiledQuantity);
+        Assert.NotNull(inventory.ExpirationDate);
+
+        var accepted = new InventoriesController(db);
+        Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(
+            await accepted.Edit(inventory.Id, input, "Old records reconciled with batch history"));
+        Assert.Equal(10, inventory.StockQuantity);
+        Assert.Equal(10, (await db.InventoryBatches.SingleAsync()).Quantity);
+        Assert.Equal("Old records reconciled with batch history", db.AuditReason);
+        var result = Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await new NotificationsController(db).Index());
+        Assert.Empty(Assert.IsType<List<InventoryNotification>>(result.Model));
+    }
+
+    [Fact]
     public async Task ReceiptsUseSavedOrderValuesAndRejectMissingOrders()
     {
         await Receive(10);
@@ -341,5 +369,73 @@ public sealed class WorkflowTests : IAsyncLifetime
     {
         public string? Link { get; private set; }
         public Task SendAsync(string email, string link) { Link = link; return Task.CompletedTask; }
+    }
+
+    private AccountController RegistrationController()
+    {
+        var recovery = new PasswordRecoveryService(db, new FakeEmail(),
+            new ConfigurationBuilder().Build(), NullLogger<PasswordRecoveryService>.Instance);
+        return new AccountController(db, recovery)
+        {
+            TempData = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(
+                new Microsoft.AspNetCore.Http.DefaultHttpContext(), new TestTempDataProvider())
+        };
+    }
+
+    [Theory]
+    [InlineData("Admin")]
+    [InlineData("Manager")]
+    public async Task PublicRegistrationCreatesSelectedRoleWithHashedPassword(string role)
+    {
+        var model = new AdminRegistrationViewModel { FullName = " New User ",
+            Email = "new@example.com", Username = " newuser ", Role = role,
+            Password = "LongPassword123!", ConfirmPassword = "LongPassword123!" };
+        var result = Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(
+            await RegistrationController().RegisterAdmin(model));
+        Assert.Equal("Login", result.ActionName);
+        var user = await db.Users.SingleAsync();
+        Assert.Equal(role, user.Role);
+        Assert.Equal("newuser", user.Username);
+        Assert.True(user.IsActive);
+        Assert.False(user.IsArchived);
+        Assert.Equal(Microsoft.AspNetCore.Identity.PasswordVerificationResult.Success,
+            new Microsoft.AspNetCore.Identity.PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, model.Password));
+
+        var duplicate = RegistrationController();
+        model.Username = "NEWUSER";
+        model.Email = "NEW@EXAMPLE.COM";
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await duplicate.RegisterAdmin(model));
+        Assert.False(duplicate.ModelState.IsValid);
+        Assert.Single(await db.Users.ToListAsync());
+    }
+
+    [Theory]
+    [InlineData("Main Admin")]
+    [InlineData("Delivery Staff")]
+    public async Task PublicRegistrationRejectsOtherRoles(string role)
+    {
+        var controller = RegistrationController();
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.RegisterAdmin(
+            new AdminRegistrationViewModel { Role = role }));
+        Assert.False(controller.ModelState.IsValid);
+        Assert.Empty(await db.Users.ToListAsync());
+    }
+
+    [Fact]
+    public void RegistrationValidatesPasswordLengthAndConfirmation()
+    {
+        var model = new AdminRegistrationViewModel { FullName = "Test", Email = "test@example.com",
+            Username = "test", Password = "short", ConfirmPassword = "different" };
+        var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        Assert.False(System.ComponentModel.DataAnnotations.Validator.TryValidateObject(model,
+            new System.ComponentModel.DataAnnotations.ValidationContext(model), results, true));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(model.Password)));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(model.ConfirmPassword)));
+    }
+
+    private sealed class TestTempDataProvider : Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataProvider
+    {
+        public IDictionary<string, object> LoadTempData(Microsoft.AspNetCore.Http.HttpContext context) => new Dictionary<string, object>();
+        public void SaveTempData(Microsoft.AspNetCore.Http.HttpContext context, IDictionary<string, object> values) { }
     }
 }

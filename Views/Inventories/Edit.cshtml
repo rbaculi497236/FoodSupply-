@@ -7,6 +7,14 @@
     <input asp-for="Id" type="hidden" /><input asp-for="ProductId" type="hidden" /><input asp-for="StockQuantity" type="hidden" />
     <p>Stock on hand: @Model.StockQuantity</p>
     <label asp-for="ReorderLevel"></label><input asp-for="ReorderLevel" type="number" min="0" class="form-control mb-3" />
+    <h2 class="h5">Review older inventory alerts</h2>
+    <p>These values belong to the inventory record. Record any physical stock removal in Batches and stock history first, then correct these values to match the remaining unresolved quantities. Corrections here do not change stock on hand.</p>
+    <label asp-for="ExpirationDate"></label><input asp-for="ExpirationDate" type="date" class="form-control mb-3" />
+    <p class="text-muted">Clear this older expiry date only after its stock has been handled or its expiry is tracked in batches. Batch expiry alerts remain active while affected stock remains.</p>
+    <label asp-for="SpoiledQuantity"></label><input asp-for="SpoiledQuantity" type="number" min="0" class="form-control mb-3" />
+    <label asp-for="DamagedQuantity"></label><input asp-for="DamagedQuantity" type="number" min="0" class="form-control mb-3" />
+    <label for="reason">Correction reason (required when changing the values above)</label>
+    @Html.TextBox("reason", null, new { id = "reason", maxlength = "500", @class = "form-control mb-3" })
     <button class="btn btn-primary">Save settings</button>
 </form>
 <a asp-controller="Operations" asp-action="Batches" asp-route-productId="@Model.ProductId" class="btn btn-outline-primary mt-3">Batches and stock history</a>

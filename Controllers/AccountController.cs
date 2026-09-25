@@ -40,6 +40,42 @@ private readonly PasswordHasher<User> _passwordHasher;
         return View();
     }
 
+    [HttpGet]
+    public IActionResult RegisterAdmin() => View(new AdminRegistrationViewModel());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RegisterAdmin(AdminRegistrationViewModel model)
+    {
+        if (model.Role != "Admin" && model.Role != "Manager")
+            ModelState.AddModelError(nameof(model.Role), "Choose Admin or Manager.");
+        if (!ModelState.IsValid) return View(model);
+
+        var username = model.Username.Trim();
+        var email = model.Email.Trim();
+        if (await _context.Users.AnyAsync(u => u.Username.ToUpper() == username.ToUpper()))
+            ModelState.AddModelError(nameof(model.Username), "Username already exists.");
+        if (await _context.Users.AnyAsync(u => u.Email.ToUpper() == email.ToUpper()))
+            ModelState.AddModelError(nameof(model.Email), "Email already exists.");
+        if (!ModelState.IsValid) return View(model);
+
+        var user = new User
+        {
+            FullName = model.FullName.Trim(),
+            Username = username,
+            Email = email,
+            Role = model.Role,
+            IsActive = true,
+            IsArchived = false,
+            CreatedAt = DateTime.UtcNow
+        };
+        user.PasswordHash = _passwordHasher.HashPassword(user, model.Password);
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+        TempData["Success"] = $"{user.Role} account created. You can now sign in.";
+        return RedirectToAction(nameof(Login));
+    }
+
     // ==============================
     // LOGIN - POST
     // ==============================

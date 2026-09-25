@@ -17,6 +17,8 @@ public class NotificationsController(ApplicationDbContext db) : Controller
         var query = db.Inventories.AsNoTracking().Where(i => !i.IsArchived)
             .Select(i => new InventoryNotification
             {
+                InventoryId = i.Id,
+                LegacyExpiry = i.ExpirationDate.HasValue && i.ExpirationDate.Value <= cutoff,
                 ProductId = i.ProductId,
                 ProductName = i.Product != null ? i.Product.ProductName : "Product unavailable",
                 StockQuantity = i.StockQuantity,

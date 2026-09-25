@@ -1,0 +1,71 @@
+@model FoodSupply.Models.AdminRegistrationViewModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create admin or manager account - FoodSupply</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body { min-height: 100vh; background: linear-gradient(135deg, #f4f8f5, #e6f0e8); }
+        .registration-card { width: 100%; max-width: 520px; border: 1px solid #d8e4dc; }
+        .brand { display: block; width: min(280px, 72vw); margin: 0 auto 1rem; }
+        .btn-primary { background-color: #123d68; border-color: #123d68; }
+    </style>
+</head>
+<body>
+<main class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+    <div class="card shadow registration-card">
+        <div class="card-body p-4">
+            <img src="~/images/foodsupply-logo.png" alt="FoodSupply" class="brand" />
+            <h1 class="h3 text-center">Create admin or manager account</h1>
+            <p class="text-muted text-center">Register as an admin or manager. No approval is required. Other staff accounts are created by an administrator.</p>
+            <form asp-controller="Account" asp-action="RegisterAdmin" method="post">
+                <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+                <div class="mb-3">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select" aria-describedby="role-help">
+                        <option value="Manager">Manager</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                    <div id="role-help" class="form-text">Admins can create and manage staff accounts. Managers have access to operational management.</div>
+                    <span asp-validation-for="Role" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <input asp-for="FullName" class="form-control" autocomplete="name" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" type="email" class="form-control" autocomplete="email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label"></label>
+                    <input asp-for="Username" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" aria-describedby="password-help" />
+                    <div id="password-help" class="form-text">Use at least 12 characters.</div>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create account</button>
+            </form>
+            <p class="text-center mt-3 mb-0"><a asp-action="Login">Back to login</a></p>
+        </div>
+    </div>
+</main>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<partial name="_ValidationScriptsPartial" />
+</body>
+</html>

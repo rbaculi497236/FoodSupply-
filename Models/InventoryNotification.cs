@@ -2,6 +2,8 @@ namespace FoodSupply.Models;
 
 public class InventoryNotification
 {
+    public int InventoryId { get; set; }
+    public bool LegacyExpiry { get; set; }
     public int ProductId { get; set; }
     public string ProductName { get; set; } = "";
     public int StockQuantity { get; set; }
