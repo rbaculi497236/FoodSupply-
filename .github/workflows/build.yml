@@ -75,5 +75,8 @@ jobs:
             '-enableRule:AppOffline', '-enableRule:DoNotDeleteRule',
             '-disableLink:AppPoolExtension', '-disableLink:ContentExtension', '-disableLink:CertificateExtension'
           )
+          # MSDeploy parses its raw command line and cannot consume PowerShell 7's
+          # modern escaping of embedded provider quotes.
+          $PSNativeCommandArgumentPassing = 'Legacy'
           & $msdeploy @deployArgs
           if ($LASTEXITCODE -ne 0) { throw "Web Deploy failed with exit code $LASTEXITCODE" }
