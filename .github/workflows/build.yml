@@ -1,5 +1,12 @@
-name: Build and test
-on: [push, pull_request]
+name: Build, test and deploy to MonsterASP
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -11,3 +18,62 @@ jobs:
       - run: dotnet restore Tests/FoodSupply.Tests.csproj
       - run: dotnet build FoodSupply.csproj --no-restore --configuration Release
       - run: dotnet test Tests/FoodSupply.Tests.csproj --no-restore --configuration Release
+
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: windows-latest
+    concurrency:
+      group: monsterasp-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Publish
+        run: dotnet publish FoodSupply.csproj --configuration Release --output artifacts/publish --self-contained false -p:UseAppHost=false
+      - name: Prepare production configuration
+        shell: pwsh
+        run: |
+          $settingsPath = 'artifacts/publish/appsettings.json'
+          $settings = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json
+          $settings.ConnectionStrings.DefaultConnection = ''
+          $settings | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $settingsPath -Encoding utf8
+          Get-ChildItem -LiteralPath artifacts/publish -Filter 'appsettings.*.json' | Remove-Item
+      - name: Deploy to MonsterASP
+        shell: pwsh
+        env:
+          WEBSITE_NAME: ${{ secrets.WEBSITE_NAME }}
+          SERVER_COMPUTER_NAME: ${{ secrets.SERVER_COMPUTER_NAME }}
+          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          foreach ($name in @('WEBSITE_NAME', 'SERVER_COMPUTER_NAME', 'SERVER_USERNAME', 'SERVER_PASSWORD')) {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+              throw "Missing GitHub Actions secret: $name"
+            }
+          }
+          $msdeploy = Join-Path ${env:ProgramFiles} 'IIS/Microsoft Web Deploy V3/msdeploy.exe'
+          if (!(Test-Path -LiteralPath $msdeploy)) {
+            $msdeploy = Join-Path ${env:ProgramFiles(x86)} 'IIS/Microsoft Web Deploy V3/msdeploy.exe'
+          }
+          if (!(Test-Path -LiteralPath $msdeploy)) { throw 'Web Deploy is missing from this runner.' }
+          # Quote provider values for Web Deploy; never interpolate secrets into shell source.
+          function Quote-ProviderValue([string] $value) {
+            if ($value.Contains('"')) { throw 'Web Deploy values must not contain a double quote.' }
+            return '"' + $value + '"'
+          }
+          $source = (Resolve-Path artifacts/publish).Path
+          $destination = '-dest:contentPath=' + (Quote-ProviderValue $env:WEBSITE_NAME) +
+            ',computerName=' + (Quote-ProviderValue $env:SERVER_COMPUTER_NAME) +
+            ',userName=' + (Quote-ProviderValue $env:SERVER_USERNAME) +
+            ',password=' + (Quote-ProviderValue $env:SERVER_PASSWORD) +
+            ',authType=Basic,includeAcls=False'
+          $deployArgs = @(
+            '-verb:sync', ('-source:contentPath=' + (Quote-ProviderValue $source)), $destination,
+            '-enableRule:AppOffline', '-enableRule:DoNotDeleteRule',
+            '-disableLink:AppPoolExtension', '-disableLink:ContentExtension', '-disableLink:CertificateExtension'
+          )
+          & $msdeploy @deployArgs
+          if ($LASTEXITCODE -ne 0) { throw "Web Deploy failed with exit code $LASTEXITCODE" }

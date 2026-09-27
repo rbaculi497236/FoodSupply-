@@ -5,3 +5,11 @@ TestResults/
 *.user
 *.suo
 .vs/
+
+# Local configuration and hosting credentials
+appsettings.Local.json
+appsettings.Production.json
+*.publishsettings
+*.PublishSettings
+*.pubxml
+*.pubxml.user
