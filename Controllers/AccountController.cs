@@ -40,6 +40,27 @@ private readonly PasswordHasher<User> _passwordHasher;
         return View();
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [HttpGet]
+    public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
+
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Challenge();
+        if (!await _recovery.ChangeAsync(userId, model.CurrentPassword, model.NewPassword))
+        {
+            ModelState.AddModelError("", "Unable to change your password. Check your current password and try again.");
+            return View(model);
+        }
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["Success"] = "Password changed successfully. Sign in with your new password.";
+        return RedirectToAction(nameof(Login));
+    }
+
     [HttpGet]
     public IActionResult RegisterAdmin() => View(new AdminRegistrationViewModel());
 

@@ -1,0 +1,22 @@
+@model bool
+@{
+    var preference = Context.Request.Cookies["FoodSupply.CookiePreference"];
+    var show = Model || (preference != "all" && preference != "essential");
+}
+@if (show)
+{
+    <section class="border rounded bg-white text-dark p-3 m-3 shadow-sm" aria-label="Cookie preferences">
+        <h2 class="h5">Your cookie preferences</h2>
+        <p>We use essential cookies to keep you signed in and protect forms. Optional cookies require your permission. No optional analytics or advertising cookies are currently used.</p>
+        @if (Model && preference != null)
+        {
+            <p>Current preference: @(preference == "all" ? "Optional cookies allowed" : "Essential cookies only").</p>
+        }
+        <form asp-controller="Home" asp-action="CookiePreferences" method="post" class="d-flex flex-wrap gap-2">
+            <input type="hidden" name="returnUrl" value="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" />
+            <button type="submit" name="allowOptional" value="false" class="btn btn-outline-primary">Essential only</button>
+            <button type="submit" name="allowOptional" value="true" class="btn btn-primary">Allow optional cookies</button>
+            <a asp-controller="Home" asp-action="Privacy" class="btn btn-link">Cookie details and settings</a>
+        </form>
+    </section>
+}

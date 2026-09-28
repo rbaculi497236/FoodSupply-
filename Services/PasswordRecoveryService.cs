@@ -53,6 +53,27 @@ public sealed class PasswordRecoveryService(ApplicationDbContext db, IRecoveryEm
         }
     }
 
+    public async Task<bool> ChangeAsync(int userId, string currentPassword, string newPassword)
+    {
+        if (string.IsNullOrEmpty(currentPassword) || string.IsNullOrEmpty(newPassword) || newPassword.Length < 12)
+            return false;
+        var user = await db.Users.SingleOrDefaultAsync(u => u.Id == userId && u.IsActive && !u.IsArchived);
+        if (user == null || string.IsNullOrEmpty(user.PasswordHash)) return false;
+        var hasher = new PasswordHasher<User>();
+        try
+        {
+            if (hasher.VerifyHashedPassword(user, user.PasswordHash, currentPassword) == PasswordVerificationResult.Failed)
+                return false;
+        }
+        catch (FormatException) { return false; }
+        user.PasswordHash = hasher.HashPassword(user, newPassword);
+        user.SecurityStamp = Guid.NewGuid().ToString();
+        user.ResetTokenHash = null;
+        user.ResetTokenExpiresAt = null;
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> ResetAsync(int userId, string token, string password)
     {
         if (string.IsNullOrEmpty(password) || password.Length < 12) return false;

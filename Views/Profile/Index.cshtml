@@ -1,0 +1,26 @@
+@model FoodSupply.Models.User
+@{ ViewData["Title"] = "My profile"; }
+<div class="container py-4">
+    <div class="card shadow-sm mx-auto" style="max-width: 640px;">
+        <div class="card-body p-4">
+            <h1 class="h3">My profile</h1>
+            @if (TempData["Success"] is string message)
+            {
+                <div class="alert alert-success" role="status">@message</div>
+            }
+            <dl class="row mt-4">
+                <dt class="col-sm-4">Full name</dt><dd class="col-sm-8 text-break">@Model.FullName</dd>
+                <dt class="col-sm-4">Username</dt><dd class="col-sm-8 text-break">@Model.Username</dd>
+                <dt class="col-sm-4">Email</dt><dd class="col-sm-8 text-break">@Model.Email</dd>
+                <dt class="col-sm-4">Role</dt><dd class="col-sm-8">@Model.Role</dd>
+                <dt class="col-sm-4">Member since</dt><dd class="col-sm-8">@Model.CreatedAt.ToString("MMMM d, yyyy")</dd>
+            </dl>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Edit" class="btn btn-primary">Edit profile</a>
+                <a asp-controller="Account" asp-action="ChangePassword" class="btn btn-outline-primary">Change password</a>
+                <a asp-controller="Account" asp-action="ForgotPassword" class="btn btn-link">Reset password by email</a>
+            </div>
+            <p class="text-muted small mt-4 mb-0">FoodSupply uses essential cookies to keep you signed in and protect forms. Select Remember me when signing in to keep your sign-in after closing your browser. Sessions expire after 8 hours and may renew while you use the app. <a asp-controller="Home" asp-action="Privacy">About cookies</a></p>
+        </div>
+    </div>
+</div>

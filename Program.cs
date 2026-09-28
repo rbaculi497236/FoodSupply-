@@ -14,6 +14,21 @@ var builder = WebApplication.CreateBuilder(args);
 // ==========================================
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.CookieTempDataProviderOptions>(options =>
+{
+    options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+});
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.CheckConsentNeeded = _ => true;
+    options.ConsentCookie.Name = "FoodSupply.Consent";
+    options.ConsentCookie.HttpOnly = true;
+    options.ConsentCookie.SameSite = SameSiteMode.Lax;
+    options.ConsentCookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+});
 
 builder.Services.AddScoped<AccountActivityFilter>();
 builder.Services.AddScoped<StockService>();
@@ -55,6 +70,12 @@ builder.Services.AddAuthentication(
 )
 .AddCookie(options =>
 {
+    options.Cookie.Name = "FoodSupply.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
@@ -145,6 +166,7 @@ app.UseStaticFiles();
 // ==========================================
 
 app.UseRouting();
+app.UseCookiePolicy();
 app.UseRateLimiter();
 
 // ==========================================

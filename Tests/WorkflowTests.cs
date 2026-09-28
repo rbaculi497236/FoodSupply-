@@ -524,6 +524,80 @@ public sealed class WorkflowTests : IAsyncLifetime
         Assert.Null(authentication.Principal);
     }
 
+    [Fact]
+    public async Task ProfileEditUpdatesOnlyCurrentUserAndRefreshesClaims()
+    {
+        var user = new User { FullName = "Alice", Username = "alice", Email = "alice@example.com", Role = "Manager",
+            ResetTokenHash = "old-token", ResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(30) };
+        user.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<User>().HashPassword(user, "CurrentPassword123!");
+        var other = new User { FullName = "Bob", Username = "bob", Email = "bob@example.com" };
+        db.AddRange(user, other); await db.SaveChangesAsync();
+        var oldStamp = user.SecurityStamp;
+        var authentication = new TestAuthentication();
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<Microsoft.AspNetCore.Authentication.IAuthenticationService>(services, authentication);
+        using var provider = Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);
+        var http = new Microsoft.AspNetCore.Http.DefaultHttpContext { RequestServices = provider,
+            User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[] {
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id.ToString()) }, "Cookies")) };
+        var controller = new ProfileController(db) {
+            ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext { HttpContext = http,
+                RouteData = new Microsoft.AspNetCore.Routing.RouteData(),
+                ActionDescriptor = new Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor() },
+            TempData = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(http, new TestTempDataProvider()) };
+        controller.Url = new Microsoft.AspNetCore.Mvc.Routing.UrlHelper(controller.ControllerContext);
+        Assert.Same(user, Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Index()).Model);
+        var input = new ProfileViewModel { FullName = " Alice Updated ", Username = " alice-new ", Email = " new@example.com ", CurrentPassword = "wrong" };
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Edit(input));
+        Assert.Equal("alice", user.Username);
+        controller.ModelState.Clear();
+        input.CurrentPassword = "CurrentPassword123!";
+        input.Username = "BOB";
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Edit(input));
+        Assert.Equal("alice", user.Username);
+        controller.ModelState.Clear();
+        input.Username = " alice-new ";
+        input.Email = "BOB@example.com";
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Edit(input));
+        controller.ModelState.Clear();
+        input.Email = " new@example.com ";
+        Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(await controller.Edit(input));
+        Assert.Equal("alice-new", user.Username);
+        Assert.Equal("Alice Updated", user.FullName);
+        Assert.Equal("new@example.com", user.Email);
+        Assert.Equal("Manager", user.Role);
+        Assert.Equal("bob", other.Username);
+        Assert.Null(user.ResetTokenHash);
+        Assert.NotEqual(oldStamp, user.SecurityStamp);
+        Assert.Equal("alice-new", authentication.Principal!.Identity!.Name);
+        Assert.True(authentication.Principal.IsInRole("Manager"));
+        user.IsActive = false;
+        await db.SaveChangesAsync();
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ChallengeResult>(await controller.Index());
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ChallengeResult>(await controller.Edit(input));
+    }
+
+    [Fact]
+    public async Task PasswordChangeRequiresCurrentPasswordAndInvalidatesSessionsAndRecovery()
+    {
+        var user = new User { FullName = "Alice", Username = "alice", Email = "alice@example.com",
+            ResetTokenHash = "old-token", ResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(30) };
+        var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<User>();
+        user.PasswordHash = hasher.HashPassword(user, "CurrentPassword123!");
+        db.Add(user); await db.SaveChangesAsync();
+        var oldStamp = user.SecurityStamp;
+        var recovery = new PasswordRecoveryService(db, new FakeEmail(), new ConfigurationBuilder().Build(), NullLogger<PasswordRecoveryService>.Instance);
+        Assert.False(await recovery.ChangeAsync(user.Id, "wrong", "NewPassword123!"));
+        Assert.False(await recovery.ChangeAsync(user.Id, "CurrentPassword123!", "short"));
+        Assert.Equal(oldStamp, user.SecurityStamp);
+        Assert.True(await recovery.ChangeAsync(user.Id, "CurrentPassword123!", "NewPassword123!"));
+        Assert.NotEqual(oldStamp, user.SecurityStamp);
+        Assert.Null(user.ResetTokenHash);
+        Assert.Null(user.ResetTokenExpiresAt);
+        Assert.Equal(Microsoft.AspNetCore.Identity.PasswordVerificationResult.Success,
+            hasher.VerifyHashedPassword(user, user.PasswordHash, "NewPassword123!"));
+    }
+
     private sealed class TestAuthentication : Microsoft.AspNetCore.Authentication.IAuthenticationService
     {
         public System.Security.Claims.ClaimsPrincipal? Principal;

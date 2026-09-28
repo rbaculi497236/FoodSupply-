@@ -1757,6 +1757,13 @@
 
             @if (isAuthenticated)
             {
+                <a asp-controller="Profile" asp-action="Index" class="sidebar-logout">
+                    <i class="bi bi-person-circle"></i> My profile
+                </a>
+                <a asp-controller="Account" asp-action="ChangePassword" class="sidebar-logout">
+                    <i class="bi bi-key"></i>
+                    <span>Change password</span>
+                </a>
                 <form asp-controller="Account"
                       asp-action="Logout"
                       method="post">
@@ -1826,6 +1833,11 @@
 
         <main class="content">
 
+            @if (currentController != "Home" || currentAction != "Privacy")
+            {
+                <partial name="_CookieConsent" model="false" />
+            }
+
             @RenderBody()
 
         </main>
@@ -1857,7 +1869,7 @@
                 <div>
 
                     <span class="text-muted">
-                        Food Supply ERP & CRM System
+                        <a asp-controller="Home" asp-action="Privacy">Cookie settings</a>
                     </span>
 
                 </div>
