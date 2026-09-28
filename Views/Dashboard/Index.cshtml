@@ -3,6 +3,8 @@
 
 @{
     ViewData["Title"] = "Dashboard";
+    var canViewInsights = Model.Highlights.CanViewSales || Model.Highlights.CanViewInventory;
+    var showInsights = canViewInsights && Context.Request.Query["tab"] == "insights";
 
     var weatherLocation = Configuration["Weather:LocationName"] ?? "Manila, Philippines";
     var weatherLatitude = Configuration["Weather:Latitude"] ?? "14.5995";
@@ -34,44 +36,105 @@
     </div>
 
 
-    <partial name="_Highlights" model="Model.Highlights" />
-
-    <!-- ================= WEATHER ================= -->
-    <div class="weather-card"
-         id="weather-card"
-         data-location="@weatherLocation"
-         data-latitude="@weatherLatitude"
-         data-longitude="@weatherLongitude"
-         data-timezone="@weatherTimezone">
-
-        <div class="weather-header">
-            <div>
-                <h5>
-                    <i class="bi bi-cloud-sun"></i>
-                    Weather
-                </h5>
-
-                <span id="weather-updated">
-                    Loading current conditions...
-                </span>
-            </div>
-
-            <button type="button"
-                    class="weather-refresh"
-                    id="refresh-weather"
-                    aria-label="Refresh weather">
-                <i class="bi bi-arrow-clockwise"></i>
-            </button>
-        </div>
-
-        <div id="weather-content" class="weather-content">
-            <div class="text-muted small">
-                Retrieving forecast...
-            </div>
+<nav class="nav nav-pills gap-2 mb-4" aria-label="Dashboard sections">
+<a asp-action="Index" class="nav-link @(!showInsights ? "active" : "")" aria-current="@(!showInsights ? "page" : null)">Overview</a>
+@if (canViewInsights) {
+<a asp-action="Index" asp-route-tab="insights" class="nav-link @(showInsights ? "active" : "")" aria-current="@(showInsights ? "page" : null)">Insights</a>
+}
+</nav>
+@if (showInsights) {
+<partial name="_Highlights" model="Model.Highlights" />
+} else {
+<partial name="_Priorities" model="Model.Highlights" />
+@if (Model.Highlights.CanViewSales) {
+    <!-- ================= FINANCIAL ================= -->
+    <div class="section-heading financial-heading">
+        <div>
+            <span class="section-label">FINANCIAL</span>
+            <h4>Financial Summary</h4>
         </div>
     </div>
 
+    <div class="financial-grid">
 
+        <!-- TOTAL SALES -->
+        <div class="financial-card sales-card">
+
+            <div class="financial-top">
+                <div class="financial-icon blue">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+
+                <span>Delivered order value</span>
+            </div>
+
+            <div class="financial-value">
+                ₱@Model.TotalSales.ToString("N2")
+            </div>
+
+            <div class="financial-footer">
+                <span>
+                    <i class="bi bi-graph-up"></i>
+                    All active sales orders
+                </span>
+            </div>
+
+        </div>
+
+
+        <!-- TOTAL PAID -->
+        <div class="financial-card paid-card">
+
+            <div class="financial-top">
+                <div class="financial-icon green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+
+                <span>Total Paid</span>
+            </div>
+
+            <div class="financial-value">
+                ₱@Model.TotalPaid.ToString("N2")
+            </div>
+
+            <div class="financial-footer success">
+                <i class="bi bi-arrow-up"></i>
+                Payments received
+            </div>
+
+        </div>
+
+
+        <!-- OUTSTANDING -->
+        <a asp-controller="Billings"
+           asp-action="Index"
+           class="financial-card outstanding-card">
+
+            <div class="financial-top">
+                <div class="financial-icon red">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+
+                <span>Outstanding Balance</span>
+            </div>
+
+            <div class="financial-value">
+                ₱@Model.OutstandingBalance.ToString("N2")
+            </div>
+
+            <div class="financial-footer danger">
+                View invoices
+                <i class="bi bi-arrow-right"></i>
+            </div>
+
+        </a>
+
+    </div>
+
+
+}
+<partial name="_RecentActivity" model="Model.Highlights" />
+<details class="dashboard-disclosure"><summary>Directory and operational totals</summary>
     <!-- ================= OVERVIEW ================= -->
     <div class="section-heading">
         <div>
@@ -169,91 +232,6 @@
     </div>
 
 
-    <!-- ================= FINANCIAL ================= -->
-    <div class="section-heading financial-heading">
-        <div>
-            <span class="section-label">FINANCIAL</span>
-            <h4>Financial Summary</h4>
-        </div>
-    </div>
-
-    <div class="financial-grid">
-
-        <!-- TOTAL SALES -->
-        <div class="financial-card sales-card">
-
-            <div class="financial-top">
-                <div class="financial-icon blue">
-                    <i class="bi bi-cash-stack"></i>
-                </div>
-
-                <span>Delivered order value</span>
-            </div>
-
-            <div class="financial-value">
-                ₱@Model.TotalSales.ToString("N2")
-            </div>
-
-            <div class="financial-footer">
-                <span>
-                    <i class="bi bi-graph-up"></i>
-                    All active sales orders
-                </span>
-            </div>
-
-        </div>
-
-
-        <!-- TOTAL PAID -->
-        <div class="financial-card paid-card">
-
-            <div class="financial-top">
-                <div class="financial-icon green">
-                    <i class="bi bi-check-circle"></i>
-                </div>
-
-                <span>Total Paid</span>
-            </div>
-
-            <div class="financial-value">
-                ₱@Model.TotalPaid.ToString("N2")
-            </div>
-
-            <div class="financial-footer success">
-                <i class="bi bi-arrow-up"></i>
-                Payments received
-            </div>
-
-        </div>
-
-
-        <!-- OUTSTANDING -->
-        <a asp-controller="Billings"
-           asp-action="Index"
-           class="financial-card outstanding-card">
-
-            <div class="financial-top">
-                <div class="financial-icon red">
-                    <i class="bi bi-exclamation-circle"></i>
-                </div>
-
-                <span>Outstanding Balance</span>
-            </div>
-
-            <div class="financial-value">
-                ₱@Model.OutstandingBalance.ToString("N2")
-            </div>
-
-            <div class="financial-footer danger">
-                View invoices
-                <i class="bi bi-arrow-right"></i>
-            </div>
-
-        </a>
-
-    </div>
-
-
     <!-- ================= OPERATIONS ================= -->
     <div class="section-heading">
         <div>
@@ -346,6 +324,9 @@
     </div>
 
 
+</details>
+@if (Model.Highlights.CanViewSales) {
+<details class="dashboard-disclosure"><summary>Recent orders and invoices</summary>
     <!-- ================= RECENT ACTIVITY ================= -->
     <div class="section-heading activity-heading">
         <div>
@@ -556,6 +537,47 @@
         </div>
 
     </div>
+</details>
+}
+<details id="dashboard-weather" class="dashboard-disclosure"><summary>Weather and forecast</summary>
+    <!-- ================= WEATHER ================= -->
+    <div class="weather-card"
+         id="weather-card"
+         data-location="@weatherLocation"
+         data-latitude="@weatherLatitude"
+         data-longitude="@weatherLongitude"
+         data-timezone="@weatherTimezone">
+
+        <div class="weather-header">
+            <div>
+                <h5>
+                    <i class="bi bi-cloud-sun"></i>
+                    Weather
+                </h5>
+
+                <span id="weather-updated">
+                    Loading current conditions...
+                </span>
+            </div>
+
+            <button type="button"
+                    class="weather-refresh"
+                    id="refresh-weather"
+                    aria-label="Refresh weather">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+
+        <div id="weather-content" class="weather-content">
+            <div class="text-muted small">
+                Retrieving forecast...
+            </div>
+        </div>
+    </div>
+
+
+</details>
+}
 
 </div>
 
@@ -1225,6 +1247,7 @@
     (() => {
 
         const card = document.getElementById('weather-card');
+        if (!card) return;
         const content = document.getElementById('weather-content');
         const updated = document.getElementById('weather-updated');
         const refreshButton = document.getElementById('refresh-weather');
@@ -1470,7 +1493,14 @@
         );
 
 
-        loadWeather();
+        const weatherPanel = document.getElementById('dashboard-weather');
+        let weatherLoaded = false;
+        weatherPanel.addEventListener('toggle', () => {
+            if (weatherPanel.open && !weatherLoaded) {
+                weatherLoaded = true;
+                loadWeather();
+            }
+        });
 
     })();
 

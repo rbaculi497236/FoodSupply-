@@ -46,7 +46,7 @@ public static class DashboardHighlightsService
         if (model.CanViewActivity)
             model.Activity = await db.AuditEntries.AsNoTracking()
                 .Where(a => a.Entity == "SalesOrder" || a.Entity == "Payment" || a.Entity == "Delivery")
-                .OrderByDescending(a => a.CreatedAt).ThenByDescending(a => a.Id).Take(6)
+                .OrderByDescending(a => a.CreatedAt).ThenByDescending(a => a.Id).Take(5)
                 .Select(a => new AuditEntry { Id = a.Id, Entity = a.Entity, Action = a.Action, RecordId = a.RecordId, CreatedAt = a.CreatedAt }).ToListAsync();
         return model;
     }

@@ -1,0 +1,17 @@
+@model FoodSupply.Models.DashboardHighlights
+            @if (Model.CanViewActivity) {
+                <div class="mb-4"><section class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                    <div class="d-flex justify-content-between gap-2"><h2 class="h5">Recent activity</h2><a asp-controller="Operations" asp-action="Audit">View all</a></div>
+                    <p class="small text-muted">Latest order, payment, and delivery updates across all dates.</p>
+                    @if (Model.Activity.Count == 0) { <p class="empty-state">Your activity feed will fill up as orders, payments, and deliveries are recorded.</p> }
+                    <ol class="activity-feed">
+                        @foreach (var item in Model.Activity) {
+                            var label = item.Entity == "SalesOrder" ? "Order" : item.Entity;
+                            var action = item.Action == "Added" ? "created" : item.Action == "Modified" ? "updated" : item.Action.ToLowerInvariant();
+                            <li><i class="bi bi-check-circle" aria-hidden="true"></i><div><strong>@label #@item.RecordId</strong> @action<br /><time class="small text-muted" data-local-time datetime="@item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss'Z'")">@item.CreatedAt.ToString("MMM d, HH:mm") UTC</time></div></li>
+                        }
+                    </ol>
+                </div></section></div>
+            }
+        
+        

@@ -1,29 +1,15 @@
 @model FoodSupply.Models.DashboardHighlights
-<section class="daily-priorities mb-4" aria-label="Daily priorities">
-    <div><span class="section-label">YOUR DAY AT A GLANCE</span><h2 class="h4">A fresh start, a clear plan.</h2><p class="text-muted">Today's workload and stock that needs attention.</p></div>
-    <div class="row g-3">
-        @if (Model.CanViewSales) {
-            <div class="col-sm"><a asp-controller="SalesOrders" asp-action="Index" class="priority-tile"><i class="bi bi-bag-check"></i><strong>@Model.OrdersToday</strong><span>Orders placed today</span><small>View orders →</small></a></div>
-        }
-        @if (Model.CanViewDeliveries) {
-            <div class="col-sm"><a asp-controller="Deliveries" asp-action="Index" class="priority-tile"><i class="bi bi-truck"></i><strong>@Model.DeliveriesToday</strong><span>Deliveries scheduled today</span><small>View deliveries →</small></a></div>
-        }
-        @if (Model.CanViewInventory) {
-            <div class="col-sm"><a asp-controller="Inventories" asp-action="Alerts" class="priority-tile"><i class="bi bi-box-seam"></i><strong>@Model.LowStock</strong><span>Items at or below reorder level</span><small>Review stock →</small></a></div>
-        }
-    </div>
-    <p class="small text-muted mt-2 mb-0">Daily counts use the application server's date.</p>
-</section>
 @if (Model.CanViewSales || Model.CanViewInventory) {
     <section aria-label="Business insights" class="mb-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
             <div><span class="section-label">BUSINESS INSIGHTS</span><h2 class="h4 mb-0">See how things are moving</h2></div>
             @if (Model.CanViewSales) {
                 <form asp-action="Index" method="get" class="d-flex flex-wrap align-items-end gap-2">
+<input type="hidden" name="tab" value="insights" />
                     <div><label for="insights-from" class="form-label small">From</label><input id="insights-from" name="from" type="date" class="form-control" value="@Model.From.ToString("yyyy-MM-dd")" required /></div>
                     <div><label for="insights-to" class="form-label small">To</label><input id="insights-to" name="to" type="date" class="form-control" value="@Model.To.ToString("yyyy-MM-dd")" required /></div>
                     <button class="btn btn-primary" type="submit">Update charts</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary">Last 30 days</a>
+                    <a asp-action="Index" asp-route-tab="insights" class="btn btn-outline-secondary">Last 30 days</a>
                 </form>
             }
         </div>
@@ -35,20 +21,6 @@
             }
             @if (Model.CanViewInventory) {
                 <div class="col-xl-6"><partial name="~/Views/Reports/_ReportChart.cshtml" model="Model.Stock" /></div>
-            }
-            @if (Model.CanViewActivity) {
-                <div class="col-xl-6"><section class="card border-0 shadow-sm h-100"><div class="card-body p-4">
-                    <div class="d-flex justify-content-between gap-2"><h2 class="h5">Recent activity</h2><a asp-controller="Operations" asp-action="Audit">View all</a></div>
-                    <p class="small text-muted">Latest order, payment, and delivery updates across all dates.</p>
-                    @if (Model.Activity.Count == 0) { <p class="empty-state">Your activity feed will fill up as orders, payments, and deliveries are recorded.</p> }
-                    <ol class="activity-feed">
-                        @foreach (var item in Model.Activity) {
-                            var label = item.Entity == "SalesOrder" ? "Order" : item.Entity;
-                            var action = item.Action == "Added" ? "created" : item.Action == "Modified" ? "updated" : item.Action.ToLowerInvariant();
-                            <li><i class="bi bi-check-circle" aria-hidden="true"></i><div><strong>@label #@item.RecordId</strong> @action<br /><time class="small text-muted" data-local-time datetime="@item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss'Z'")">@item.CreatedAt.ToString("MMM d, HH:mm") UTC</time></div></li>
-                        }
-                    </ol>
-                </div></section></div>
             }
         </div>
     </section>
