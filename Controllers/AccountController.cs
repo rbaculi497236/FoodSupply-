@@ -68,8 +68,8 @@ private readonly PasswordHasher<User> _passwordHasher;
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RegisterAdmin(AdminRegistrationViewModel model)
     {
-        if (model.Role != "Admin" && model.Role != "Manager")
-            ModelState.AddModelError(nameof(model.Role), "Choose Admin or Manager.");
+        if (model.Role != "Admin")
+            ModelState.AddModelError(nameof(model.Role), "Only Admin accounts can be registered here.");
         if (!ModelState.IsValid) return View(model);
 
         var username = model.Username.Trim();
@@ -85,7 +85,7 @@ private readonly PasswordHasher<User> _passwordHasher;
             FullName = model.FullName.Trim(),
             Username = username,
             Email = email,
-            Role = model.Role,
+            Role = "Admin",
             IsActive = true,
             IsArchived = false,
             CreatedAt = DateTime.UtcNow

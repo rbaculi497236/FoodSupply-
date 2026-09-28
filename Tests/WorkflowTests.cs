@@ -402,19 +402,17 @@ public sealed class WorkflowTests : IAsyncLifetime
         };
     }
 
-    [Theory]
-    [InlineData("Admin")]
-    [InlineData("Manager")]
-    public async Task PublicRegistrationCreatesSelectedRoleWithHashedPassword(string role)
+    [Fact]
+    public async Task PublicRegistrationCreatesAdminWithHashedPassword()
     {
         var model = new AdminRegistrationViewModel { FullName = " New User ",
-            Email = "new@example.com", Username = " newuser ", Role = role,
+            Email = "new@example.com", Username = " newuser ",
             Password = "LongPassword123!", ConfirmPassword = "LongPassword123!" };
         var result = Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(
             await RegistrationController().RegisterAdmin(model));
         Assert.Equal("Login", result.ActionName);
         var user = await db.Users.SingleAsync();
-        Assert.Equal(role, user.Role);
+        Assert.Equal("Admin", user.Role);
         Assert.Equal("newuser", user.Username);
         Assert.True(user.IsActive);
         Assert.False(user.IsArchived);
@@ -431,6 +429,7 @@ public sealed class WorkflowTests : IAsyncLifetime
 
     [Theory]
     [InlineData("Main Admin")]
+    [InlineData("Manager")]
     [InlineData("Delivery Staff")]
     public async Task PublicRegistrationRejectsOtherRoles(string role)
     {

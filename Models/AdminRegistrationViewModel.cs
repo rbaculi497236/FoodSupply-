@@ -13,8 +13,8 @@ public sealed class AdminRegistrationViewModel
     [Required]
     public string Username { get; set; } = "";
 
-    [Required, RegularExpression("^(Admin|Manager)$", ErrorMessage = "Choose Admin or Manager.")]
-    public string Role { get; set; } = "Manager";
+    [Required, RegularExpression("^Admin$", ErrorMessage = "Only Admin accounts can be registered here.")]
+    public string Role { get; set; } = "Admin";
 
     [Required, MinLength(12), DataType(DataType.Password)]
     public string Password { get; set; } = "";
