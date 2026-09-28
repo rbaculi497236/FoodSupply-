@@ -1833,10 +1833,6 @@
 
         <main class="content">
 
-            @if (currentController != "Home" || currentAction != "Privacy")
-            {
-                <partial name="_CookieConsent" model="false" />
-            }
 
             @RenderBody()
 
@@ -1869,7 +1865,7 @@
                 <div>
 
                     <span class="text-muted">
-                        <a asp-controller="Home" asp-action="Privacy">Cookie settings</a>
+                        <a asp-controller="Home" asp-action="Privacy">Privacy policy</a>
                     </span>
 
                 </div>

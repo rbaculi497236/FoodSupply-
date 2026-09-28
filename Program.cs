@@ -20,15 +20,6 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.CookieTempDataProviderOption
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
         ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 });
-builder.Services.Configure<CookiePolicyOptions>(options =>
-{
-    options.CheckConsentNeeded = _ => true;
-    options.ConsentCookie.Name = "FoodSupply.Consent";
-    options.ConsentCookie.HttpOnly = true;
-    options.ConsentCookie.SameSite = SameSiteMode.Lax;
-    options.ConsentCookie.SecurePolicy = builder.Environment.IsDevelopment()
-        ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-});
 
 builder.Services.AddScoped<AccountActivityFilter>();
 builder.Services.AddScoped<StockService>();
@@ -166,7 +157,6 @@ app.UseStaticFiles();
 // ==========================================
 
 app.UseRouting();
-app.UseCookiePolicy();
 app.UseRateLimiter();
 
 // ==========================================
