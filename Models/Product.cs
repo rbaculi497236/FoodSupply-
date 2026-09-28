@@ -16,6 +16,11 @@ namespace FoodSupply.Models
 
         public string? Description { get; set; }
 
+        [Display(Name = "Photo URL"), StringLength(2048)]
+        [RegularExpression(@"https://[^\s]+", ErrorMessage = "Enter a valid HTTPS photo URL.")]
+        [Url]
+        public string? PhotoUrl { get; set; }
+
         // Foreign key to Category
         [Required]
         [Display(Name = "Category")]

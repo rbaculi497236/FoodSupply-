@@ -8,7 +8,7 @@
 <section class="card shadow-sm border-0 mb-4 report-chart" aria-label="@Model.Title">
     <div class="card-body p-4">
         <h2 class="h5 fw-bold">@Model.Title</h2>
-        <p class="text-muted small">@Model.Description All matching records are included, across all table pages.</p>
+        <p class="text-muted small">@Model.Description</p>
         @if (Model.Points.Count == 0 || maximum == 0)
         {
             <p class="text-muted mb-0">No chart data for the selected filters.</p>
@@ -55,9 +55,9 @@
         {
             var total = Model.Points.Sum(p => p.Value);
             decimal offset = 0;
-            var colors = new[] { "#4b9b28", "#123d68" };
+            var colors = new[] { "#4b9b28", "#123d68", "#c94b47", "#d89d29" };
             <div class="report-doughnut-layout">
-                <svg class="report-doughnut" viewBox="0 0 240 240" role="img" aria-label="Paid versus outstanding amounts. Exact values and percentages are listed alongside.">
+                <svg class="report-doughnut" viewBox="0 0 240 240" role="img" aria-label="@Model.Title. Exact values and percentages are listed alongside.">
                     @for (var i = 0; i < Model.Points.Count; i++)
                     {
                         var point = Model.Points[i];

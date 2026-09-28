@@ -1,0 +1,7 @@
+@model FoodSupply.Models.Product
+<span class="product-photo">
+    <i class="bi bi-box-seam" aria-hidden="true"></i>
+    @if (!string.IsNullOrWhiteSpace(Model.PhotoUrl)) {
+        <img src="@Model.PhotoUrl" alt="@Model.ProductName" loading="lazy" referrerpolicy="no-referrer" data-product-photo />
+    }
+</span>

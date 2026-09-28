@@ -139,36 +139,7 @@
 
                                     <!-- Status -->
                                     <td>
-                                        @if (order.Status == "Pending")
-                                        {
-                                            <span class="badge bg-warning text-dark">
-                                                Pending
-                                            </span>
-                                        }
-                                        else if (order.Status == "Confirmed")
-                                        {
-                                            <span class="badge bg-primary">
-                                                Confirmed
-                                            </span>
-                                        }
-                                        else if (order.Status == "Completed")
-                                        {
-                                            <span class="badge bg-success">
-                                                Completed
-                                            </span>
-                                        }
-                                        else if (order.Status == "Cancelled")
-                                        {
-                                            <span class="badge bg-danger">
-                                                Cancelled
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary">
-                                                @order.Status
-                                            </span>
-                                        }
+                                        <partial name="_StatusBadge" model="order.Status" />
                                     </td>
 
                                     <!-- Actions -->

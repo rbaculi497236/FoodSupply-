@@ -1,4 +1,4 @@
-﻿@model IEnumerable<FoodSupply.Models.Billing>
+@model IEnumerable<FoodSupply.Models.Billing>
 
 @{
     ViewData["Title"] = "Billing";
@@ -102,24 +102,7 @@
                                 </td>
 
                                 <td>
-                                    @if (item.PaymentStatus == "Paid")
-                                    {
-                                        <span class="badge bg-success">
-                                            Paid
-                                        </span>
-                                    }
-                                    else if (item.PaymentStatus == "Partially Paid")
-                                    {
-                                        <span class="badge bg-warning text-dark">
-                                            Partially Paid
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-danger">
-                                            Unpaid
-                                        </span>
-                                    }
+                                    <partial name="_StatusBadge" model="item.PaymentStatus" />
                                 </td>
 
                                 <td class="text-end">

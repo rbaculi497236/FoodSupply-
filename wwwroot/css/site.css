@@ -2,6 +2,37 @@
    FOODSUPPLY ERP - GLOBAL STYLES
    ========================================================= */
 
+.priority-tile {
+    display: flex; flex-direction: column; gap: 6px; height: 100%;
+    padding: 24px; border: 1px solid #dce8e0; border-radius: 16px;
+    background: linear-gradient(135deg, #fff, #f1f8ee); color: #123d68;
+    text-decoration: none;
+}
+.priority-tile > i { font-size: 1.4rem; color: #4b9b28; }
+.priority-tile > strong { font-size: 2rem; line-height: 1.2; }
+.priority-tile small { margin-top: auto; padding-top: 8px; }
+.activity-feed { list-style: none; padding: 0; margin: 0; }
+.activity-feed li { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eef2f6; }
+.activity-feed li:last-child { border: 0; }
+.activity-feed i { color: #4b9b28; }
+.product-photo { display: inline-flex; flex: 0 0 48px; width: 48px; height: 48px; position: relative; align-items: center; justify-content: center; overflow: hidden; border-radius: 10px; background: #eef5eb; color: #4b9b28; font-size: 1.5rem; }
+.product-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: white; }
+.product-photo-detail .product-photo { width: 160px; height: 160px; font-size: 3rem; }
+.badge { border-radius: 999px; padding: .45em .7em; }
+.badge.bg-success { background: #e5f4e9 !important; color: #216337 !important; }
+.badge.bg-warning { background: #fff3cd !important; color: #755300 !important; }
+.badge.bg-info { background: #e1efff !important; color: #174b7c !important; }
+.badge.bg-danger { background: #fce8e8 !important; color: #9d2929 !important; }
+.badge.bg-secondary { background: #edf0f3 !important; color: #4b5563 !important; }
+@media (prefers-reduced-motion: no-preference) {
+    .priority-tile, .overview-card, .btn { transition: transform .16s ease, box-shadow .16s ease; }
+    .priority-tile:hover, .overview-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px #123d6812; }
+    .btn:hover { transform: translateY(-1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
 html {
     font-size: 14px;
     position: relative;

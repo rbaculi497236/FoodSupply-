@@ -156,36 +156,7 @@
 
                                     <td>
 
-                                        @if (delivery.Status == "Pending")
-                                        {
-                                            <span class="badge bg-warning text-dark">
-                                                Pending
-                                            </span>
-                                        }
-                                        else if (delivery.Status == "Out for Delivery")
-                                        {
-                                            <span class="badge bg-info text-dark">
-                                                Out for Delivery
-                                            </span>
-                                        }
-                                        else if (delivery.Status == "Delivered")
-                                        {
-                                            <span class="badge bg-success">
-                                                Delivered
-                                            </span>
-                                        }
-                                        else if (delivery.Status == "Cancelled")
-                                        {
-                                            <span class="badge bg-danger">
-                                                Cancelled
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary">
-                                                @delivery.Status
-                                            </span>
-                                        }
+                                        <partial name="_StatusBadge" model="delivery.Status" />
 
                                     </td>
 

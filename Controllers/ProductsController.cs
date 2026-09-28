@@ -126,6 +126,7 @@ namespace FoodSupply.Controllers
                 _context.Products.Add(product);
                 await _context.SaveChangesAsync();
 
+                TempData["Success"] = "Product added successfully.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -183,6 +184,7 @@ namespace FoodSupply.Controllers
                     existingProduct.ProductCode = product.ProductCode;
                     existingProduct.ProductName = product.ProductName;
                     existingProduct.Description = product.Description;
+                    existingProduct.PhotoUrl = product.PhotoUrl;
 
                     // Save selected category
                     existingProduct.CategoryId = product.CategoryId;
@@ -204,6 +206,7 @@ namespace FoodSupply.Controllers
                     existingProduct.IsArchived = false;
 
                     await _context.SaveChangesAsync();
+                    TempData["Success"] = "Product updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {

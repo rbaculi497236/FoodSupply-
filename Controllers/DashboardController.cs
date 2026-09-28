@@ -17,9 +17,19 @@ private readonly ApplicationDbContext _context;
     }
 
     // GET: Dashboard
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(DateTime? from = null, DateTime? to = null)
     {
         var model = new DashboardViewModel();
+        var end = (to ?? DateTime.Today).Date;
+        var start = (from ?? (end >= DateTime.MinValue.AddDays(29) ? end.AddDays(-29) : end)).Date;
+        if (!ModelState.IsValid || start > end || (end - start).TotalDays > 366 || end >= DateTime.MaxValue.Date)
+        {
+            ModelState.AddModelError("", "Choose a valid date range of up to 366 days.");
+            end = DateTime.Today;
+            start = end.AddDays(-29);
+        }
+        model.Highlights = await FoodSupply.Services.DashboardHighlightsService.LoadAsync(_context, User, start, end);
+        model.LowStockProducts = model.Highlights.LowStock;
 
         // =========================
         // BASIC COUNTS

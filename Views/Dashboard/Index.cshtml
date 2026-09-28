@@ -21,8 +21,8 @@
                 </div>
 
                 <div>
-                    <h1>Dashboard</h1>
-                    <p>Welcome to your FoodSupply ERP dashboard.</p>
+                    <h1><span data-greeting>Welcome</span>, @(User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "there")!</h1>
+                    <p>Keep your stock fresh and your deliveries moving.</p>
                 </div>
             </div>
         </div>
@@ -33,6 +33,8 @@
         </div>
     </div>
 
+
+    <partial name="_Highlights" model="Model.Highlights" />
 
     <!-- ================= WEATHER ================= -->
     <div class="weather-card"
@@ -454,7 +456,8 @@
                 {
                     <div class="empty-state">
                         <i class="bi bi-cart-x"></i>
-                        <p>No sales orders yet.</p>
+                        <p>No delivered orders yet. Completed deliveries will appear here.</p>
+                        @if (Model.Highlights.CanViewSales) { <a asp-controller="SalesOrders" asp-action="Index" class="btn btn-outline-primary">View sales orders</a> }
                     </div>
                 }
 
@@ -544,6 +547,7 @@
                     <div class="empty-state">
                         <i class="bi bi-receipt"></i>
                         <p>No invoices yet.</p>
+                        @if (Model.Highlights.CanViewSales) { <a asp-controller="Billings" asp-action="Index" class="btn btn-outline-primary">Open billing</a> }
                     </div>
                 }
 

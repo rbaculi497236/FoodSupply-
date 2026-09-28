@@ -2,6 +2,7 @@ namespace FoodSupply.Models
 {
 public class DashboardViewModel
 {
+public DashboardHighlights Highlights { get; set; } = new();
 // Summary counts
 public int TotalProducts { get; set; }
 public int TotalCustomers { get; set; }

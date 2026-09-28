@@ -1,0 +1,7 @@
+@model FoodSupply.Models.Product
+<div class="mb-3">
+    <label asp-for="PhotoUrl" class="form-label"></label>
+    <input asp-for="PhotoUrl" class="form-control" placeholder="https://example.com/product.jpg" aria-describedby="photo-help" />
+    <span asp-validation-for="PhotoUrl" class="text-danger"></span>
+    <div id="photo-help" class="form-text">Optional. Paste a public HTTPS image link for this product. Leave blank to use the product icon.</div>
+</div>

@@ -34,6 +34,14 @@ dotnet ef migrations script 20260915010205_AddCustomerConcerns 20260920152853_Op
 
 If the original data is inconsistent, reconcile it on the restored test copy first. Do not guess which duplicate stock record is correct. Restore the complete pre-upgrade backup if an upgrade fails after schema changes.
 
+## Dashboard and product photos update
+
+This update adds the nullable `Products.PhotoUrl` column through `AddProductPhotoUrl`. Existing products keep an icon until a photo URL is entered. Add or edit a product and paste a public HTTPS image URL; images are displayed from that host, not uploaded to FoodSupply. Broken images fall back to the product icon.
+
+Before running the updated app against an existing database, stop the app, back up the database, and run `dotnet run -- --upgrade-database` using the updated source and the intended connection string. For a published deployment, run `dotnet FoodSupply.dll --upgrade-database` from the published directory. Restart after the upgrade succeeds. The GitHub deployment workflow does not apply database migrations; an unapplied migration puts the app into its existing maintenance response.
+
+Dashboard charts default to the last 30 days and accept a range of up to 366 days. Sales are grouped by order date for non-archived delivered orders. Stock health and recent activity are current snapshots, independent of the date filter. Greetings and activity timestamps use the browser's local time; daily workload counts use the application server's date. Sales, stock, and audit highlights follow the corresponding role permissions.
+
 ## Password reset email
 
 Set these using environment variables or a secret store, not committed configuration:

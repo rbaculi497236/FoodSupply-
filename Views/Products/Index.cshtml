@@ -22,6 +22,10 @@ var canEditProducts = User.IsInRole("Admin") || User.IsInRole("Manager") || User
 
 @await Html.PartialAsync("_TableTools")
 
+@if (TempData["Success"] is string message) {
+    <div class="alert alert-success" role="status"><i class="bi bi-check-circle me-2"></i>@message</div>
+}
+
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
@@ -39,18 +43,27 @@ var canEditProducts = User.IsInRole("Admin") || User.IsInRole("Manager") || User
     </thead>
 
 <tbody>
+    @if (!Model.Any()) {
+        <tr><td colspan="10"><div class="empty-state p-4 text-center">
+            <i class="bi bi-box-seam fs-1" aria-hidden="true"></i>
+            <h2 class="h5 mt-2">@(string.IsNullOrWhiteSpace((string?)ViewBag.Search) ? "Your catalogue starts here" : "No products match your search")</h2>
+            <p class="text-muted">@(string.IsNullOrWhiteSpace((string?)ViewBag.Search) ? "Add your first product to start organizing your stock." : "Try a product name, code, or unit, or clear the search.")</p>
+            @if (!string.IsNullOrWhiteSpace((string?)ViewBag.Search)) { <a asp-action="Index" class="btn btn-outline-primary">Clear search</a> }
+            else if (canEditProducts) { <a asp-action="Create" class="btn btn-primary">Add your first product</a> }
+        </div></td></tr>
+    }
     @foreach (var item in Model)
     {
         <tr>
             <td>@item.ProductCode</td>
-            <td>@item.ProductName</td>
+            <td><div class="d-flex align-items-center gap-2"><partial name="_ProductPhoto" model="item" /><span>@item.ProductName</span></div></td>
             <td>@(item.Category?.CategoryName ?? "Uncategorized")</td>
             <td>@item.Unit</td>
             <td>@item.Boxes box(es) / @item.PiecesPerBox pcs</td>
             <td>@item.Price.ToString("N2")</td>
-            <td>@item.StockQuantity</td>
+            <td>@item.StockQuantity @if (item.StockQuantity <= item.ReorderLevel) { <span class="badge bg-warning text-dark">Low stock</span> }</td>
             <td>@item.ReorderLevel</td>
-            <td>@item.Status</td>
+            <td><partial name="_StatusBadge" model="item.Status" /></td>
             <td>
                 <a asp-action="Details" asp-route-id="@item.Id"
                    class="btn btn-info btn-sm">Details</a>

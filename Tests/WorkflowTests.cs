@@ -525,6 +525,64 @@ public sealed class WorkflowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task DashboardHighlightsRespectDatesArchiveFlagsAndRoles()
+    {
+        await Receive(100);
+        var delivered = await Order(3);
+        delivered.Status = "Delivered";
+        delivered.OrderDate = new DateTime(2026, 1, 31, 23, 59, 59);
+        var outside = await Order(4);
+        outside.Status = "Delivered";
+        outside.OrderDate = new DateTime(2026, 2, 1);
+        var archived = await Order(5);
+        archived.Status = "Delivered";
+        archived.IsArchived = true;
+        archived.OrderDate = new DateTime(2026, 1, 15);
+        await db.SaveChangesAsync();
+        System.Security.Claims.ClaimsPrincipal Role(string role) => new(new System.Security.Claims.ClaimsIdentity(new[] {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role) }, "Cookies"));
+        var from = new DateTime(2026, 1, 1);
+        var to = new DateTime(2026, 1, 31);
+        var manager = await DashboardHighlightsService.LoadAsync(db, Role("Manager"), from, to);
+        Assert.Equal(30m, Assert.Single(manager.Sales.Points).Value);
+        Assert.Equal(3m, Assert.Single(manager.TopProducts.Points).Value);
+        Assert.Equal(1m, manager.Stock.Points.Sum(p => p.Value));
+        Assert.NotEmpty(manager.Activity);
+        Assert.All(manager.Activity, a => Assert.Equal("", a.Changes));
+        var delivery = await DashboardHighlightsService.LoadAsync(db, Role("Delivery Staff"), from, to);
+        Assert.True(delivery.CanViewDeliveries);
+        Assert.Empty(delivery.Sales.Points);
+        Assert.Empty(delivery.Stock.Points);
+        Assert.Empty(delivery.Activity);
+        var sales = await DashboardHighlightsService.LoadAsync(db, Role("Sales Staff / Billing Staff"), from, to);
+        Assert.True(sales.CanViewSales);
+        Assert.False(sales.CanViewDeliveries);
+        Assert.Empty(sales.Activity);
+        var inventory = await db.Inventories.SingleAsync();
+        inventory.ReorderLevel = 100;
+        await db.SaveChangesAsync();
+        var warehouse = await DashboardHighlightsService.LoadAsync(db, Role("Warehouse Staff"), from, to);
+        Assert.Equal(1, warehouse.LowStock);
+        Assert.Empty(warehouse.Sales.Points);
+        inventory.IsArchived = true;
+        await db.SaveChangesAsync();
+        warehouse = await DashboardHighlightsService.LoadAsync(db, Role("Warehouse Staff"), from, to);
+        Assert.Equal(0, warehouse.LowStock);
+    }
+
+    [Theory]
+    [InlineData("https://example.com/rice.jpg", true)]
+    [InlineData(null, true)]
+    [InlineData("http://example.com/rice.jpg", false)]
+    [InlineData("javascript:alert(1)", false)]
+    public void ProductPhotosRequireHttps(string? url, bool expected)
+    {
+        var model = new Product { ProductCode = "P1", ProductName = "Rice", Unit = "Bag", PhotoUrl = url };
+        Assert.Equal(expected, System.ComponentModel.DataAnnotations.Validator.TryValidateObject(model,
+            new System.ComponentModel.DataAnnotations.ValidationContext(model), new List<System.ComponentModel.DataAnnotations.ValidationResult>(), true));
+    }
+
+    [Fact]
     public async Task ProfileEditUpdatesOnlyCurrentUserAndRefreshesClaims()
     {
         var user = new User { FullName = "Alice", Username = "alice", Email = "alice@example.com", Role = "Manager",

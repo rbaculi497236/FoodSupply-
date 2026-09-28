@@ -1,0 +1,11 @@
+@model string
+@{
+    var tone = Model switch {
+        "Active" or "Paid" or "Delivered" or "Completed" or "Received" => "success",
+        "Pending" or "Partially Paid" or "Partially Delivered" or "Partially Received" or "Low stock" => "warning",
+        "Processing" or "Confirmed" or "Out for Delivery" => "info",
+        "Cancelled" or "Unpaid" or "Out of stock" => "danger",
+        _ => "secondary"
+    };
+}
+<span class="badge bg-@tone @(tone is "warning" or "info" ? "text-dark" : "")">@Model</span>
