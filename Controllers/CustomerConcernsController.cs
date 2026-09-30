@@ -94,7 +94,7 @@ namespace FoodSupply.Controllers
                 .OrderBy(c => c.CustomerName)
                 .ToListAsync();
 
-            return View();
+            return View(new CustomerConcern());
         }
 
         // POST: CustomerConcerns/Create
@@ -102,11 +102,15 @@ namespace FoodSupply.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CustomerConcern concern)
         {
+            if (!await _context.Customers.AnyAsync(c => c.Id == concern.CustomerId && !c.IsArchived))
+                ModelState.AddModelError(nameof(concern.CustomerId), "Select an active customer.");
             if (ModelState.IsValid)
             {
                 concern.DateReported = DateTime.Now;
                 concern.Status = "Pending";
                 concern.IsArchived = false;
+                concern.ResolvedDate = null;
+                concern.Resolution = null;
 
                 _context.CustomerConcerns.Add(concern);
                 await _context.SaveChangesAsync();
@@ -149,14 +153,24 @@ namespace FoodSupply.Controllers
             if (id != concern.Id)
                 return NotFound();
 
+            var existing = await _context.CustomerConcerns.FirstOrDefaultAsync(c => c.Id == id && !c.IsArchived);
+            if (existing == null) return NotFound();
+            if (!await _context.Customers.AnyAsync(c => c.Id == concern.CustomerId && !c.IsArchived))
+                ModelState.AddModelError(nameof(concern.CustomerId), "Select an active customer.");
+            if (concern.Status is not ("Pending" or "In Progress" or "Resolved"))
+                ModelState.AddModelError(nameof(concern.Status), "Select a valid status.");
+
             if (ModelState.IsValid)
             {
-                if (concern.Status == "Resolved" && concern.ResolvedDate == null)
-                {
-                    concern.ResolvedDate = DateTime.Now;
-                }
-
-                _context.Update(concern);
+                existing.CustomerId = concern.CustomerId;
+                existing.ConcernType = concern.ConcernType;
+                existing.Subject = concern.Subject;
+                existing.Description = concern.Description;
+                existing.Priority = concern.Priority;
+                existing.Status = concern.Status;
+                existing.Resolution = concern.Resolution;
+                existing.Remarks = concern.Remarks;
+                existing.ResolvedDate = concern.Status == "Resolved" ? existing.ResolvedDate ?? DateTime.Now : null;
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
@@ -171,6 +185,7 @@ namespace FoodSupply.Controllers
         }
 
         // Archive instead of delete
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Archive(int? id)
         {
             if (id == null)
@@ -189,6 +204,7 @@ namespace FoodSupply.Controllers
         }
 
         // Restore archived concern
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Restore(int? id)
         {
             if (id == null)

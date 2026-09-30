@@ -61,6 +61,117 @@ public sealed class WorkflowTests : IAsyncLifetime
     }
     private async Task<SalesOrder> Order(params int[] quantities) => await new SalesOrderService(db, stock).SaveAsync(Input(quantities));
 
+    [Theory]
+    [InlineData("Categories", "Category")]
+    [InlineData("Products", "Product")]
+    [InlineData("Customers", "Customer")]
+    [InlineData("Suppliers", "Supplier")]
+    [InlineData("Inventories", "Inventory")]
+    [InlineData("Purchases", "Purchase")]
+    [InlineData("SalesOrders", "SalesOrder")]
+    [InlineData("Billings", "Billing")]
+    [InlineData("Deliveries", "Delivery")]
+    [InlineData("Users", "User")]
+    [InlineData("CustomerConcerns", "CustomerConcern")]
+    public async Task EveryTableListsArchivesAndRestoresRecords(string controllerName, string modelName)
+    {
+        await Receive(10);
+        var order = await Order(1);
+        order.Status = "Delivered";
+        var billing = new Billing { InvoiceNumber = "TEST-INVOICE", SalesOrder = order, TotalAmount = 10m, Balance = 10m };
+        var delivery = new Delivery { SalesOrder = order, Status = "Delivered" };
+        var purchase = new Purchase { PurchaseOrderNumber = "TEST-PO", SupplierId = product.SupplierId };
+        var user = new User { Username = "table-test", FullName = "Table Test", Email = "table@example.com" };
+        var concern = new CustomerConcern { Customer = customer, Subject = "Test concern", Description = "Test" };
+        var emptyCategory = new Category { CategoryCode = "EMPTY", CategoryName = "Unused category" };
+        db.AddRange(billing, delivery, purchase, user, concern, emptyCategory);
+        await db.SaveChangesAsync();
+        object record = modelName switch {
+            "Category" => emptyCategory, "Product" => product, "Customer" => customer,
+            "Supplier" => product.Supplier!, "Inventory" => await db.Inventories.SingleAsync(),
+            "Purchase" => purchase, "SalesOrder" => order, "Billing" => billing,
+            "Delivery" => delivery, "User" => user, _ => concern
+        };
+        var type = typeof(ProductsController).Assembly.GetType($"FoodSupply.Controllers.{controllerName}Controller")!;
+        var constructor = type.GetConstructors().Single();
+        var args = constructor.GetParameters().Select(p => p.ParameterType == typeof(ApplicationDbContext) ? (object)db
+            : p.ParameterType == typeof(PaymentService) ? new PaymentService(db)
+            : (object)new SalesOrderService(db, stock)).ToArray();
+        var controller = (Microsoft.AspNetCore.Mvc.Controller)constructor.Invoke(args);
+        var http = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+        controller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext { HttpContext = http };
+        controller.TempData = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(http, new TestTempDataProvider());
+        var id = (int)record.GetType().GetProperty("Id")!.GetValue(record)!;
+        async Task<Microsoft.AspNetCore.Mvc.IActionResult> Call(string action, int page = 1)
+        {
+            var method = type.GetMethods().Single(m => m.Name == action);
+            var values = method.GetParameters().Select(p => p.Name == "id" ? (object)id
+                : p.Name == "page" ? page : p.HasDefaultValue ? p.DefaultValue : null).ToArray();
+            return await (Task<Microsoft.AspNetCore.Mvc.IActionResult>)method.Invoke(controller, values)!;
+        }
+        async Task<bool> Contains(string action, int page = 1)
+        {
+            var view = Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await Call(action, page));
+            return ((System.Collections.IEnumerable)view.Model!).Cast<object>()
+                .Any(row => (int)row.GetType().GetProperty("Id")!.GetValue(row)! == id);
+        }
+        Assert.True(await Contains("Index", -1));
+        Assert.False(await Contains("Archived"));
+        var archiveAction = type.GetMethod("ArchiveConfirmed") != null ? "ArchiveConfirmed" : "Archive";
+        Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(await Call(archiveAction));
+        Assert.True((bool)record.GetType().GetProperty("IsArchived")!.GetValue(record)!);
+        Assert.False(await Contains("Index"));
+        Assert.True(await Contains("Archived", 999));
+        Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(await Call("Restore"));
+        Assert.False((bool)record.GetType().GetProperty("IsArchived")!.GetValue(record)!);
+        Assert.True(await Contains("Index"));
+        Assert.False(await Contains("Archived"));
+    }
+
+    [Fact]
+    public async Task ConcernCreateEditPreservesReportedDateAndControlsResolution()
+    {
+        var controller = new CustomerConcernsController(db);
+        var input = new CustomerConcern { CustomerId = customer.Id, Subject = "Damaged packaging", Description = "Please replace", Status = "Resolved", IsArchived = true };
+        Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(await controller.Create(input));
+        Assert.Equal("Pending", input.Status);
+        Assert.False(input.IsArchived);
+        var reported = input.DateReported;
+        var edit = new CustomerConcern { Id = input.Id, CustomerId = customer.Id, Subject = "Replacement sent", Description = "Replacement delivered", Status = "Resolved", IsArchived = true, DateReported = DateTime.MinValue };
+        Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(await controller.Edit(input.Id, edit));
+        Assert.Equal(reported, input.DateReported);
+        Assert.False(input.IsArchived);
+        Assert.NotNull(input.ResolvedDate);
+        Assert.Equal("Replacement sent", input.Subject);
+        edit.Status = "In Progress";
+        await controller.Edit(input.Id, edit);
+        Assert.Null(input.ResolvedDate);
+        edit.CustomerId = -1;
+        Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Edit(input.Id, edit));
+        Assert.False(controller.ModelState.IsValid);
+    }
+
+    [Fact]
+    public async Task IncompleteOrdersAndDeliveriesShowArchiveErrorsWithoutArchiving()
+    {
+        await Receive(5);
+        var order = await Order(1);
+        var delivery = new Delivery { SalesOrder = order, Status = "Pending" };
+        db.Deliveries.Add(delivery);
+        await db.SaveChangesAsync();
+        var http = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+        var orders = new SalesOrdersController(db, new SalesOrderService(db, stock)) {
+            TempData = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(http, new TestTempDataProvider()) };
+        var deliveries = new DeliveriesController(db) {
+            TempData = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(http, new TestTempDataProvider()) };
+        Assert.Equal("Archive", Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(await orders.ArchiveConfirmed(order.Id)).ActionName);
+        Assert.Equal("Archive", Assert.IsType<Microsoft.AspNetCore.Mvc.RedirectToActionResult>(await deliveries.ArchiveConfirmed(delivery.Id)).ActionName);
+        Assert.NotNull(orders.TempData["ErrorMessage"]);
+        Assert.NotNull(deliveries.TempData["ErrorMessage"]);
+        Assert.False(order.IsArchived);
+        Assert.False(delivery.IsArchived);
+    }
+
     [Fact]
     public async Task NotificationsIncludeBatchAlertsAndExcludeHealthyOrArchivedStock()
     {

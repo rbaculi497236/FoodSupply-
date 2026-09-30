@@ -184,7 +184,11 @@ namespace FoodSupply.Controllers
                 return NotFound();
             }
 
-            BusinessRule.Require(salesOrder.Status is "Cancelled" or "Delivered", "Complete or cancel an order before archiving it.");
+            if (salesOrder.Status is not ("Cancelled" or "Delivered"))
+            {
+                TempData["ErrorMessage"] = "Complete or cancel an order before archiving it.";
+                return RedirectToAction(nameof(Archive), new { id });
+            }
             salesOrder.IsArchived = true;
 
             await _context.SaveChangesAsync();

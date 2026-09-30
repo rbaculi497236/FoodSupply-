@@ -35,10 +35,11 @@ else
                             <td>@concern.Status</td>
                             <td>@concern.DateReported.ToString("MMM dd, yyyy")</td>
                             <td>
-                                <a asp-action="Restore" onclick="return confirm('Are you sure to restore?');" asp-route-id="@concern.Id"
-                                   class="btn btn-sm btn-outline-success">
+                                <form asp-action="Restore" method="post" onsubmit="return confirm('Are you sure to restore?');" asp-route-id="@concern.Id">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
                                     <i class="bi bi-arrow-counterclockwise"></i> Restore
-                                </a>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     }

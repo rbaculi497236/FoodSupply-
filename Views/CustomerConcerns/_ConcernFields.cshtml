@@ -1,0 +1,24 @@
+@model FoodSupply.Models.CustomerConcern
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<label asp-for="CustomerId" class="form-label">Customer</label>
+<select asp-for="CustomerId" class="form-select" required>
+    <option value="">Select customer</option>
+    @foreach (var customer in (IEnumerable<FoodSupply.Models.Customer>)ViewBag.Customers)
+    {
+        <option value="@customer.Id">@customer.CustomerName</option>
+    }
+</select>
+<label asp-for="ConcernType" class="form-label mt-3">Concern type</label>
+<select asp-for="ConcernType" class="form-select">
+    <option>Complaint</option><option>Inquiry</option><option>Request</option><option>Feedback</option>
+</select>
+<label asp-for="Subject" class="form-label mt-3"></label>
+<input asp-for="Subject" class="form-control" maxlength="150" />
+<label asp-for="Description" class="form-label mt-3"></label>
+<textarea asp-for="Description" class="form-control" rows="4"></textarea>
+<label asp-for="Priority" class="form-label mt-3"></label>
+<select asp-for="Priority" class="form-select">
+    <option>Low</option><option>Medium</option><option>High</option><option>Urgent</option>
+</select>
+<label asp-for="Remarks" class="form-label mt-3"></label>
+<textarea asp-for="Remarks" class="form-control" rows="2"></textarea>

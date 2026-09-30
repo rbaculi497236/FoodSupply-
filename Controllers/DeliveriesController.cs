@@ -348,7 +348,11 @@ namespace FoodSupply.Controllers
             if (delivery == null)
                 return NotFound();
 
-            BusinessRule.Require(delivery.Status == "Delivered", "Complete the delivery before archiving it.");
+            if (delivery.Status != "Delivered")
+            {
+                TempData["ErrorMessage"] = "Complete the delivery before archiving it.";
+                return RedirectToAction(nameof(Archive), new { id });
+            }
             delivery.IsArchived = true;
 
             // If the delivery was not completed,

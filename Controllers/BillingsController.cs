@@ -23,7 +23,7 @@ namespace FoodSupply.Controllers
         {
             const int pageSize = 10;
             var query = _context.Billings
-                .Where(b => true)
+                .Where(b => !b.IsArchived)
                 .Include(b => b.SalesOrder)
                 .AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
