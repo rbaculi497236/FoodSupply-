@@ -102,13 +102,12 @@
                                             <form asp-action="Restore"
                                                   asp-route-id="@delivery.Id"
                                                   method="post"
-                                                  class="d-inline">
+                                                  class="d-inline" onsubmit="return confirm('Are you sure to restore?');">
 
                                                 @Html.AntiForgeryToken()
 
                                                 <button type="submit"
-                                                        class="btn btn-sm btn-outline-success"
-                                                        onclick="return confirm('Are you sure you want to restore Delivery #@delivery.Id?');">
+                                                        class="btn btn-sm btn-outline-success">
 
                                                     <i class="bi bi-arrow-counterclockwise"></i>
                                                     Restore

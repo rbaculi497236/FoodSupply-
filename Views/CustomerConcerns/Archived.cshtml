@@ -1,0 +1,51 @@
+@model IEnumerable<FoodSupply.Models.CustomerConcern>
+@{
+    ViewData["Title"] = "Archived Customer Concerns";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Archived Customer Concerns</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to Customer Concerns</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No archived customer concerns found.</div>
+}
+else
+{
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Date Reported</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var concern in Model)
+                    {
+                        <tr>
+                            <td>@concern.Customer?.CustomerName</td>
+                            <td>@concern.Subject</td>
+                            <td>@concern.Status</td>
+                            <td>@concern.DateReported.ToString("MMM dd, yyyy")</td>
+                            <td>
+                                <a asp-action="Restore" onclick="return confirm('Are you sure to restore?');" asp-route-id="@concern.Id"
+                                   class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Restore
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@await Html.PartialAsync("_Pagination")

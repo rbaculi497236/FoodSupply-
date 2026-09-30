@@ -30,7 +30,7 @@ else
                     <form asp-action="Restore"
                           asp-route-id="@product.Id"
                           method="post"
-                          style="display:inline;">
+                          style="display:inline;" onsubmit="return confirm('Are you sure to restore?');">
                         <button type="submit" class="btn btn-success btn-sm">
                             Restore
                         </button>

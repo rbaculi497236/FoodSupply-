@@ -35,7 +35,7 @@
             <dd class="col-sm-9">@Model.Status</dd>
         </dl>
 
-        <form asp-action="Archive" method="post">
+        <form asp-action="Archive" method="post" onsubmit="return confirm('Are you sure to Archive?');">
             <input type="hidden" asp-for="Id" />
 
             <button type="submit" class="btn btn-danger">

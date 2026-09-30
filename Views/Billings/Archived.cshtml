@@ -1,4 +1,4 @@
-﻿@model IEnumerable<FoodSupply.Models.Billing>
+@model IEnumerable<FoodSupply.Models.Billing>
 
 @{
     ViewData["Title"] = "Archived Billing";
@@ -114,7 +114,7 @@
                                         <form asp-action="Restore"
                                               asp-route-id="@item.Id"
                                               method="post"
-                                              class="d-inline">
+                                              class="d-inline" onsubmit="return confirm('Are you sure to restore?');">
 
                                             @Html.AntiForgeryToken()
 

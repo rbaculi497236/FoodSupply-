@@ -110,14 +110,13 @@
 
             <form asp-action="ArchiveConfirmed"
                   asp-route-id="@Model.Id"
-                  method="post">
+                  method="post" onsubmit="return confirm('Are you sure to Archive?');">
 
                 @Html.AntiForgeryToken()
 
                 <button type="submit"
                         class="btn"
-                        style="background-color: #4B9B28; border-color: #4B9B28; color: white;"
-                        onclick="return confirm('Are you sure you want to archive this inventory record?');">
+                        style="background-color: #4B9B28; border-color: #4B9B28; color: white;">
 
                     <i class="bi bi-archive-fill me-1"></i>
                     Confirm Archive

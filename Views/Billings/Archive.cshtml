@@ -1,4 +1,4 @@
-﻿@model FoodSupply.Models.Billing
+@model FoodSupply.Models.Billing
 
 @{
     ViewData["Title"] = "Archive Billing";
@@ -266,13 +266,12 @@
                 <!-- Confirm Archive -->
                 <form asp-action="ArchiveConfirmed"
                       asp-route-id="@Model.Id"
-                      method="post">
+                      method="post" onsubmit="return confirm('Are you sure to Archive?');">
 
                     @Html.AntiForgeryToken()
 
                     <button type="submit"
-                            class="btn btn-success"
-                            onclick="return confirm('Are you sure you want to archive invoice @Model.InvoiceNumber?');">
+                            class="btn btn-success">
 
                         <i class="bi bi-archive me-1"></i>
 
