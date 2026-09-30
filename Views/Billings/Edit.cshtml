@@ -20,7 +20,13 @@ else
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card card-body">
         <input type="hidden" name="requestId" value="@(Context.Request.HasFormContentType && Context.Request.Form.ContainsKey("requestId") ? Context.Request.Form["requestId"].ToString() : Guid.NewGuid().ToString())" />
         <label class="mb-3">New payment amount<input name="amount" type="number" min="0.01" max="@remainingBalance.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" step="0.01" required class="form-control" /></label>
-        <label class="mb-3">Method<select name="paymentMethod" required class="form-select"><option value="">Select method</option><option>Cash</option><option>Bank Transfer</option><option>GCash</option><option>Credit Card</option><option>Check</option></select></label>
+        <label class="mb-3">Payment method
+            <select name="paymentMethod" required class="form-select">
+                <option value="">Select method</option>
+                <option value="Check">Check</option>
+                <option value="Cash">Cash</option>
+            </select>
+        </label>
         <label class="mb-3">Receipt / transaction reference<input name="reference" maxlength="200" class="form-control" /></label>
         <button class="btn btn-primary">Record payment</button>
     </form>

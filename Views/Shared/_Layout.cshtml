@@ -1549,6 +1549,20 @@
         }
 
 
+        @if (isAuthenticated)
+        {
+            <a class="sidebar-link @(currentController == "CustomerConcerns" ? "active" : "")"
+               asp-controller="CustomerConcerns"
+               asp-action="Index">
+                <span class="sidebar-icon">
+                    <i class="bi bi-chat-left-text"></i>
+                </span>
+                <span class="sidebar-text">
+                    Customer Concerns
+                </span>
+            </a>
+        }
+
         <!-- =================================================
              OPERATIONS
              ================================================= -->
