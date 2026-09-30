@@ -1,13 +1,46 @@
 @model FoodSupply.Models.User
+@inject FoodSupply.Services.ProfilePhotoStore Photos
 @{ ViewData["Title"] = "My profile"; }
 <div class="container py-4">
     <div class="card shadow-sm mx-auto" style="max-width: 640px;">
         <div class="card-body p-4">
             <h1 class="h3">My profile</h1>
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             @if (TempData["Success"] is string message)
             {
                 <div class="alert alert-success" role="status">@message</div>
             }
+            @{
+                var photoVersion = Photos.Version(Model.Id);
+            }
+            <div class="my-4">
+                @if (photoVersion.HasValue)
+                {
+                    <img src="@Url.Action("Photo", "Profile", new { v = photoVersion })" alt="Your profile photo"
+                         class="rounded-circle mb-3" width="96" height="96" style="object-fit: cover;" />
+                }
+                else
+                {
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mb-3"
+                         style="width:96px;height:96px;font-size:2rem;" aria-label="Default profile avatar">
+                        @(string.IsNullOrWhiteSpace(Model.FullName) ? "U" : Model.FullName[..1].ToUpper())
+                    </div>
+                }
+                <form asp-action="UploadPhoto" method="post" enctype="multipart/form-data">
+                    <label for="profilePhoto" class="form-label">Profile photo</label>
+                    <input id="profilePhoto" name="photo" type="file" accept="image/jpeg,image/png" required
+                           class="form-control" aria-describedby="photoHelp" />
+                    <div id="photoHelp" class="form-text">Choose a JPG or PNG image, up to 2 MB.</div>
+                    <button type="submit" class="btn btn-primary mt-2">Upload photo</button>
+                </form>
+                @if (photoVersion.HasValue)
+                {
+                    <form asp-action="RemovePhoto" method="post" class="mt-2"
+                          onsubmit="return confirm('Remove your profile photo?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Remove photo</button>
+                    </form>
+                }
+            </div>
             <dl class="row mt-4">
                 <dt class="col-sm-4">Full name</dt><dd class="col-sm-8 text-break">@Model.FullName</dd>
                 <dt class="col-sm-4">Username</dt><dd class="col-sm-8 text-break">@Model.Username</dd>

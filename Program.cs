@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ==========================================
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ProfilePhotoStore>();
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.CookieTempDataProviderOptions>(options =>
 {
     options.Cookie.IsEssential = true;

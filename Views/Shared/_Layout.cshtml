@@ -1,6 +1,7 @@
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims
 @inject FoodSupply.Data.ApplicationDbContext DbContext
+@inject FoodSupply.Services.ProfilePhotoStore ProfilePhotos
 
 @{
     // =========================================================
@@ -1404,7 +1405,16 @@
             <div class="sidebar-user">
 
                 <div class="sidebar-user-avatar">
-                    @firstLetter
+                    @if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var photoUserId)
+                        && ProfilePhotos.Version(photoUserId) is long photoVersion)
+                    {
+                        <img src="@Url.Action("Photo", "Profile", new { v = photoVersion })" alt="Your profile photo"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                    }
+                    else
+                    {
+                        @firstLetter
+                    }
                 </div>
 
                 <div class="sidebar-user-info">

@@ -597,7 +597,7 @@ public sealed class WorkflowTests : IAsyncLifetime
         var http = new Microsoft.AspNetCore.Http.DefaultHttpContext { RequestServices = provider,
             User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[] {
                 new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id.ToString()) }, "Cookies")) };
-        var controller = new ProfileController(db) {
+        var controller = new ProfileController(db, new ProfilePhotoStore(new ProfilePhotoTests.TestEnvironment())) {
             ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext { HttpContext = http,
                 RouteData = new Microsoft.AspNetCore.Routing.RouteData(),
                 ActionDescriptor = new Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor() },

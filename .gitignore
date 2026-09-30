@@ -2,6 +2,7 @@ bin/
 obj/
 artifacts/
 TestResults/
+App_Data/profile-photos/
 *.user
 *.suo
 .vs/

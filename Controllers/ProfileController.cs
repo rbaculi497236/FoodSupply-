@@ -8,12 +8,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using FoodSupply.Services;
 
 namespace FoodSupply.Controllers;
 
 [Authorize]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public class ProfileController(ApplicationDbContext db) : Controller
+public class ProfileController(ApplicationDbContext db, ProfilePhotoStore photos) : Controller
 {
     private Task<User?> CurrentUserAsync() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
         ? db.Users.SingleOrDefaultAsync(u => u.Id == id && u.IsActive && !u.IsArchived)
@@ -32,6 +33,47 @@ public class ProfileController(ApplicationDbContext db) : Controller
         var user = await CurrentUserAsync();
         return user == null ? Challenge() : View(new ProfileViewModel {
             FullName = user.FullName, Username = user.Username, Email = user.Email });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Photo()
+    {
+        var user = await CurrentUserAsync();
+        if (user == null) return Challenge();
+        var bytes = await photos.ReadAsync(user.Id);
+        if (bytes == null || ProfilePhotoStore.ContentType(bytes) is not string contentType) return NotFound();
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
+        return File(bytes, contentType);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(3 * 1024 * 1024)]
+    public async Task<IActionResult> UploadPhoto(IFormFile? photo)
+    {
+        var user = await CurrentUserAsync();
+        if (user == null) return Challenge();
+        if (photo == null)
+        {
+            ModelState.AddModelError("", "Choose a JPG or PNG photo to upload.");
+            return View("Index", user);
+        }
+        try { await photos.SaveAsync(user.Id, photo); }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return View("Index", user);
+        }
+        TempData["Success"] = "Your profile photo has been updated.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemovePhoto()
+    {
+        var user = await CurrentUserAsync();
+        if (user == null) return Challenge();
+        photos.Remove(user.Id);
+        TempData["Success"] = "Your profile photo has been removed.";
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost, ValidateAntiForgeryToken, EnableRateLimiting("account")]
