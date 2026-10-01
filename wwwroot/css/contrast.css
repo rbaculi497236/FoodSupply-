@@ -1,0 +1,41 @@
+﻿/* Light foregrounds for existing dark surfaces; keep the current theme. */
+.content .table-dark,
+.content .table-dark > tr > *,
+.content .table-dark > :not(caption) > * > * {
+    --bs-table-color: #fff;
+    --bs-table-striped-color: #fff;
+    --bs-table-hover-color: #fff;
+    --bs-table-active-color: #fff;
+    color: #fff;
+}
+.content .card-header.text-white,
+.content .card-header.text-white :is(h1, h2, h3, h4, h5, h6, p, span, small, label),
+.content .bg-dark,
+.content .text-bg-dark {
+    color: #fff !important;
+}
+.content :is(.card-header.text-white, .bg-dark, .text-bg-dark, .table-dark)
+    :is(.text-muted, .text-secondary, .text-body-secondary, .form-text) {
+    color: #dbe5ef !important;
+}
+.content :is(.card-header.text-white, .bg-dark, .text-bg-dark, .table-dark) a:not(.btn) {
+    color: #cde8ff;
+}
+.content :is(.card-header.text-white, .bg-dark, .text-bg-dark, .table-dark) a:not(.btn):hover {
+    color: #fff;
+    text-decoration: underline;
+}
+.content :is(.btn-primary, .btn-success, .btn-danger, .btn-secondary, .btn-dark) {
+    color: #fff !important;
+}
+.content .badge.bg-success {
+    /* The layout gives this badge a solid green background. */
+    color: #fff !important;
+}
+.content .page-item.active .page-link { color: #fff; }
+.sidebar-user-name,
+.sidebar-link:hover,
+.sidebar-link.active { color: #fff; }
+.sidebar-user-role { color: #dbe5ef; }
+.sidebar-version { color: #c8d8e5; }
+.sidebar-section { color: #bce5a6; }
